@@ -6,7 +6,7 @@
   "description": "Decentralized Identity Issuance",
   "scripts": {
     "prepare": "husky",
-    "compile": "npx hardhat compile",
+    "compile": "npx hardhat compile --force",
     "coverage": "npx hardhat coverage --solcoverjs ./.solcover.ts",
     "clean": "npx hardhat clean",
     "test": "npx hardhat test",

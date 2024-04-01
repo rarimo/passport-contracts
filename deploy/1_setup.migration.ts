@@ -1,8 +1,13 @@
 import { ethers } from "hardhat";
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
-import { deployPoseidons } from "./helper";
+import { deployPoseidons } from "./helpers/helper";
 
-import { Registration__factory, VerifierMock__factory } from "@ethers-v6";
+import { Registration__factory, RegistrationVerifier__factory } from "@ethers-v6";
+
+const treeHeight = 80;
+const icaoMasterTreeMerkleRoot = ethers.hexlify(
+  "20044536444086118591887109164436364136320990398424186763077840515405091245125",
+);
 
 export = async (deployer: Deployer) => {
   await deployPoseidons(
@@ -11,12 +16,9 @@ export = async (deployer: Deployer) => {
   );
 
   const registration = await deployer.deploy(Registration__factory);
+  const registrationVerifier = await deployer.deploy(RegistrationVerifier__factory);
 
-  const verifierMock = await deployer.deploy(VerifierMock__factory);
-
-  const icaoMasterTreeMerkleRoot = ethers.hexlify(ethers.randomBytes(32));
-
-  await registration.__Registration_init(80, await verifierMock.getAddress(), icaoMasterTreeMerkleRoot);
+  await registration.__Registration_init(treeHeight, await registrationVerifier.getAddress(), icaoMasterTreeMerkleRoot);
 
   Reporter.reportContracts(["Registration", `${await registration.getAddress()}`]);
 };

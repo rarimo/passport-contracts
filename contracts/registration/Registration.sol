@@ -20,6 +20,11 @@ contract Registration is PoseidonSMT, Initializable {
     address public verifier;
     bytes32 public icaoMasterTreeMerkleRoot;
 
+    mapping(bytes32 => bytes32) public hashedRSAKeyToInternalKey;
+    mapping(bytes32 => bytes32) public internalKeyToHashedRSAKey;
+
+    mapping(bytes32 => bool) internal _usedSignatures;
+
     function __Registration_init(
         uint256 treeHeight_,
         address verifier_,
@@ -37,7 +42,6 @@ contract Registration is PoseidonSMT, Initializable {
         bytes memory s_,
         bytes memory n_,
         VerifierHelper.ProofPoints memory zkPoints_,
-        uint256 proofTimestamp_,
         uint256 group1Hash_
     ) external {
         bytes memory challenge_ = new bytes(8);
@@ -46,12 +50,22 @@ contract Registration is PoseidonSMT, Initializable {
             [uint256(userInternalPublicKeyX_), uint256(userInternalPublicKeyY_)]
         );
         uint256 hashedRSAKey_ = PoseidonUnit5L.poseidon(_decomposeRSAKey(n_));
-        uint256 parsedProofTimestamp_ = _parseTimestamp(proofTimestamp_);
 
         for (uint256 i = 0; i < challenge_.length; ++i) {
             challenge_[i] = bytes1(uint8(hashedInternalKey_ >> (8 * i)));
         }
 
+        bytes32 sigHash_ = keccak256(s_);
+
+        require(!_usedSignatures[sigHash_], "Registration: signature used");
+        require(
+            hashedRSAKeyToInternalKey[bytes32(hashedRSAKey_)] == bytes32(0),
+            "Registration: passport already registered"
+        );
+        require(
+            internalKeyToHashedRSAKey[bytes32(hashedInternalKey_)] == bytes32(0),
+            "Registration: identity already registered"
+        );
         require(
             challenge_.verifyPassport(s_, abi.encodePacked(E), n_),
             "Registration: invalid passport signature"
@@ -59,26 +73,21 @@ contract Registration is PoseidonSMT, Initializable {
 
         uint256[] memory pubSignals_ = new uint256[](4);
 
-        pubSignals_[0] = hashedRSAKey_;
-        pubSignals_[1] = uint256(icaoMasterTreeMerkleRoot);
-        pubSignals_[2] = proofTimestamp_;
-        pubSignals_[3] = group1Hash_;
+        pubSignals_[0] = hashedRSAKey_; // output
+        pubSignals_[1] = group1Hash_; // output
+        pubSignals_[2] = uint256(icaoMasterTreeMerkleRoot); // public input
+        pubSignals_[3] = hashedInternalKey_; // public input
 
-        require(parsedProofTimestamp_ > block.timestamp - 1 days, "Registration: proof expired");
         require(verifier.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
 
-        _add(
-            bytes32(PoseidonUnit2L.poseidon([hashedRSAKey_, hashedInternalKey_])),
-            bytes32(group1Hash_)
-        );
-    }
+        uint256 index_ = PoseidonUnit2L.poseidon([hashedRSAKey_, hashedInternalKey_]);
 
-    function _parseTimestamp(uint256 proofTimestamp_) private pure returns (uint256) {
-        uint256 year_ = 2000 + ((proofTimestamp_ >> 16) & 255);
-        uint256 month_ = (proofTimestamp_ >> 8) & 255;
-        uint256 day_ = proofTimestamp_ & 255;
+        _usedSignatures[sigHash_] = true;
 
-        return Date2Time.timestampFromDate(year_, month_, day_);
+        hashedRSAKeyToInternalKey[bytes32(hashedRSAKey_)] = bytes32(hashedInternalKey_);
+        internalKeyToHashedRSAKey[bytes32(hashedInternalKey_)] = bytes32(hashedRSAKey_);
+
+        _add(bytes32(index_), bytes32(PoseidonUnit2L.poseidon([index_, group1Hash_])));
     }
 
     function _decomposeRSAKey(

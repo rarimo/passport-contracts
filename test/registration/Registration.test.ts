@@ -41,16 +41,6 @@ describe("Registration", () => {
   afterEach(reverter.revert);
 
   describe("#register", () => {
-    function packDate(timestamp: number) {
-      const date = new Date(timestamp * 1000);
-
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const day = date.getDate();
-
-      return day | ((month + 1) << 8) | ((year - 2000) << 16);
-    }
-
     it("should register", async () => {
       const privKey = "0xed54a648103a338f9f9873534951457d99020e6a070c0a565cb0b6308485b577";
       const pubKeyX = "0x2c2b7d910cfc889cb631308bfa413b3e784693566068dd94d160521f4c4ee70a";
@@ -71,9 +61,8 @@ describe("Registration", () => {
         ],
         c: [0, 0],
       };
-      const proofTime = await time.latest();
 
-      await registration.register(pubKeyX, pubKeyY, signature, modulus, formattedProof, packDate(proofTime), pubKeyX);
+      await registration.register(pubKeyX, pubKeyY, signature, modulus, formattedProof, pubKeyX);
     });
   });
 });
