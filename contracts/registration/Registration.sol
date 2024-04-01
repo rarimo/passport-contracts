@@ -37,8 +37,7 @@ contract Registration is PoseidonSMT, Initializable {
     }
 
     function register(
-        bytes32 userInternalPublicKeyX_,
-        bytes32 userInternalPublicKeyY_,
+        uint256 hashedInternalKey_,
         bytes memory s_,
         bytes memory n_,
         VerifierHelper.ProofPoints memory zkPoints_,
@@ -46,9 +45,6 @@ contract Registration is PoseidonSMT, Initializable {
     ) external {
         bytes memory challenge_ = new bytes(8);
 
-        uint256 hashedInternalKey_ = PoseidonUnit2L.poseidon(
-            [uint256(userInternalPublicKeyX_), uint256(userInternalPublicKeyY_)]
-        );
         uint256 hashedRSAKey_ = PoseidonUnit5L.poseidon(_decomposeRSAKey(n_));
 
         for (uint256 i = 0; i < challenge_.length; ++i) {
@@ -75,8 +71,8 @@ contract Registration is PoseidonSMT, Initializable {
 
         pubSignals_[0] = hashedRSAKey_; // output
         pubSignals_[1] = group1Hash_; // output
-        pubSignals_[2] = uint256(icaoMasterTreeMerkleRoot); // public input
-        pubSignals_[3] = hashedInternalKey_; // public input
+        pubSignals_[2] = hashedInternalKey_; // output
+        pubSignals_[3] = uint256(icaoMasterTreeMerkleRoot); // public input
 
         require(verifier.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
 
