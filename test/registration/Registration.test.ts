@@ -68,33 +68,24 @@ describe("Registration", () => {
 
     it.skip("should register", async () => {
       const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
-      const poseidon2PubKey = "0x07fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f";
-      const group1Hash = "0x2a18950489dbbae3eb7ad61e9a521439a937fe400f13e26a28cb31445b23f66c";
+      const poseidon2PubKey = "0xced3831dcf3a96049d93cbbd3eaa0010f3b97a70ef591269c8975afb4717e5";
+      const group1Hash = "0x206187ab789aca5d2073582ba86f76c57f741ed2c78ccb96d79a9600b49df8d6";
 
       await registration.__Registration_init(TREE_SIZE, await registrationVerifier.getAddress(), icaoMerkleRoot);
 
-      const signature = "";
-      const modulus = "";
+      const signature =
+        "0xa7ea14a7734f7d789c4f0493bd71cc34a10986c2ce2bfad2118f05d21b4aaf65ca15f6f408e2af0ecdbf37fbaca88998d365f39d865a8face1ca4205ca94a59630af03b2c565f29dea5f8b317a7c5f04db16f2ff115c21c9696e9d45a635c2f066cfd50df09d41328888d2c8fc386e9ebc170b56977af65a5ad74db1f0d25d46";
+      const modulus =
+        "0xae782184c70d1c9829be95f23b2c21abf5a82019a6648b933ca8abe4dc837582068d45d0b5f94cc4cd4c7cde9bef0f4d79534469997d95018e6391d294000d536c2654f79a829ff8cb74a32fdbbab73e16cab87ff600344ef9dda6cc11c4d67672d66e875bbacd4de1e5b2d4efdd50b027bc16f357218c345861c1bc8f38b28d";
 
       const formattedProof: VerifierHelper.ProofPointsStruct = {
-        a: [
-          "0x0d1bf791b8f9d2b48a57e0eaecf5ac2e44826f67c49ea577d3d0681d3f0c9a8c",
-          "0x261d567a004ec9f622fb8d774c1462a7d33922d5cc24d1012c3f3362deea444e",
-        ],
+        a: ["", ""],
+
         b: [
-          [
-            "0x26f1df4f1fd7abbd637d6d8b16cf564d0d364e5742ae80a2c2c5ed14afb3a3fb",
-            "0x18d5cb5297b2b0004cb4e62dca6269e201649452f0916bd3a69f68710a57d69c",
-          ],
-          [
-            "0x04915499904fc3ee304d3c205b67f5a606bbc7b1c3e486b25691a768b4759462",
-            "0x1fc32fd2b7b098384fff6e605422d60b42f720ac2c7dfcfccd3278403958220b",
-          ],
+          ["", ""],
+          ["", ""],
         ],
-        c: [
-          "0x1242b4237e9c89883b4054e4a0e38e6076fadf62840387225e195627d85bce85",
-          "0x24f71e79d7e1ad5a2abd8cca38cd99c228cda6d416113c54f4c019d7ac4baca6",
-        ],
+        c: ["", ""],
       };
 
       await registration.register(poseidon2PubKey, signature, modulus, formattedProof, group1Hash);

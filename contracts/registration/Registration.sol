@@ -48,7 +48,7 @@ contract Registration is PoseidonSMT, Initializable {
         uint256 hashedRSAKey_ = PoseidonUnit5L.poseidon(_decomposeRSAKey(n_));
 
         for (uint256 i = 0; i < challenge_.length; ++i) {
-            challenge_[i] = bytes1(uint8(hashedInternalKey_ >> (8 * i)));
+            challenge_[challenge_.length - i - 1] = bytes1(uint8(hashedInternalKey_ >> (8 * i)));
         }
 
         bytes32 sigHash_ = keccak256(s_);
