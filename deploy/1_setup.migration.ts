@@ -5,9 +5,7 @@ import { deployPoseidons } from "./helpers/helper";
 import { Registration__factory, RegistrationVerifier__factory } from "@ethers-v6";
 
 const treeHeight = 80;
-const icaoMasterTreeMerkleRoot = ethers.hexlify(
-  "20044536444086118591887109164436364136320990398424186763077840515405091245125",
-);
+const icaoMasterTreeMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 export = async (deployer: Deployer) => {
   await deployPoseidons(

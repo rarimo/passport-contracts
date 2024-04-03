@@ -25,6 +25,8 @@ contract Registration is PoseidonSMT, Initializable {
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
+    event Registered(bytes32 hashedRSAKey, bytes32 hashedInternalKey);
+
     function __Registration_init(
         uint256 treeHeight_,
         address verifier_,
@@ -84,6 +86,8 @@ contract Registration is PoseidonSMT, Initializable {
         internalKeyToHashedRSAKey[bytes32(hashedInternalKey_)] = bytes32(hashedRSAKey_);
 
         _add(bytes32(index_), bytes32(PoseidonUnit2L.poseidon([index_, group1Hash_])));
+
+        emit Registered(bytes32(hashedRSAKey_), bytes32(hashedInternalKey_));
     }
 
     function _decomposeRSAKey(
