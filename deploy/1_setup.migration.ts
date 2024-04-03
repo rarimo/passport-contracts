@@ -1,4 +1,3 @@
-import { ethers } from "hardhat";
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 import { deployPoseidons } from "./helpers/helper";
 

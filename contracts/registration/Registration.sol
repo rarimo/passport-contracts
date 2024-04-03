@@ -90,6 +90,21 @@ contract Registration is PoseidonSMT, Initializable {
         emit Registered(bytes32(hashedRSAKey_), bytes32(hashedInternalKey_));
     }
 
+    function dropRelation(uint256 hashedInternalKey_, bytes memory n_) external {
+        uint256 hashedRSAKey_ = PoseidonUnit5L.poseidon(_decomposeRSAKey(n_));
+
+        delete hashedRSAKeyToInternalKey[bytes32(hashedRSAKey_)];
+        delete internalKeyToHashedRSAKey[bytes32(hashedInternalKey_)];
+    }
+
+    function changeICAORoot(bytes32 newRoot_) external {
+        icaoMasterTreeMerkleRoot = newRoot_;
+    }
+
+    function changeVerifier(address newVerifier_) external {
+        verifier = newVerifier_;
+    }
+
     function _decomposeRSAKey(
         bytes memory n_
     ) private pure returns (uint256[5] memory decomposed_) {
