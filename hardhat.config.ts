@@ -32,6 +32,12 @@ const config: HardhatUserConfig = {
       accounts: privateKey(),
       gasMultiplier: 1.2,
     },
+    "rarimo-testnet": {
+      url: "https://rpc.evm.node2.mainnet-beta.rarimo.com",
+      accounts: privateKey(),
+      gasPrice: 0,
+      gasMultiplier: 1.2,
+    },
     "q-testnet": {
       url: "https://rpc.qtestnet.org/",
       accounts: privateKey(),
@@ -85,6 +91,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      "rarimo-testnet": "abc",
       "q-testnet": "abc",
       sepolia: `${process.env.ETHERSCAN_KEY}`,
       mainnet: `${process.env.ETHERSCAN_KEY}`,
@@ -96,6 +103,14 @@ const config: HardhatUserConfig = {
       avalanche: `${process.env.AVALANCHE_KEY}`,
     },
     customChains: [
+      {
+        network: "rarimo-testnet",
+        chainId: 42,
+        urls: {
+          apiURL: "https://evmscan.mainnet-beta.rarimo.com/api",
+          browserURL: "https://newevmscan.mainnet-beta.rarimo.com",
+        },
+      },
       {
         network: "q-testnet",
         chainId: 35443,

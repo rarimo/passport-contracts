@@ -15,6 +15,7 @@
     "private-network-fork": "npx hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '\"' -f2)",
     "deploy-localhost": "npx hardhat migrate --network localhost",
     "deploy-sepolia": "npx hardhat migrate --network sepolia --verify",
+    "deploy-rarimo-testnet": "npx hardhat migrate --network rarimo-testnet --verify",
     "deploy-q-testnet": "npx hardhat migrate --network q-testnet --verify",
     "deploy-chapel": "npx hardhat migrate --network chapel --verify",
     "deploy-mumbai": "npx hardhat migrate --network mumbai --verify",
