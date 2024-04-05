@@ -8,10 +8,7 @@ const treeHeight = 80;
 const icaoMasterTreeMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 export = async (deployer: Deployer) => {
-  await deployPoseidons(
-    deployer,
-    new Array(6).fill(6).map((_, i) => i + 1),
-  );
+  await deployPoseidons(deployer, [2, 3, 5]);
 
   const registration = await deployer.deploy(Registration__factory);
   const registrationVerifier = await deployer.deploy(RegistrationVerifier__factory);

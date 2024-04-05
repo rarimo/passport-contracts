@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
@@ -22,6 +22,9 @@ contract Registration is PoseidonSMT, Initializable {
 
     mapping(bytes32 => bytes32) public hashedRSAKeyToInternalKey;
     mapping(bytes32 => bytes32) public internalKeyToHashedRSAKey;
+
+    mapping(bytes32 => uint256) public passportIdentitiesCounter;
+    mapping(bytes32 => uint256) public identityCreationTimestamps;
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
@@ -78,14 +81,19 @@ contract Registration is PoseidonSMT, Initializable {
 
         require(verifier.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
 
-        uint256 index_ = PoseidonUnit2L.poseidon([hashedRSAKey_, hashedInternalKey_]);
-
         _usedSignatures[sigHash_] = true;
 
         hashedRSAKeyToInternalKey[bytes32(hashedRSAKey_)] = bytes32(hashedInternalKey_);
         internalKeyToHashedRSAKey[bytes32(hashedInternalKey_)] = bytes32(hashedRSAKey_);
 
-        _add(bytes32(index_), bytes32(PoseidonUnit2L.poseidon([index_, group1Hash_])));
+        identityCreationTimestamps[bytes32(hashedInternalKey_)] = block.timestamp;
+
+        uint256 index_ = PoseidonUnit2L.poseidon([hashedRSAKey_, hashedInternalKey_]);
+        uint256 value_ = PoseidonUnit3L.poseidon(
+            [group1Hash_, passportIdentitiesCounter[bytes32(hashedRSAKey_)], block.timestamp]
+        );
+
+        _add(bytes32(index_), bytes32(value_));
 
         emit Registered(bytes32(hashedRSAKey_), bytes32(hashedInternalKey_));
     }
