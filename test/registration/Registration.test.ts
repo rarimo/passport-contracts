@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { Reverter, deployPoseidons, getPoseidon, poseidonHash } from "@/test/helpers/";
 
 import { Registration, VerifierMock, RegistrationVerifier } from "@ethers-v6";
@@ -63,7 +62,7 @@ describe("Registration", () => {
         c: [0, 0],
       };
 
-      await registration.register(poseidon2PubKey, signature, modulus, formattedProof, someHash);
+      await registration.register(poseidon2PubKey, someHash, signature, modulus, formattedProof);
     });
 
     it("should register", async () => {
@@ -99,7 +98,7 @@ describe("Registration", () => {
         ],
       };
 
-      await registration.register(poseidon2PubKey, signature, modulus, formattedProof, group1Hash);
+      await registration.register(poseidon2PubKey, group1Hash, signature, modulus, formattedProof);
     });
   });
 });
