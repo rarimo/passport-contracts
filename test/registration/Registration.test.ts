@@ -19,10 +19,11 @@ describe("Registration", () => {
   before("setup", async () => {
     [OWNER] = await ethers.getSigners();
 
-    await deployPoseidons(OWNER, [2, 3, 5], false);
+    await deployPoseidons(OWNER, [1, 2, 3, 5], false);
 
     const Registration = await ethers.getContractFactory("Registration", {
       libraries: {
+        PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
