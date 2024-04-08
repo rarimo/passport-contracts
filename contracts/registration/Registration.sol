@@ -64,6 +64,7 @@ contract Registration is PoseidonSMT, Initializable {
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
 
+        require(identityKey_ > 0, "Registration: identity can not be zero");
         require(
             _passportInfo.activeIdentity == bytes32(0),
             "Registration: passport already registered"
@@ -103,6 +104,7 @@ contract Registration is PoseidonSMT, Initializable {
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
 
+        require(identityKey_ > 0, "Registration: identity can not be zero");
         require(
             _passportInfo.activeIdentity == bytes32(identityKey_),
             "Registration: passport already revoked"
@@ -139,6 +141,7 @@ contract Registration is PoseidonSMT, Initializable {
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
 
+        require(identityKey_ > 0, "Registration: identity can not be zero");
         require(_passportInfo.activeIdentity == REVOKED, "Registration: passport is not revoked");
         require(
             _identityInfo.activePassport == bytes32(0),
