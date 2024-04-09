@@ -55,4 +55,6 @@ contract PoseidonSMT {
                 )
             );
     }
+
+    uint256[46] private _gap;
 }
