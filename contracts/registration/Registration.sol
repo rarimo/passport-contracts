@@ -8,13 +8,15 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
+import {TSSSigner} from "../utils/TSSSigner.sol";
 import {RSAVerifier} from "../utils/RSAVerifier.sol";
 
-contract Registration is PoseidonSMT, Initializable {
+contract Registration is PoseidonSMT, TSSSigner, Initializable {
     using VerifierHelper for address;
     using RSAVerifier for bytes;
 
     uint256 public constant E = 65537;
+    string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
 
     struct PassportInfo {
@@ -41,10 +43,12 @@ contract Registration is PoseidonSMT, Initializable {
 
     function __Registration_init(
         uint256 treeHeight_,
+        address signer_,
         address verifier_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
         __PoseidonSMT_init(treeHeight_);
+        __TSSSigner_init(signer_);
 
         verifier = verifier_;
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
@@ -165,6 +169,25 @@ contract Registration is PoseidonSMT, Initializable {
         _add(bytes32(index_), bytes32(value_));
 
         emit ReissuedIdentity(bytes32(passportKey_), bytes32(identityKey_));
+    }
+
+    function changeICAOMasterTreeRoot(
+        bytes32 newRoot_,
+        uint64 timestamp,
+        bytes memory proof_
+    ) external {
+        bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
+
+        _useNonce(timestamp);
+        _checkMerkleSignature(leaf_, proof_);
+
+        icaoMasterTreeMerkleRoot = newRoot_;
+    }
+
+    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
+        _checkSignature(keccak256(newSignerPubKey_), signature_);
+
+        signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
     function getPassportInfo(
