@@ -9,7 +9,6 @@ import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHe
 
 import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
 import {RSAVerifier} from "../utils/RSAVerifier.sol";
-import {Date2Time} from "../utils/Date2Time.sol";
 
 contract Registration is PoseidonSMT, Initializable {
     using VerifierHelper for address;
@@ -53,7 +52,7 @@ contract Registration is PoseidonSMT, Initializable {
 
     function register(
         uint256 identityKey_,
-        uint256 group1Hash_,
+        uint256 dgCommit_,
         bytes memory passportSignature_,
         bytes memory passportPublicKey_,
         VerifierHelper.ProofPoints memory zkPoints_
@@ -76,7 +75,7 @@ contract Registration is PoseidonSMT, Initializable {
 
         _useSignature(passportSignature_);
         _verifyPassportAA(challenge_, passportSignature_, passportPublicKey_);
-        _verifyZKProof(passportKey_, identityKey_, group1Hash_, zkPoints_);
+        _verifyZKProof(passportKey_, identityKey_, dgCommit_, zkPoints_);
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
 
@@ -85,7 +84,7 @@ contract Registration is PoseidonSMT, Initializable {
 
         uint256 index_ = PoseidonUnit2L.poseidon([passportKey_, identityKey_]);
         uint256 value_ = PoseidonUnit3L.poseidon(
-            [group1Hash_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
+            [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
         _add(bytes32(index_), bytes32(value_));
@@ -130,7 +129,7 @@ contract Registration is PoseidonSMT, Initializable {
 
     function reissueIdentity(
         uint256 identityKey_,
-        uint256 group1Hash_,
+        uint256 dgCommit_,
         bytes memory passportSignature_,
         bytes memory passportPublicKey_,
         VerifierHelper.ProofPoints memory zkPoints_
@@ -150,7 +149,7 @@ contract Registration is PoseidonSMT, Initializable {
 
         _useSignature(passportSignature_);
         _verifyPassportAA(challenge_, passportSignature_, passportPublicKey_);
-        _verifyZKProof(passportKey_, identityKey_, group1Hash_, zkPoints_);
+        _verifyZKProof(passportKey_, identityKey_, dgCommit_, zkPoints_);
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
         ++_passportInfo.identityReissueCounter;
@@ -160,7 +159,7 @@ contract Registration is PoseidonSMT, Initializable {
 
         uint256 index_ = PoseidonUnit2L.poseidon([passportKey_, identityKey_]);
         uint256 value_ = PoseidonUnit3L.poseidon(
-            [group1Hash_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
+            [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
         _add(bytes32(index_), bytes32(value_));
@@ -184,7 +183,7 @@ contract Registration is PoseidonSMT, Initializable {
         }
     }
 
-    function _useSignature(bytes memory passportSignature_) private {
+    function _useSignature(bytes memory passportSignature_) internal {
         bytes32 sigHash_ = keccak256(passportSignature_);
 
         require(!_usedSignatures[sigHash_], "Registration: signature used");
@@ -196,7 +195,7 @@ contract Registration is PoseidonSMT, Initializable {
         bytes memory challenge_,
         bytes memory passportSignature_,
         bytes memory passportPublicKey_
-    ) private view {
+    ) internal view {
         require(
             challenge_.verifyPassport(passportSignature_, abi.encodePacked(E), passportPublicKey_),
             "Registration: invalid passport signature"
@@ -206,20 +205,20 @@ contract Registration is PoseidonSMT, Initializable {
     function _verifyZKProof(
         uint256 passportKey_,
         uint256 identityKey_,
-        uint256 group1Hash_,
+        uint256 dgCommit_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) private view {
+    ) internal view {
         uint256[] memory pubSignals_ = new uint256[](4);
 
         pubSignals_[0] = passportKey_; // output
-        pubSignals_[1] = group1Hash_; // output
+        pubSignals_[1] = dgCommit_; // output
         pubSignals_[2] = identityKey_; // output
         pubSignals_[3] = uint256(icaoMasterTreeMerkleRoot); // public input
 
         require(verifier.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
     }
 
-    function _getChallenge(uint256 identityKey_) private pure returns (bytes memory challenge_) {
+    function _getChallenge(uint256 identityKey_) internal pure returns (bytes memory challenge_) {
         challenge_ = new bytes(8);
 
         for (uint256 i = 0; i < challenge_.length; ++i) {
@@ -227,7 +226,7 @@ contract Registration is PoseidonSMT, Initializable {
         }
     }
 
-    function _getPassportKey(bytes memory passportPublicKey_) private pure returns (uint256) {
+    function _getPassportKey(bytes memory passportPublicKey_) internal pure returns (uint256) {
         uint256[5] memory decomposed_;
 
         assembly {
