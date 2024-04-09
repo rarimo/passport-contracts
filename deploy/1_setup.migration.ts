@@ -5,6 +5,7 @@ import { deployPoseidons } from "./helpers/helper";
 import { Registration__factory, RegistrationVerifier__factory } from "@ethers-v6";
 
 const treeHeight = 80;
+const tssSigner = "0x038D006846a3e203738cF80A02418e124203beb2";
 const icaoMasterTreeMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 export = async (deployer: Deployer) => {
@@ -13,7 +14,12 @@ export = async (deployer: Deployer) => {
   const registration = await deployer.deploy(Registration__factory);
   const registrationVerifier = await deployer.deploy(RegistrationVerifier__factory);
 
-  await registration.__Registration_init(treeHeight, await registrationVerifier.getAddress(), icaoMasterTreeMerkleRoot);
+  await registration.__Registration_init(
+    treeHeight,
+    tssSigner,
+    await registrationVerifier.getAddress(),
+    icaoMasterTreeMerkleRoot,
+  );
 
   Reporter.reportContracts(["Registration", `${await registration.getAddress()}`]);
 };
