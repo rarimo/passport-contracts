@@ -301,14 +301,14 @@ describe("Registration", () => {
         const signature = signHelper.signChangeSigner(newSigner.privateKey);
         const tx = registration.changeSigner(tssPublicKey, signature);
 
-        await expect(tx).to.be.revertedWith("TSSSigners: invalid signature");
+        await expect(tx).to.be.revertedWith("TSSSigner: invalid signature");
       });
 
       it("should not change signer if wrong pubKey length", async () => {
         const signature = signHelper.signChangeSigner(newSigner.privateKey);
         const tx = registration.changeSigner(newSigner.privateKey, signature);
 
-        await expect(tx).to.be.revertedWith("TSSSigners: wrong pubKey length");
+        await expect(tx).to.be.revertedWith("TSSSigner: wrong pubKey length");
       });
 
       it("should not change signer if zero pubKey", async () => {
@@ -327,7 +327,7 @@ describe("Registration", () => {
           const signature = signHelper.signChangeSigner(pubKey);
           const tx = registration.changeSigner(pubKey, signature);
 
-          await expect(tx).to.be.revertedWith("TSSSigners: zero pubKey");
+          await expect(tx).to.be.revertedWith("TSSSigner: zero pubKey");
         }
       });
 
@@ -338,7 +338,7 @@ describe("Registration", () => {
         const signature = signHelper.signChangeSigner(wrongPubKey);
         const tx = registration.changeSigner(wrongPubKey, signature);
 
-        await expect(tx).to.be.revertedWith("TSSSigners: pubKey not on the curve");
+        await expect(tx).to.be.revertedWith("TSSSigner: pubKey not on the curve");
       });
 
       it("should change signer if all conditions are met", async () => {
@@ -382,7 +382,7 @@ describe("Registration", () => {
         await registration.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof);
 
         expect(registration.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof)).to.be.revertedWith(
-          "TSSSigners: nonce used",
+          "TSSSigner: nonce used",
         );
       });
     });
