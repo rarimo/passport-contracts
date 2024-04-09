@@ -3,7 +3,22 @@
   "version": "0.1.0",
   "license": "MIT",
   "author": "Zero Block Global Foundation",
+  "readme": "README.md",
   "description": "Decentralized Identity Issuance",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rarimo/passport-contracts"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart-contracts",
+    "zero-knowledge"
+  ],
+  "files": [
+    "**/*.sol",
+    "!mock/**/*"
+  ],
   "scripts": {
     "prepare": "husky",
     "compile": "npx hardhat compile --force",
@@ -36,10 +51,7 @@
     "@iden3/contracts": "1.4.7",
     "@openzeppelin/contracts": "4.9.5",
     "@openzeppelin/contracts-upgradeable": "4.9.5",
-    "@solarity/solidity-lib": "2.7.2",
-    "dotenv": "16.4.5",
-    "hardhat": "2.20.1",
-    "typechain": "8.3.2"
+    "@solarity/solidity-lib": "2.7.3"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",
@@ -58,6 +70,9 @@
     "bignumber.js": "^9.1.2",
     "chai": "^4.4.1",
     "circomlibjs": "^0.1.7",
+    "dotenv": "16.4.5",
+    "hardhat": "2.20.1",
+    "typechain": "8.3.2",
     "ethers": "^6.11.1",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-gas-reporter": "^2.0.2",
