@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {SHA1} from "./SHA1.sol";
+import {SHA1} from "../utils/SHA1.sol";
 
-library RSAVerifier {
+library RSASHA1Authenticator {
     using SHA1 for bytes;
 
     uint256 constant HASH_LEN = 20;
@@ -40,7 +40,7 @@ library RSAVerifier {
         }
     }
 
-    function verifyPassport(
+    function authenticate(
         bytes memory challenge_,
         bytes memory s_,
         bytes memory e_,

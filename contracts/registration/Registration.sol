@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
+import {TSSSigner} from "./TSSSigner.sol";
+import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
-import {TSSSigner} from "../utils/TSSSigner.sol";
-import {RSAVerifier} from "../utils/RSAVerifier.sol";
 
-contract Registration is PoseidonSMT, TSSSigner, Initializable {
-    using VerifierHelper for address;
-    using RSAVerifier for bytes;
-
-    uint256 public constant E = 65537;
+contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
+
+    struct Passport {
+        bytes32 dataType;
+        bytes signature;
+        bytes publicKey;
+    }
 
     struct PassportInfo {
         bytes32 activeIdentity;
@@ -29,8 +31,9 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
         uint64 issueTimestamp;
     }
 
-    address public verifier;
     bytes32 public icaoMasterTreeMerkleRoot;
+
+    mapping(bytes32 => IPassportDispatcher) public passportDispatchers;
 
     mapping(bytes32 => PassportInfo) internal _passportInfos;
     mapping(bytes32 => IdentityInfo) internal _identityInfos;
@@ -44,25 +47,24 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
     function __Registration_init(
         uint256 treeHeight_,
         address signer_,
-        address verifier_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
         __PoseidonSMT_init(treeHeight_);
         __TSSSigner_init(signer_);
 
-        verifier = verifier_;
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
     }
 
     function register(
         uint256 identityKey_,
         uint256 dgCommit_,
-        bytes memory passportSignature_,
-        bytes memory passportPublicKey_,
+        Passport memory passport_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) external {
-        bytes memory challenge_ = _getChallenge(identityKey_);
-        uint256 passportKey_ = _getPassportKey(passportPublicKey_);
+        IPassportDispatcher dispatcher_ = _getDispatcher(passport_.dataType);
+
+        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
+        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
 
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
@@ -77,9 +79,9 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
             "Registration: identity already registered"
         );
 
-        _useSignature(passportSignature_);
-        _verifyPassportAA(challenge_, passportSignature_, passportPublicKey_);
-        _verifyZKProof(passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _useSignature(passport_.signature);
+        _authenticate(dispatcher_, challenge_, passport_);
+        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
 
@@ -96,13 +98,11 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
         emit Registered(bytes32(passportKey_), bytes32(identityKey_));
     }
 
-    function revoke(
-        uint256 identityKey_,
-        bytes memory passportSignature_,
-        bytes memory passportPublicKey_
-    ) external {
-        bytes memory challenge_ = _getChallenge(identityKey_);
-        uint256 passportKey_ = _getPassportKey(passportPublicKey_);
+    function revoke(uint256 identityKey_, Passport memory passport_) external {
+        IPassportDispatcher dispatcher_ = _getDispatcher(passport_.dataType);
+
+        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
+        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
 
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
@@ -117,8 +117,8 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
             "Registration: identity already revoked"
         );
 
-        _useSignature(passportSignature_);
-        _verifyPassportAA(challenge_, passportSignature_, passportPublicKey_);
+        _useSignature(passport_.signature);
+        _authenticate(dispatcher_, challenge_, passport_);
 
         _passportInfo.activeIdentity = REVOKED;
         _identityInfo.activePassport = REVOKED;
@@ -134,12 +134,13 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
     function reissueIdentity(
         uint256 identityKey_,
         uint256 dgCommit_,
-        bytes memory passportSignature_,
-        bytes memory passportPublicKey_,
+        Passport memory passport_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) external {
-        bytes memory challenge_ = _getChallenge(identityKey_);
-        uint256 passportKey_ = _getPassportKey(passportPublicKey_);
+        IPassportDispatcher dispatcher_ = _getDispatcher(passport_.dataType);
+
+        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
+        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
 
         PassportInfo storage _passportInfo = _passportInfos[bytes32(passportKey_)];
         IdentityInfo storage _identityInfo = _identityInfos[bytes32(identityKey_)];
@@ -151,9 +152,9 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
             "Registration: identity already registered"
         );
 
-        _useSignature(passportSignature_);
-        _verifyPassportAA(challenge_, passportSignature_, passportPublicKey_);
-        _verifyZKProof(passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _useSignature(passport_.signature);
+        _authenticate(dispatcher_, challenge_, passport_);
+        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
         ++_passportInfo.identityReissueCounter;
@@ -190,16 +191,27 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
         signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
+    function addDispatcher(bytes32 dispatcherType_, address dispatcher_) external onlyOwner {
+        require(
+            address(passportDispatchers[dispatcherType_]) == address(0),
+            "Registration: dispatcher already exists"
+        );
+
+        passportDispatchers[dispatcherType_] = IPassportDispatcher(dispatcher_);
+    }
+
+    function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
+        delete passportDispatchers[dispatcherType_];
+    }
+
     function getPassportInfo(
-        bytes memory passportPublicKey_
+        bytes32 passportKey_
     )
         external
         view
         returns (PassportInfo memory passportInfo_, IdentityInfo memory identityInfo_)
     {
-        uint256 passportKey_ = _getPassportKey(passportPublicKey_);
-
-        passportInfo_ = _passportInfos[bytes32(passportKey_)];
+        passportInfo_ = _passportInfos[passportKey_];
 
         if (passportInfo_.activeIdentity != REVOKED) {
             identityInfo_ = _identityInfos[passportInfo_.activeIdentity];
@@ -214,18 +226,19 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
         _usedSignatures[sigHash_] = true;
     }
 
-    function _verifyPassportAA(
+    function _authenticate(
+        IPassportDispatcher dispatcher_,
         bytes memory challenge_,
-        bytes memory passportSignature_,
-        bytes memory passportPublicKey_
+        Passport memory passport_
     ) internal view {
         require(
-            challenge_.verifyPassport(passportSignature_, abi.encodePacked(E), passportPublicKey_),
-            "Registration: invalid passport signature"
+            dispatcher_.authenticate(challenge_, passport_.signature, passport_.publicKey),
+            "Registration: invalid passport authentication"
         );
     }
 
     function _verifyZKProof(
+        IPassportDispatcher dispatcher_,
         uint256 passportKey_,
         uint256 identityKey_,
         uint256 dgCommit_,
@@ -238,40 +251,17 @@ contract Registration is PoseidonSMT, TSSSigner, Initializable {
         pubSignals_[2] = identityKey_; // output
         pubSignals_[3] = uint256(icaoMasterTreeMerkleRoot); // public input
 
-        require(verifier.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
+        require(
+            dispatcher_.verifyZKProof(pubSignals_, zkPoints_),
+            "Registration: invalid zk proof"
+        );
     }
 
-    function _getChallenge(uint256 identityKey_) internal pure returns (bytes memory challenge_) {
-        challenge_ = new bytes(8);
+    function _getDispatcher(
+        bytes32 passportType_
+    ) internal view returns (IPassportDispatcher dispatcher_) {
+        dispatcher_ = passportDispatchers[passportType_];
 
-        for (uint256 i = 0; i < challenge_.length; ++i) {
-            challenge_[challenge_.length - i - 1] = bytes1(uint8(identityKey_ >> (8 * i)));
-        }
-    }
-
-    function _getPassportKey(bytes memory passportPublicKey_) internal pure returns (uint256) {
-        uint256[5] memory decomposed_;
-
-        assembly {
-            for {
-                let i := 0
-            } lt(i, 5) {
-                i := add(i, 1)
-            } {
-                let someData_ := mload(add(passportPublicKey_, add(32, mul(i, 25))))
-
-                switch i
-                case 4 {
-                    someData_ := shr(32, someData_)
-                }
-                default {
-                    someData_ := shr(56, someData_)
-                }
-
-                mstore(add(decomposed_, mul(i, 32)), someData_)
-            }
-        }
-
-        return PoseidonUnit5L.poseidon(decomposed_);
+        require(address(dispatcher_) != address(0), "Registration: dispatcher does not exist");
     }
 }
