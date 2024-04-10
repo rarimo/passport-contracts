@@ -97,14 +97,14 @@ describe("Registration", () => {
       it("should add and remove dispatchers", async () => {
         const someType = ethers.randomBytes(32);
 
-        expect(await registration.getDispatcher(someType)).to.equal(ZERO_ADDR);
+        expect(await registration.passportDispatchers(someType)).to.equal(ZERO_ADDR);
 
         await registration.addDispatcher(someType, SIGNER.address);
 
         expect(registration.addDispatcher(someType, SIGNER.address)).to.be.revertedWith(
           "Registration: dispatcher already exists",
         );
-        expect(await registration.getDispatcher(someType)).to.equal(SIGNER.address);
+        expect(await registration.passportDispatchers(someType)).to.equal(SIGNER.address);
       });
 
       it("should not be called by not owner", async () => {

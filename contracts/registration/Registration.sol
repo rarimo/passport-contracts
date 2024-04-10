@@ -205,10 +205,6 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         delete passportDispatchers[dispatcherType_];
     }
 
-    function getDispatcher(bytes32 dispatcherType_) external view returns (address) {
-        return address(passportDispatchers[dispatcherType_]);
-    }
-
     function getPassportInfo(
         bytes32 passportKey_
     )
