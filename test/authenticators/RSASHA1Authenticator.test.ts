@@ -2,25 +2,25 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 
-import { RSAVerifierMock } from "@ethers-v6";
+import { RSASHA1Authenticator } from "@ethers-v6";
 
-describe("RSA", () => {
+describe("RSASHA1Authenticator", () => {
   const reverter = new Reverter();
 
-  let rsaVerifier: RSAVerifierMock;
+  let auth: RSASHA1Authenticator;
 
   before("setup", async () => {
-    const RSAVerifierMock = await ethers.getContractFactory("RSAVerifierMock");
+    const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
 
-    rsaVerifier = await RSAVerifierMock.deploy();
+    auth = await RSASHA1Authenticator.deploy();
 
     await reverter.snapshot();
   });
 
   afterEach(reverter.revert);
 
-  describe("#verify", () => {
-    it("should verify passport signature", async () => {
+  describe("#authenticate", () => {
+    it("should authenticate passport", async () => {
       const challenge = "0x5119311531111100";
 
       const signature =
@@ -29,7 +29,7 @@ describe("RSA", () => {
       const modulus =
         "0xd21f63969effab33383ab4f8a3955739ad8ae14879d17509b4f444284e52de3956ed40e5245ea8d9db9540c7ed21aa5ca17fb84f1651d218d183a19b017d80335dbcc2e8c5c2ba1705235ac897f942190d2a2ad60119178ef2b555ea5772c65a32bf42699ee512949235702c7b9d2176e498fef69be5651f8434686f7aa1adf7";
 
-      expect(await rsaVerifier.verifyPassport(challenge, signature, exponent, modulus)).to.be.true;
+      expect(await auth.authenticate(challenge, signature, exponent, modulus)).to.be.true;
     });
   });
 });
