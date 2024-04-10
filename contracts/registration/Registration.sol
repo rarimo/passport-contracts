@@ -49,6 +49,7 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         address signer_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
+        __Ownable_init();
         __PoseidonSMT_init(treeHeight_);
         __TSSSigner_init(signer_);
 
@@ -202,6 +203,10 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
     function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
         delete passportDispatchers[dispatcherType_];
+    }
+
+    function getDispatcher(bytes32 dispatcherType_) external view returns (address) {
+        return address(passportDispatchers[dispatcherType_]);
     }
 
     function getPassportInfo(

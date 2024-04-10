@@ -12,13 +12,17 @@ import {RSASHA1Authenticator} from "../authenticators/RSASHA1Authenticator.sol";
 
 contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
     using VerifierHelper for address;
-    using RSASHA1Authenticator for bytes;
 
     uint256 public constant E = 65537;
 
+    address public authenticator;
     address public verifier;
 
-    function __RSASHA1Dispather_init(address verifier_) external initializer {
+    function __RSASHA1Dispatcher_init(
+        address authenticator_,
+        address verifier_
+    ) external initializer {
+        authenticator = authenticator_;
         verifier = verifier_;
     }
 
@@ -28,7 +32,12 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
         bytes memory passportPublicKey_
     ) external view returns (bool) {
         return
-            challenge_.authenticate(passportSignature_, abi.encodePacked(E), passportPublicKey_);
+            RSASHA1Authenticator(authenticator).authenticate(
+                challenge_,
+                passportSignature_,
+                abi.encodePacked(E),
+                passportPublicKey_
+            );
     }
 
     function verifyZKProof(

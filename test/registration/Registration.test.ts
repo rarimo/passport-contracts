@@ -3,11 +3,13 @@ import { HDNodeWallet } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { Reverter, deployPoseidons, getPoseidon } from "@/test/helpers/";
+import { RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
 
-import { RegistrationMock, RegistrationVerifier } from "@ethers-v6";
+import { Registration, RegistrationMock, RSASHA1Dispatcher } from "@ethers-v6";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 import { TSSMerkleTree, TSSSigner } from "../helpers";
+import { ZERO_ADDR } from "@/scripts/utils/constants";
 
 const TREE_SIZE = 80;
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
@@ -25,13 +27,33 @@ describe("Registration", () => {
   let merkleTree: TSSMerkleTree;
 
   let OWNER: SignerWithAddress;
+  let SECOND: SignerWithAddress;
   let SIGNER: HDNodeWallet;
 
+  let rsaSha1Dispatcher: RSASHA1Dispatcher;
   let registration: RegistrationMock;
-  let registrationVerifier: RegistrationVerifier;
+
+  const deployRSASHA1Disaptcher = async () => {
+    const RSASHA1Verifier = await ethers.getContractFactory("RSASHA1Verifier");
+    const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
+    const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
+      libraries: {
+        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
+      },
+    });
+
+    const rsaSha1Verifier = await RSASHA1Verifier.deploy();
+    const rsaSha1Authenticator = await RSASHA1Authenticator.deploy();
+    rsaSha1Dispatcher = await RSASHA1Dispatcher.deploy();
+
+    await rsaSha1Dispatcher.__RSASHA1Dispatcher_init(
+      await rsaSha1Authenticator.getAddress(),
+      await rsaSha1Verifier.getAddress(),
+    );
+  };
 
   before("setup", async () => {
-    [OWNER] = await ethers.getSigners();
+    [OWNER, SECOND] = await ethers.getSigners();
     SIGNER = ethers.Wallet.createRandom();
 
     await deployPoseidons(OWNER, [1, 2, 3, 5], false);
@@ -41,20 +63,16 @@ describe("Registration", () => {
         PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
-        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
-    const RegistrationVerifier = await ethers.getContractFactory("RegistrationVerifier");
 
     registration = await Registration.deploy();
-    registrationVerifier = await RegistrationVerifier.deploy();
 
-    await registration.__Registration_init(
-      TREE_SIZE,
-      SIGNER.address,
-      await registrationVerifier.getAddress(),
-      icaoMerkleRoot,
-    );
+    await deployRSASHA1Disaptcher();
+
+    await registration.__Registration_init(TREE_SIZE, SIGNER.address, icaoMerkleRoot);
+
+    await registration.addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
 
     signHelper = new TSSSigner(SIGNER);
     merkleTree = new TSSMerkleTree(signHelper);
@@ -67,14 +85,35 @@ describe("Registration", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(
-          registration.__Registration_init(
-            TREE_SIZE,
-            SIGNER.address,
-            await registrationVerifier.getAddress(),
-            icaoMerkleRoot,
-          ),
-        ).to.be.revertedWith("Initializable: contract is already initialized");
+        expect(registration.__Registration_init(TREE_SIZE, SIGNER.address, icaoMerkleRoot)).to.be.revertedWith(
+          "Initializable: contract is already initialized",
+        );
+      });
+    });
+  });
+
+  describe("$ownable flow", () => {
+    describe("#addDispatcher, #removeDispatcher", () => {
+      it("should add and remove dispatchers", async () => {
+        const someType = ethers.randomBytes(32);
+
+        expect(await registration.getDispatcher(someType)).to.equal(ZERO_ADDR);
+
+        await registration.addDispatcher(someType, SIGNER.address);
+
+        expect(registration.addDispatcher(someType, SIGNER.address)).to.be.revertedWith(
+          "Registration: dispatcher already exists",
+        );
+        expect(await registration.getDispatcher(someType)).to.equal(SIGNER.address);
+      });
+
+      it("should not be called by not owner", async () => {
+        expect(registration.connect(SECOND).addDispatcher(ethers.randomBytes(32), SIGNER.address)).to.be.rejectedWith(
+          "Ownable: caller is not the owner",
+        );
+        expect(registration.connect(SECOND).removeDispatcher(ethers.randomBytes(32))).to.be.rejectedWith(
+          "Ownable: caller is not the owner",
+        );
       });
     });
   });
@@ -110,11 +149,16 @@ describe("Registration", () => {
         ],
       };
 
+      const passport: Registration.PassportStruct = {
+        dataType: RSA_SHA1_2688,
+        signature: signatureOverride ?? signature,
+        publicKey: passportPubKey,
+      };
+
       return registration.register(
         identityOverride ?? identityKey,
         dgCommit,
-        signatureOverride ?? signature,
-        passportPubKey,
+        passport,
         proofOverride ?? formattedProof,
       );
     };
@@ -123,7 +167,13 @@ describe("Registration", () => {
       const signature =
         "0xad778f0761f791cef96619cefd7709c031eeaec86c158eb5d58ad636bc494bd84cd2bc9cf21e27ff17479abbecc7bfa284f9d20505b129db8c02cbf9cacc7f883e4d2552565854ec6db2ec736133eea3d6cd0ce514c413ecc7e73dabe7bd09b96638048aff55cd495b800b93c4d8f6ca52c1bd11727aa03056dafcb83ea18364";
 
-      return registration.revoke(identityOverride ?? identityKey, signatureOverride ?? signature, passportPubKey);
+      const passport: Registration.PassportStruct = {
+        dataType: RSA_SHA1_2688,
+        signature: signatureOverride ?? signature,
+        publicKey: passportPubKey,
+      };
+
+      return registration.revoke(identityOverride ?? identityKey, passport);
     };
 
     const reissueIdentity = async (
@@ -156,11 +206,16 @@ describe("Registration", () => {
         ],
       };
 
+      const passport: Registration.PassportStruct = {
+        dataType: RSA_SHA1_2688,
+        signature: signatureOverride ?? signature,
+        publicKey: passportPubKey,
+      };
+
       return registration.reissueIdentity(
         identityOverride ?? newIdentityKey,
         dgCommit,
-        signatureOverride ?? signature,
-        passportPubKey,
+        passport,
         proofOverride ?? formattedProof,
       );
     };
@@ -169,7 +224,9 @@ describe("Registration", () => {
       it("should register", async () => {
         await register();
 
-        const passportInfo = await registration.getPassportInfo(passportPubKey);
+        const passportInfo = await registration.getPassportInfo(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+        );
 
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(identityKey, 32));
         expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(0n);
@@ -198,13 +255,19 @@ describe("Registration", () => {
       });
 
       it("should revert if passport already registered", async () => {
-        await registration.mockPassportData(passportPubKey, identityKey);
+        await registration.mockPassportData(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+          identityKey,
+        );
 
         expect(register()).to.be.revertedWith("Registration: passport already registered");
       });
 
       it("should revert if identity already registered", async () => {
-        await registration.mockIdentityData(identityKey, passportPubKey);
+        await registration.mockIdentityData(
+          identityKey,
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+        );
 
         expect(register()).to.be.revertedWith("Registration: identity already registered");
       });
@@ -219,7 +282,9 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        const passportInfo = await registration.getPassportInfo(passportPubKey);
+        const passportInfo = await registration.getPassportInfo(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+        );
 
         const revoked = ethers.keccak256(ethers.toUtf8Bytes("REVOKED"));
 
@@ -238,7 +303,10 @@ describe("Registration", () => {
       it("should revert if passport already revoked", async () => {
         await register();
 
-        await registration.mockPassportData(passportPubKey, newIdentityKey);
+        await registration.mockPassportData(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+          newIdentityKey,
+        );
 
         expect(revoke()).to.be.revertedWith("Registration: passport already revoked");
       });
@@ -246,7 +314,10 @@ describe("Registration", () => {
       it("should revert if identity already revoked", async () => {
         await register();
 
-        await registration.mockIdentityData(identityKey, passportPubKey.slice(0, -2) + "aa");
+        await registration.mockIdentityData(
+          identityKey,
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32).slice(0, -2) + "aa",
+        );
 
         expect(revoke()).to.be.revertedWith("Registration: identity already revoked");
       });
@@ -262,7 +333,9 @@ describe("Registration", () => {
         await revoke();
         await reissueIdentity();
 
-        const passportInfo = await registration.getPassportInfo(passportPubKey);
+        const passportInfo = await registration.getPassportInfo(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+        );
 
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(newIdentityKey, 32));
         expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(1n);
@@ -272,7 +345,10 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        await registration.mockPassportData(passportPubKey, newIdentityKey);
+        await registration.mockPassportData(
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+          newIdentityKey,
+        );
 
         expect(reissueIdentity()).to.be.revertedWith("Registration: passport is not revoked");
       });
@@ -281,7 +357,10 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        await registration.mockIdentityData(newIdentityKey, passportPubKey);
+        await registration.mockIdentityData(
+          newIdentityKey,
+          ethers.toBeHex(await rsaSha1Dispatcher.getPassportKey(passportPubKey), 32),
+        );
 
         expect(reissueIdentity()).to.be.revertedWith("Registration: identity already registered");
       });
