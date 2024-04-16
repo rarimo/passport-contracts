@@ -69,28 +69,28 @@ describe("RSASHA1Dispatcher", () => {
     it("should verify the zk proof", async () => {
       const formattedProof: VerifierHelper.ProofPointsStruct = {
         a: [
-          "0x27f38de50a94be7ee0800af286e325c7f511fbf0efc5a2e5f0ebe91452afc2de",
-          "0x1f83fc36e33638f87842f9b73b2dd5d78b3f0739916ba5de83cd649ab9832188",
+          "0x2726196d623151786a5312430e452fc127d67f6f71c3f1e41f82635bcc347c12",
+          "0x22210da66624f0738b238824490fc2ac4a7e3fd14c3ae8d72df12c9b3ba2769f",
         ],
         b: [
           [
-            "0x01002b749e10d2c8c5b1096bc357ad5c717cea22e3dcf74ff6d54c48c7a6996e",
-            "0x2d150a719a453e518547933898b3018ee0c411cab31fa1e65c2a7d23ed1db71f",
+            "0x18a24cb8849b87786b87aff05910823f887d7d406729662be4ccfd62711d6ea",
+            "0x140ac60fa018ef7d932497a901ac09041a3f7231d99dc679fac713360bff32b2",
           ],
           [
-            "0x291074f584c7ccd96d5eaf4343b5cd845958f878be4d48475bbb04dea0eb423a",
-            "0x2806f8db67b0903f06d519fa4f19f4b24ec46cb23e54cbe1d2a78abb6010fbf1",
+            "0x1d1c3e720cb9fe13d7514d219fd52bd19ae3551b5be58a9acfc0054b6670ab9e",
+            "0xad27c6f62410c1aab61a2afd45e6924b03d37dea99419dcde4d92b837ac9365",
           ],
         ],
         c: [
-          "0x040a8f87dafa269268d4f8ac56b555c827575c39b329dbd05d4f8747df0f1727",
-          "0x18d2c06b3d99d63d5ae9fa29b560f6cad6d213f7974d2f187fb17d6e1cdc8e21",
+          "0x3de5ac6addc35b2a7dfe2475dc473cbb1c037e4232dd33a02ed7b2bf850b739",
+          "0x2ad4d1892eabad69b85f9e076e8376d1e5649cb0336254b364bf074b415acfd8",
         ],
       };
       const publicSignals = [
         "0x2baee9a30a3e327ebe5153524acfde2674bb4d54146c903ed8969c94d1f20301",
         "0x2d7a28fe5dcf90a75e00ebb85bf867efec70b2644f4533e617710ed8b816c5f8",
-        "0x07fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f",
+        "0x7fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f",
         "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45",
       ];
 

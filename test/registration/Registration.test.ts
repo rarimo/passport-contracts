@@ -14,7 +14,9 @@ import { ZERO_ADDR } from "@/scripts/utils/constants";
 const TREE_SIZE = 80;
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-const identityKey = "0xced3831dcf3a96049d93cbbd3eaa0010f3b97a70ef591269c8975afb4717e5";
+// private key: 0x0ed54a648103a338f9f9873534951457d99020e6a070c0a565cb0b6308485b57
+const identityKey = "0x07fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f";
+// private key: 0x2f0c93d7fbb2565641d4d4568a59cf88793f410df86dd9315e9fd9e37f4ab4
 const newIdentityKey = "0x231fc90b639cf778138f1e1c9edc5581a5b764545fbf106ada70dacb178b38d9";
 
 const passportPubKey =
@@ -125,27 +127,27 @@ describe("Registration", () => {
       proofOverride?: VerifierHelper.ProofPointsStruct,
     ) => {
       const signature =
-        "0xa7ea14a7734f7d789c4f0493bd71cc34a10986c2ce2bfad2118f05d21b4aaf65ca15f6f408e2af0ecdbf37fbaca88998d365f39d865a8face1ca4205ca94a59630af03b2c565f29dea5f8b317a7c5f04db16f2ff115c21c9696e9d45a635c2f066cfd50df09d41328888d2c8fc386e9ebc170b56977af65a5ad74db1f0d25d46";
-      const dgCommit = "0x206187ab789aca5d2073582ba86f76c57f741ed2c78ccb96d79a9600b49df8d6";
+        "0x0eefd853e9a72a4fc802336f015da6bcfe5741d6ad6b292f6907c7a9f2aa81336b7cbd68cfd959c8a1877457f14b098eeb6c7a70ffdafdeb8346ac66301b3e16fc226bc3cc803fa3f9804e7801fbdad3ec45304763bd19aa92ab8f8dc8c9d0083e6368c001b8a8c40c7fdaee40934e798b15229fc14056bad9fc26dac34125bf";
+      const dgCommit = "0x2d7a28fe5dcf90a75e00ebb85bf867efec70b2644f4533e617710ed8b816c5f8";
 
       const formattedProof: VerifierHelper.ProofPointsStruct = {
         a: [
-          "0x03960af5aef41d09feedd5667557b3f66906efc99d618e1b620c258d703f464e",
-          "0x0198fdc5850cf60eb9322a4698168104b17929bd788a8fc41293e484253ad3e5",
+          "0x2726196d623151786a5312430e452fc127d67f6f71c3f1e41f82635bcc347c12",
+          "0x22210da66624f0738b238824490fc2ac4a7e3fd14c3ae8d72df12c9b3ba2769f",
         ],
         b: [
           [
-            "0x0e87a6078b813d04d28c8eece683bdafed42d09164d84d4f985e33ab8dc71632",
-            "0x046a25322c4b9895633cc5843743c4bbf2a713b7e29de5a9f26a8cad8de89929",
+            "0x18a24cb8849b87786b87aff05910823f887d7d406729662be4ccfd62711d6ea",
+            "0x140ac60fa018ef7d932497a901ac09041a3f7231d99dc679fac713360bff32b2",
           ],
           [
-            "0x195e73b16694ab3336060030270992f8c3a7645890b21538dbbf14eefd3b7c1d",
-            "0x15eb5353267f74221773d78bc90ba1f339dae7741fc579d224f5e8095dfccb11",
+            "0x1d1c3e720cb9fe13d7514d219fd52bd19ae3551b5be58a9acfc0054b6670ab9e",
+            "0xad27c6f62410c1aab61a2afd45e6924b03d37dea99419dcde4d92b837ac9365",
           ],
         ],
         c: [
-          "0x10dabe3bdf9e7cdb86977c8ad8234a9ce9ca7663e221678d24790e691719f210",
-          "0x02b23d6029d3a89e45d77d09ed8c81cc669dd7b6bbaf43020520e1f6bdf39249",
+          "0x3de5ac6addc35b2a7dfe2475dc473cbb1c037e4232dd33a02ed7b2bf850b739",
+          "0x2ad4d1892eabad69b85f9e076e8376d1e5649cb0336254b364bf074b415acfd8",
         ],
       };
 
@@ -165,7 +167,7 @@ describe("Registration", () => {
 
     const revoke = async (identityOverride?: string, signatureOverride?: string) => {
       const signature =
-        "0xad778f0761f791cef96619cefd7709c031eeaec86c158eb5d58ad636bc494bd84cd2bc9cf21e27ff17479abbecc7bfa284f9d20505b129db8c02cbf9cacc7f883e4d2552565854ec6db2ec736133eea3d6cd0ce514c413ecc7e73dabe7bd09b96638048aff55cd495b800b93c4d8f6ca52c1bd11727aa03056dafcb83ea18364";
+        "0x8314bacd355e2c40e03a383397d1cdae63b2b80351bcf69c96f3b48c618bff96c0836881010a37f675b19582c8c97a5e781213293202c9ebde8cef08a14e5f5a564ca3ee375b4f03f570a063a9a2edeb1a28c5b6bbc83d3a3e1ddf36b4774152e849051462fe1c8bf3010a8a215873151e95a480f265585032daa3ac4a3fd8e0";
 
       const passport: Registration.PassportStruct = {
         dataType: RSA_SHA1_2688,
@@ -187,22 +189,22 @@ describe("Registration", () => {
 
       const formattedProof: VerifierHelper.ProofPointsStruct = {
         a: [
-          "0x0bb9104059b8be014598f86077bd78d8cbe255e823bde3f99d9927b60ef890a7",
-          "0x2da9a7f0b765069ca6f0cfa13a97c18c9c8fff4ad6f7d9ec02e0ffa5c7249fcf",
+          "0x2a1f0aca3ce44d0f556f8035dc27d38a976bd1912a2749c9ac7659f4100ce258",
+          "0x27804b0d2ebad01b1109e5c405d757547073871ba93c528d692896b78b658ac8",
         ],
         b: [
           [
-            "0x1e7c560008de96f6bb5b16558ad75c9bb15e26e70bbb47558f2cd051cc871b6a",
-            "0x05311d0224e4269d26f3bd737f794dcf6c1481b6ec4ca9866b949fca6a70aacb",
+            "0x262514555a71427078779ce3272990696089d1d940e35017d8bb002bf7f4ab9",
+            "0xc533882ebd7fb923d5701bbf986a4a509bafafeb7e19c4e3920f4785fc2089b",
           ],
           [
-            "0x1d8ea47009bd910d9fc8ae73d8846d8da662254d553c1e92da691c7598a18d05",
-            "0x0a396c298164888db55c66f957a02b2ba6bdcf7e5882639b60f6bcaf77c24af3",
+            "0x167ccd27caedd2fb1f60a1c699cb927636b29c28a09bd6937eeef72b264f3719",
+            "0x28ac83ad4d9f537d1f64698201c5ea7480f03a79079868a83edc6c2cf315a7ce",
           ],
         ],
         c: [
-          "0x0b1ff154590f8a790eac03f121e4a1496afa8cb527ae71f13d2699e31684d296",
-          "0x1f3496bf0bff888cac2734271621fe65fbb97300dbab972f8df3132574fc8c39",
+          "0x1a5fd97fb5edb93b85bf20d08f4a404ab5ba95d09d0021a2c678178ca6237a1b",
+          "0x164ee20866ea97865c9cf6d64115d28609c16066de7b18b27f85152bece6cbd8",
         ],
       };
 
@@ -233,15 +235,14 @@ describe("Registration", () => {
       });
 
       it("should not register with wrong AA", async () => {
-        const signature =
-          "0xb7ea14a7734f7d789c4f0493bd71cc34a10986c2ce2bfad2118f05d21b4aaf65ca15f6f408e2af0ecdbf37fbaca88998d365f39d865a8face1ca4205ca94a59630af03b2c565f29dea5f8b317a7c5f04db16f2ff115c21c9696e9d45a635c2f066cfd50df09d41328888d2c8fc386e9ebc170b56977af65a5ad74db1f0d25d46";
+        const signature = "0x1111";
 
         expect(register(identityKey, signature)).to.be.revertedWith("Registration: invalid passport signature");
       });
 
       it("should not register with wrong ZK proof", async () => {
         const signature =
-          "0xa7ea14a7734f7d789c4f0493bd71cc34a10986c2ce2bfad2118f05d21b4aaf65ca15f6f408e2af0ecdbf37fbaca88998d365f39d865a8face1ca4205ca94a59630af03b2c565f29dea5f8b317a7c5f04db16f2ff115c21c9696e9d45a635c2f066cfd50df09d41328888d2c8fc386e9ebc170b56977af65a5ad74db1f0d25d46";
+          "0x0eefd853e9a72a4fc802336f015da6bcfe5741d6ad6b292f6907c7a9f2aa81336b7cbd68cfd959c8a1877457f14b098eeb6c7a70ffdafdeb8346ac66301b3e16fc226bc3cc803fa3f9804e7801fbdad3ec45304763bd19aa92ab8f8dc8c9d0083e6368c001b8a8c40c7fdaee40934e798b15229fc14056bad9fc26dac34125bf";
         const formattedProof: VerifierHelper.ProofPointsStruct = {
           a: [0, 0],
           b: [
@@ -293,7 +294,7 @@ describe("Registration", () => {
 
       it("should not revoke with the same signature", async () => {
         const signature =
-          "0xa7ea14a7734f7d789c4f0493bd71cc34a10986c2ce2bfad2118f05d21b4aaf65ca15f6f408e2af0ecdbf37fbaca88998d365f39d865a8face1ca4205ca94a59630af03b2c565f29dea5f8b317a7c5f04db16f2ff115c21c9696e9d45a635c2f066cfd50df09d41328888d2c8fc386e9ebc170b56977af65a5ad74db1f0d25d46";
+          "0x8314bacd355e2c40e03a383397d1cdae63b2b80351bcf69c96f3b48c618bff96c0836881010a37f675b19582c8c97a5e781213293202c9ebde8cef08a14e5f5a564ca3ee375b4f03f570a063a9a2edeb1a28c5b6bbc83d3a3e1ddf36b4774152e849051462fe1c8bf3010a8a215873151e95a480f265585032daa3ac4a3fd8e0";
 
         await register();
 
