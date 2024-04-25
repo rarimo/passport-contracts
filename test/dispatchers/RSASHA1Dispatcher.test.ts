@@ -18,7 +18,7 @@ describe("RSASHA1Dispatcher", () => {
 
     await deployPoseidons(OWNER, [5], false);
 
-    const RSASHA1Verifier = await ethers.getContractFactory("RSASHA1Verifier");
+    const RSASHA1Verifier = await ethers.getContractFactory("RSASHA12688Verifier");
     const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
     const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
       libraries: {
@@ -69,28 +69,28 @@ describe("RSASHA1Dispatcher", () => {
     it("should verify the zk proof", async () => {
       const formattedProof: VerifierHelper.ProofPointsStruct = {
         a: [
-          "0x2726196d623151786a5312430e452fc127d67f6f71c3f1e41f82635bcc347c12",
-          "0x22210da66624f0738b238824490fc2ac4a7e3fd14c3ae8d72df12c9b3ba2769f",
+          "0x15de5889727e79822971005ea72180c8725d2e6ac54b328943ef6271c187dd0d",
+          "0x2519660da877dc05ac6a4a13fd726ac4a0ee4684a19cd1113706a8d07a7f8933",
         ],
         b: [
           [
-            "0x18a24cb8849b87786b87aff05910823f887d7d406729662be4ccfd62711d6ea",
-            "0x140ac60fa018ef7d932497a901ac09041a3f7231d99dc679fac713360bff32b2",
+            "0x0aba84f244e63a6881796d00a1bf83d14d52cd158c603bfeabc7e2d259173fd4",
+            "0x0c21c15d954f8606fc0ca9fbb4fc7685f483d375c3cf56b1a2c527617614f8c0",
           ],
           [
-            "0x1d1c3e720cb9fe13d7514d219fd52bd19ae3551b5be58a9acfc0054b6670ab9e",
-            "0xad27c6f62410c1aab61a2afd45e6924b03d37dea99419dcde4d92b837ac9365",
+            "0x2f959e54d27c6f631e386acb62055e3b76dfb11bb1ba3b959e42f4795172502f",
+            "0x0b376e519853315c8d9de4bdddeadadeaffb92a8e67655e015a3701f2129e959",
           ],
         ],
         c: [
-          "0x3de5ac6addc35b2a7dfe2475dc473cbb1c037e4232dd33a02ed7b2bf850b739",
-          "0x2ad4d1892eabad69b85f9e076e8376d1e5649cb0336254b364bf074b415acfd8",
+          "0x1830b4a1177c4c723642de99d1dbac59d039a5ec854487dc02ea78fce09518e3",
+          "0x2dfadba71d1a6cf7d004f7b149228af6135896691c712cfac7320bf5a32cbd57",
         ],
       };
       const publicSignals = [
         "0x2baee9a30a3e327ebe5153524acfde2674bb4d54146c903ed8969c94d1f20301",
         "0x2d7a28fe5dcf90a75e00ebb85bf867efec70b2644f4533e617710ed8b816c5f8",
-        "0x7fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f",
+        "0x07fe70c27b421e662c5099a884fc3291d8893391740320be101514d74801c43f",
         "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45",
       ];
 

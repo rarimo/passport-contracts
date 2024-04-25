@@ -5,40 +5,51 @@ import {
   Registration__factory,
   RSASHA1Dispatcher__factory,
   RSASHA1Authenticator__factory,
-  RSASHA1Verifier__factory,
+  RSASHA12688Verifier__factory,
+  RSASHA12704Verifier__factory,
 } from "@ethers-v6";
 
-import { RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
+import { RSA_SHA1_2688, RSA_SHA1_2704 } from "@/scripts/utils/passport-types";
 
 const treeHeight = 80;
 const tssSigner = "0x038D006846a3e203738cF80A02418e124203beb2";
 const icaoMasterTreeMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-const deployRSASHA1Disaptcher = async (deployer: Deployer) => {
-  const rsaSha1Verifier = await deployer.deploy(RSASHA1Verifier__factory);
-  const rsaSha1Authenticator = await deployer.deploy(RSASHA1Authenticator__factory);
-  const rsaSha1Dispatcher = await deployer.deploy(RSASHA1Dispatcher__factory);
+const deployRSASHA12688Dispatcher = async (deployer: Deployer) => {
+  const verifier = await deployer.deploy(RSASHA12688Verifier__factory);
+  const authenticator = await deployer.deploy(RSASHA1Authenticator__factory, { name: "RSASHA12688Authenticator" });
+  const dispatcher = await deployer.deploy(RSASHA1Dispatcher__factory, { name: "RSASHA12688Dispatcher" });
 
-  await rsaSha1Dispatcher.__RSASHA1Dispatcher_init(
-    await rsaSha1Authenticator.getAddress(),
-    await rsaSha1Verifier.getAddress(),
-  );
+  await dispatcher.__RSASHA1Dispatcher_init(await authenticator.getAddress(), await verifier.getAddress());
 
-  return rsaSha1Dispatcher;
+  return dispatcher;
+};
+
+const deployRSASHA12704Dispatcher = async (deployer: Deployer) => {
+  const verifier = await deployer.deploy(RSASHA12704Verifier__factory);
+  const authenticator = await deployer.deploy(RSASHA1Authenticator__factory, { name: "RSASHA12704Authenticator" });
+  const dispatcher = await deployer.deploy(RSASHA1Dispatcher__factory, { name: "RSASHA12704Dispatcher" });
+
+  await dispatcher.__RSASHA1Dispatcher_init(await authenticator.getAddress(), await verifier.getAddress());
+
+  return dispatcher;
 };
 
 export = async (deployer: Deployer) => {
   await deployPoseidons(deployer, [1, 2, 3, 5]);
 
-  const rsaSha1Dispatcher = await deployRSASHA1Disaptcher(deployer);
+  const rsaSha12688Dispatcher = await deployRSASHA12688Dispatcher(deployer);
+  const rsaSha12704Dispatcher = await deployRSASHA12704Dispatcher(deployer);
   const registration = await deployer.deploy(Registration__factory);
 
   await registration.__Registration_init(treeHeight, tssSigner, icaoMasterTreeMerkleRoot);
 
-  await registration.addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
+  await registration.addDispatcher(RSA_SHA1_2688, await rsaSha12688Dispatcher.getAddress());
+  await registration.addDispatcher(RSA_SHA1_2704, await rsaSha12688Dispatcher.getAddress());
 
   Reporter.reportContracts(
     ["Registration", `${await registration.getAddress()}`],
-    ["RSASHA1Dispatcher", `${await rsaSha1Dispatcher.getAddress()}`],
+    ["RSASHA12688Dispatcher", `${await rsaSha12688Dispatcher.getAddress()}`],
+    ["RSASHA12704Dispatcher", `${await rsaSha12704Dispatcher.getAddress()}`],
   );
 };
