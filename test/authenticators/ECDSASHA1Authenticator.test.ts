@@ -4,7 +4,7 @@ import { Reverter } from "@/test/helpers/";
 
 import { ECDSASHA1Authenticator } from "@ethers-v6";
 
-describe("RSASHA1Authenticator", () => {
+describe("ECDSASHA1Authenticator", () => {
   const reverter = new Reverter();
 
   let auth: ECDSASHA1Authenticator;

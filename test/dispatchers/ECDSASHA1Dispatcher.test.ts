@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import { ECDSASHA1Dispatcher } from "@ethers-v6";
-import { VerifierHelper } from "@/generated-types/ethers/contracts/dispatchers/RSASHA1Dispatcher";
+import { VerifierHelper } from "@/generated-types/ethers/contracts/dispatchers/ECDSASHA1Dispatcher";
 
 describe("ECDSASHA1Dispatcher", () => {
   const reverter = new Reverter();
