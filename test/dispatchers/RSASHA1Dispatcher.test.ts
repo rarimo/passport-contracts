@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
-import { Reverter, deployPoseidons, getPoseidon } from "@/test/helpers/";
+import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import { RSASHA1Dispatcher } from "@ethers-v6";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/dispatchers/RSASHA1Dispatcher";
@@ -15,8 +15,6 @@ describe("RSASHA1Dispatcher", () => {
 
   before("setup", async () => {
     [OWNER] = await ethers.getSigners();
-
-    await deployPoseidons(OWNER, [5], false);
 
     const RSASHA1Verifier = await ethers.getContractFactory("RSASHA12688Verifier");
     const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");

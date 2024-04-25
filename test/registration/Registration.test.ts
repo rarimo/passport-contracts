@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { HDNodeWallet } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { Reverter, deployPoseidons, getPoseidon } from "@/test/helpers/";
+import { Reverter, getPoseidon } from "@/test/helpers/";
 import { RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
 
 import { Registration, RegistrationMock, RSASHA1Dispatcher } from "@ethers-v6";
@@ -57,8 +57,6 @@ describe("Registration", () => {
   before("setup", async () => {
     [OWNER, SECOND] = await ethers.getSigners();
     SIGNER = ethers.Wallet.createRandom();
-
-    await deployPoseidons(OWNER, [1, 2, 3, 5], false);
 
     const Registration = await ethers.getContractFactory("RegistrationMock", {
       libraries: {
