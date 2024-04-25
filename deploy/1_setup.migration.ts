@@ -45,7 +45,7 @@ export = async (deployer: Deployer) => {
   await registration.__Registration_init(treeHeight, tssSigner, icaoMasterTreeMerkleRoot);
 
   await registration.addDispatcher(RSA_SHA1_2688, await rsaSha12688Dispatcher.getAddress());
-  await registration.addDispatcher(RSA_SHA1_2704, await rsaSha12688Dispatcher.getAddress());
+  await registration.addDispatcher(RSA_SHA1_2704, await rsaSha12704Dispatcher.getAddress());
 
   Reporter.reportContracts(
     ["Registration", `${await registration.getAddress()}`],
