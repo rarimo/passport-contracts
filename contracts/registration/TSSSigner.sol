@@ -12,13 +12,13 @@ abstract contract TSSSigner {
 
     address public signer;
 
-    mapping(uint64 => bool) internal _nonces;
+    mapping(uint256 => bool) internal _nonces;
 
     function __TSSSigner_init(address signer_) internal {
         signer = signer_;
     }
 
-    function _useNonce(uint64 nonce_) internal {
+    function _useNonce(uint256 nonce_) internal {
         require(!_nonces[nonce_], "TSSSigner: nonce used");
 
         _nonces[nonce_] = true;

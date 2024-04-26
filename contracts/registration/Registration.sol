@@ -175,7 +175,7 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
     function changeICAOMasterTreeRoot(
         bytes32 newRoot_,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes memory proof_
     ) external {
         bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));

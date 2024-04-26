@@ -438,7 +438,7 @@ describe("Registration", () => {
         expect(await registration.icaoMasterTreeMerkleRoot()).to.equal(icaoMerkleRoot);
 
         const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint64"],
+          ["string", "bytes32", "uint256"],
           ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
         );
 
@@ -451,7 +451,7 @@ describe("Registration", () => {
 
       it("should not reuse the signature", async () => {
         const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint64"],
+          ["string", "bytes32", "uint256"],
           ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
         );
 
