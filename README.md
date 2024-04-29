@@ -51,7 +51,7 @@ Afterwards, you will be able to use the application by calling the `Registration
 Currently only a few AA verification methods are supported:
 
 - RSA + SHA1 with 2688 encapsulated content bits
-- RSA + SHA1 with 2704 encapsulated content bits
+- ECDSA + SHA1 with 1704 encapsulated content bits
 
 ## License
 
