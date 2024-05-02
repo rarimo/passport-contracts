@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
-
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {RSASHA1Authenticator} from "../authenticators/RSASHA1Authenticator.sol";
+import {Bytes2Poseidon} from "../utils/Bytes2Poseidon.sol";
 
 contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
+    using Bytes2Poseidon for bytes;
     using VerifierHelper for address;
-
-    uint256 public constant E = 65537;
 
     address public authenticator;
     address public verifier;
@@ -35,7 +33,6 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
             RSASHA1Authenticator(authenticator).authenticate(
                 challenge_,
                 passportSignature_,
-                abi.encodePacked(E),
                 passportPublicKey_
             );
     }
@@ -58,28 +55,6 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
     }
 
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
-        uint256[5] memory decomposed_;
-
-        assembly {
-            for {
-                let i := 0
-            } lt(i, 5) {
-                i := add(i, 1)
-            } {
-                let someData_ := mload(add(passportPublicKey_, add(32, mul(i, 25))))
-
-                switch i
-                case 4 {
-                    someData_ := shr(32, someData_)
-                }
-                default {
-                    someData_ := shr(56, someData_)
-                }
-
-                mstore(add(decomposed_, mul(i, 32)), someData_)
-            }
-        }
-
-        return PoseidonUnit5L.poseidon(decomposed_);
+        return passportPublicKey_.hash1024();
     }
 }

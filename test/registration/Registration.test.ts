@@ -5,7 +5,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import { RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
 
-import { Registration, RegistrationMock, RSASHA1Dispatcher } from "@ethers-v6";
+import { Registration, PoseidonSMT, RegistrationMock, RSASHA1Dispatcher } from "@ethers-v6";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 import { TSSMerkleTree, TSSSigner } from "../helpers";
@@ -33,6 +33,8 @@ describe("Registration", () => {
   let SIGNER: HDNodeWallet;
 
   let rsaSha1Dispatcher: RSASHA1Dispatcher;
+  let registrationSmt: PoseidonSMT;
+  let certificatesSmt: PoseidonSMT;
   let registration: RegistrationMock;
 
   const deployRSASHA1Disaptcher = async () => {
@@ -58,19 +60,36 @@ describe("Registration", () => {
     [OWNER, SECOND] = await ethers.getSigners();
     SIGNER = ethers.Wallet.createRandom();
 
+    const PoseidonSMT = await ethers.getContractFactory("PoseidonSMT", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
     const Registration = await ethers.getContractFactory("RegistrationMock", {
       libraries: {
         PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
+    registrationSmt = await PoseidonSMT.deploy();
+    certificatesSmt = await PoseidonSMT.deploy();
     registration = await Registration.deploy();
 
     await deployRSASHA1Disaptcher();
 
-    await registration.__Registration_init(TREE_SIZE, SIGNER.address, icaoMerkleRoot);
+    await registrationSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
+    await certificatesSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
+
+    await registration.__Registration_init(
+      SIGNER.address,
+      await registrationSmt.getAddress(),
+      await certificatesSmt.getAddress(),
+      icaoMerkleRoot,
+    );
 
     await registration.addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
 
@@ -85,9 +104,9 @@ describe("Registration", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(registration.__Registration_init(TREE_SIZE, SIGNER.address, icaoMerkleRoot)).to.be.revertedWith(
-          "Initializable: contract is already initialized",
-        );
+        expect(
+          registration.__Registration_init(SIGNER.address, ZERO_ADDR, ZERO_ADDR, icaoMerkleRoot),
+        ).to.be.revertedWith("Initializable: contract is already initialized");
       });
     });
   });

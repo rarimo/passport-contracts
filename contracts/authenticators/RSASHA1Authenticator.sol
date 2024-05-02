@@ -1,24 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {RSA} from "../utils/RSA.sol";
 import {SHA1} from "../utils/SHA1.sol";
 
 contract RSASHA1Authenticator {
+    using RSA for bytes;
     using SHA1 for bytes;
 
-    uint256 constant HASH_LEN = 20;
+    uint256 public constant E = 65537;
+    uint256 public constant HASH_LEN = 20;
 
     function authenticate(
         bytes memory challenge_,
         bytes memory s_,
-        bytes memory e_,
         bytes memory n_
     ) external view returns (bool) {
-        if (s_.length == 0 || e_.length == 0 || n_.length == 0) {
+        bytes memory e_ = abi.encodePacked(E);
+
+        if (s_.length == 0 || n_.length == 0) {
             return false;
         }
 
-        bytes memory decipher_ = _decrypt(s_, e_, n_);
+        bytes memory decipher_ = s_.decrypt(e_, n_);
 
         assembly {
             mstore(decipher_, sub(mload(decipher_), 1))
@@ -36,37 +40,5 @@ contract RSASHA1Authenticator {
         }
 
         return bytes20(digest_) == abi.encodePacked(prepared_, challenge_).sha1();
-    }
-
-    function _decrypt(
-        bytes memory s_,
-        bytes memory e_,
-        bytes memory n_
-    ) internal view returns (bytes memory decipher_) {
-        bytes memory input_ = abi.encodePacked(
-            bytes32(s_.length),
-            bytes32(e_.length),
-            bytes32(n_.length),
-            s_,
-            e_,
-            n_
-        );
-        uint256 inputLength_ = input_.length;
-
-        uint256 decipherLength_ = n_.length;
-        decipher_ = new bytes(decipherLength_);
-
-        assembly {
-            pop(
-                staticcall(
-                    sub(gas(), 2000),
-                    5,
-                    add(input_, 0x20),
-                    inputLength_,
-                    add(decipher_, 0x20),
-                    decipherLength_
-                )
-            )
-        }
     }
 }

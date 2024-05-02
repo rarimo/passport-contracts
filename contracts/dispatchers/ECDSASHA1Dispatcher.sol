@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit2L} from "@iden3/contracts/lib/Poseidon.sol";
-
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ECDSASHA1Authenticator} from "../authenticators/ECDSASHA1Authenticator.sol";
+import {Bytes2Poseidon} from "../utils/Bytes2Poseidon.sol";
 
 contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
+    using Bytes2Poseidon for bytes;
     using VerifierHelper for address;
 
     address public authenticator;
@@ -63,16 +63,6 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
     }
 
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
-        uint256[2] memory decomposed_;
-
-        assembly {
-            mstore(decomposed_, mload(add(passportPublicKey_, 32)))
-            mstore(add(decomposed_, 32), mload(add(passportPublicKey_, 64)))
-        }
-
-        decomposed_[0] %= 2 ** 248;
-        decomposed_[1] %= 2 ** 248;
-
-        return PoseidonUnit2L.poseidon(decomposed_);
+        return passportPublicKey_.hash512();
     }
 }

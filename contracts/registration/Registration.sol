@@ -4,14 +4,19 @@ pragma solidity 0.8.16;
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {TSSSigner} from "./TSSSigner.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
+import {X509} from "../utils/X509.sol";
+import {TSSSigner} from "./TSSSigner.sol";
 
-contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
+contract Registration is OwnableUpgradeable, TSSSigner {
+    using MerkleProof for bytes32[];
+    using X509 for bytes;
+
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
 
@@ -31,6 +36,9 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         uint64 issueTimestamp;
     }
 
+    PoseidonSMT public registrationSmt;
+    PoseidonSMT public certificatesSmt;
+
     bytes32 public icaoMasterTreeMerkleRoot;
 
     mapping(bytes32 => IPassportDispatcher) public passportDispatchers;
@@ -40,20 +48,49 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
+    event CertificateRegistered(bytes32 certificateKey);
     event Registered(bytes32 passportKey, bytes32 identityKey);
     event Revoked(bytes32 passportKey, bytes32 identityKey);
     event ReissuedIdentity(bytes32 passportKey, bytes32 identityKey);
 
     function __Registration_init(
-        uint256 treeHeight_,
         address signer_,
+        address registrationSmt_,
+        address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
         __Ownable_init();
-        __PoseidonSMT_init(treeHeight_);
         __TSSSigner_init(signer_);
 
+        registrationSmt = PoseidonSMT(registrationSmt_);
+        certificatesSmt = PoseidonSMT(certificatesSmt_);
+
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
+    }
+
+    function registerCertificate(
+        bytes32[] memory icaoMerkleProof_,
+        bytes memory icaoMemberKey_,
+        bytes memory icaoMemberSignature_,
+        bytes memory x509SignedAttributes_,
+        uint256 x509KeyOffset_
+    ) external {
+        bytes32 icaoMerkleRoot_ = icaoMerkleProof_.processProof(keccak256(icaoMemberKey_));
+
+        require(icaoMerkleRoot_ == icaoMasterTreeMerkleRoot, "Registration: invalid icao proof");
+        require(
+            x509SignedAttributes_.verifyICAOSignature(icaoMemberKey_, icaoMemberSignature_),
+            "Registration: invalid x509 certificate"
+        );
+
+        bytes memory certificatePubKey_ = x509SignedAttributes_.extractKey(x509KeyOffset_);
+
+        uint256 value_ = certificatePubKey_.hashKey();
+        uint256 index_ = PoseidonUnit1L.poseidon([value_]);
+
+        certificatesSmt.add(bytes32(index_), bytes32(value_));
+
+        emit CertificateRegistered(bytes32(value_));
     }
 
     function register(
@@ -94,7 +131,7 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
             [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
-        _add(bytes32(index_), bytes32(value_));
+        registrationSmt.add(bytes32(index_), bytes32(value_));
 
         emit Registered(bytes32(passportKey_), bytes32(identityKey_));
     }
@@ -127,7 +164,7 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         uint256 index_ = PoseidonUnit2L.poseidon([passportKey_, identityKey_]);
         uint256 value_ = PoseidonUnit1L.poseidon([uint256(REVOKED)]);
 
-        _update(bytes32(index_), bytes32(value_));
+        registrationSmt.update(bytes32(index_), bytes32(value_));
 
         emit Revoked(bytes32(passportKey_), bytes32(identityKey_));
     }
@@ -168,7 +205,7 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
             [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
-        _add(bytes32(index_), bytes32(value_));
+        registrationSmt.add(bytes32(index_), bytes32(value_));
 
         emit ReissuedIdentity(bytes32(passportKey_), bytes32(identityKey_));
     }
