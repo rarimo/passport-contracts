@@ -8,7 +8,6 @@ library X509 {
     using Bytes2Poseidon for bytes;
     using RSA for bytes;
 
-    uint256 public constant X509_KEY_BIT_LENGTH = 4096;
     uint256 public constant X509_KEY_BYTE_LENGTH = 512;
     uint256 public constant E = 65537;
 
@@ -51,7 +50,16 @@ library X509 {
         bytes memory x509SignedAttributes_,
         uint256 keyOffset_
     ) internal pure returns (bytes memory x509Key_) {
-        x509Key_ = new bytes(X509_KEY_BIT_LENGTH);
+        x509Key_ = new bytes(X509_KEY_BYTE_LENGTH);
+
+        bytes memory check_ = hex"0282020100";
+
+        for (uint256 i = 0; i < check_.length; ++i) {
+            require(
+                x509SignedAttributes_[keyOffset_ - check_.length + i] == check_[i],
+                "X509: wrong key placement"
+            );
+        }
 
         assembly {
             let length_ := X509_KEY_BYTE_LENGTH

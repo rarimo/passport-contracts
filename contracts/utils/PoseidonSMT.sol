@@ -71,6 +71,4 @@ contract PoseidonSMT is Initializable {
                 )
             );
     }
-
-    uint256[45] private _gap;
 }

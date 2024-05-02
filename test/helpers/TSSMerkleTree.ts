@@ -29,6 +29,14 @@ export class TSSMerkleTree {
     return this.tree.getProof(leaf).map((el) => "0x" + el.data.toString("hex"));
   }
 
+  public getRawProof(leaf: string, addLeaf: boolean = true): string[] {
+    if (addLeaf) {
+      this.addLeaf(leaf);
+    }
+
+    return this.getPath(leaf);
+  }
+
   public getProof(leaf: string, addLeaf: boolean = true): string {
     if (addLeaf) {
       this.addLeaf(leaf);
