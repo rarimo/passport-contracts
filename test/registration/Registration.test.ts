@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import { HDNodeWallet } from "ethers";
 import { expect } from "chai";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import { RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
@@ -184,9 +185,25 @@ describe("Registration", () => {
 
         await registration.mockChangeICAOMasterTreeRoot(root);
 
-        expect(await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444))
+        expect(await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444, 195))
           .to.emit(registration, "CertificateRegistered")
           .withArgs("0x1d83d193df6da80bd4a8ace541bf10d90615a11d053bc2ca340cd20759e51386");
+      });
+    });
+
+    describe("#revokeCertificate", () => {
+      it("should revoke the certificate", async () => {
+        const leaf = ethers.solidityPackedKeccak256(["bytes"], [icaoPublicKey]);
+        const proof = merkleTree.getRawProof(leaf, true);
+        const root = merkleTree.getRoot();
+
+        await registration.mockChangeICAOMasterTreeRoot(root);
+
+        await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444, 195);
+
+        await time.increaseTo(2015341686);
+
+        await registration.revokeCertificate("0x1d83d193df6da80bd4a8ace541bf10d90615a11d053bc2ca340cd20759e51386");
       });
     });
   });

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {Bytes2Poseidon} from "../utils/Bytes2Poseidon.sol";
-import {RSA} from "../utils/RSA.sol";
+import {Bytes2Poseidon} from "./Bytes2Poseidon.sol";
+import {RSA} from "./RSA.sol";
+import {Date2Time} from "./Date2Time.sol";
 
 library X509 {
     using Bytes2Poseidon for bytes;
@@ -46,20 +47,38 @@ library X509 {
         return keyHash_;
     }
 
+    function extractExpirationTimestamp(
+        bytes memory x509SignedAttributes_,
+        uint256 expirationOffset_
+    ) internal pure returns (uint256) {
+        _check(x509SignedAttributes_, hex"170d", expirationOffset_);
+
+        uint256[] memory asciiTime = new uint256[](6);
+
+        for (uint256 i = 0; i < 12; i++) {
+            uint256 asciiNum_ = uint8(x509SignedAttributes_[expirationOffset_ + i]) - 48;
+
+            asciiTime[i / 2] += i % 2 == 0 ? asciiNum_ * 10 : asciiNum_;
+        }
+
+        return
+            Date2Time.timestampFromDateTime(
+                asciiTime[0] + 2000,
+                asciiTime[1],
+                asciiTime[2],
+                asciiTime[3],
+                asciiTime[4],
+                asciiTime[5]
+            );
+    }
+
     function extractKey(
         bytes memory x509SignedAttributes_,
         uint256 keyOffset_
     ) internal pure returns (bytes memory x509Key_) {
+        _check(x509SignedAttributes_, hex"0282020100", keyOffset_);
+
         x509Key_ = new bytes(X509_KEY_BYTE_LENGTH);
-
-        bytes memory check_ = hex"0282020100";
-
-        for (uint256 i = 0; i < check_.length; ++i) {
-            require(
-                x509SignedAttributes_[keyOffset_ - check_.length + i] == check_[i],
-                "X509: wrong key placement"
-            );
-        }
 
         assembly {
             let length_ := X509_KEY_BYTE_LENGTH
@@ -74,6 +93,19 @@ library X509 {
                     mload(add(x509SignedAttributes_, add(keyOffset_, add(i, 32))))
                 )
             }
+        }
+    }
+
+    function _check(
+        bytes memory x509SignedAttributes_,
+        bytes memory checker_,
+        uint256 offset_
+    ) private pure {
+        for (uint256 i = 0; i < checker_.length; ++i) {
+            require(
+                x509SignedAttributes_[offset_ - checker_.length + i] == checker_[i],
+                "X509: wrong check placement"
+            );
         }
     }
 }

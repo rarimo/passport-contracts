@@ -26,6 +26,10 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         bytes publicKey;
     }
 
+    struct CertificateInfo {
+        uint64 expirationTimestamp;
+    }
+
     struct PassportInfo {
         bytes32 activeIdentity;
         uint64 identityReissueCounter;
@@ -43,12 +47,15 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
     mapping(bytes32 => IPassportDispatcher) public passportDispatchers;
 
+    mapping(bytes32 => CertificateInfo) internal _certificateInfos;
+
     mapping(bytes32 => PassportInfo) internal _passportInfos;
     mapping(bytes32 => IdentityInfo) internal _identityInfos;
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
-    event CertificateRegistered(bytes32 certificateKey);
+    event CertificateRegistered(bytes32 certificateKey, uint256 expirationTimestamp);
+    event CertificateRevoked(bytes32 certificateKey);
     event Registered(bytes32 passportKey, bytes32 identityKey);
     event Revoked(bytes32 passportKey, bytes32 identityKey);
     event ReissuedIdentity(bytes32 passportKey, bytes32 identityKey);
@@ -73,7 +80,8 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         bytes memory icaoMemberKey_,
         bytes memory icaoMemberSignature_,
         bytes memory x509SignedAttributes_,
-        uint256 x509KeyOffset_
+        uint256 x509KeyOffset_,
+        uint256 x509ExpirationOffset_
     ) external {
         bytes32 icaoMerkleRoot_ = icaoMerkleProof_.processProof(keccak256(icaoMemberKey_));
 
@@ -83,14 +91,39 @@ contract Registration is OwnableUpgradeable, TSSSigner {
             "Registration: invalid x509 certificate"
         );
 
+        uint256 expirationTimestamp_ = x509SignedAttributes_.extractExpirationTimestamp(
+            x509ExpirationOffset_
+        );
+
+        require(expirationTimestamp_ > block.timestamp, "Registration: certificate is expired");
+
         bytes memory certificatePubKey_ = x509SignedAttributes_.extractKey(x509KeyOffset_);
 
         uint256 value_ = certificatePubKey_.hashKey();
         uint256 index_ = PoseidonUnit1L.poseidon([value_]);
 
+        _certificateInfos[bytes32(value_)].expirationTimestamp = uint64(expirationTimestamp_);
+
         certificatesSmt.add(bytes32(index_), bytes32(value_));
 
-        emit CertificateRegistered(bytes32(value_));
+        emit CertificateRegistered(bytes32(value_), expirationTimestamp_);
+    }
+
+    function revokeCertificate(bytes32 certificateKey_) external {
+        CertificateInfo storage _info = _certificateInfos[certificateKey_];
+
+        require(
+            _info.expirationTimestamp > 0 && _info.expirationTimestamp < block.timestamp,
+            "Registration: certificate is not expired"
+        );
+
+        delete _certificateInfos[certificateKey_];
+
+        uint256 index_ = PoseidonUnit1L.poseidon([uint256(certificateKey_)]);
+
+        certificatesSmt.remove(bytes32(index_));
+
+        emit CertificateRevoked(certificateKey_);
     }
 
     function register(
@@ -240,6 +273,12 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
     function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
         delete passportDispatchers[dispatcherType_];
+    }
+
+    function getCertificateInfo(
+        bytes32 certificateKey_
+    ) external view returns (CertificateInfo memory) {
+        return _certificateInfos[certificateKey_];
     }
 
     function getPassportInfo(
