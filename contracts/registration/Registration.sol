@@ -114,9 +114,7 @@ contract Registration is OwnableUpgradeable, TSSSigner {
             expirationTimestamp_
         );
 
-        uint256 index_ = PoseidonUnit1L.poseidon([certificateKey_]);
-
-        certificatesSmt.add(bytes32(index_), bytes32(index_));
+        certificatesSmt.add(bytes32(certificateKey_), bytes32(certificateKey_));
 
         emit CertificateRegistered(bytes32(certificateKey_), expirationTimestamp_);
     }
@@ -135,9 +133,7 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
         delete _certificateInfos[certificateKey_];
 
-        uint256 index_ = PoseidonUnit1L.poseidon([uint256(certificateKey_)]);
-
-        certificatesSmt.remove(bytes32(index_));
+        certificatesSmt.remove(certificateKey_);
 
         emit CertificateRevoked(certificateKey_);
     }
