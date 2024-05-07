@@ -108,14 +108,17 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
         bytes memory certificatePubKey_ = x509SignedAttributes_.extractKey(x509KeyOffset_);
 
-        uint256 value_ = certificatePubKey_.hashKey();
-        uint256 index_ = PoseidonUnit1L.poseidon([value_]);
+        uint256 certificateKey_ = certificatePubKey_.hashKey();
 
-        _certificateInfos[bytes32(value_)].expirationTimestamp = uint64(expirationTimestamp_);
+        _certificateInfos[bytes32(certificateKey_)].expirationTimestamp = uint64(
+            expirationTimestamp_
+        );
 
-        certificatesSmt.add(bytes32(index_), bytes32(value_));
+        uint256 index_ = PoseidonUnit1L.poseidon([certificateKey_]);
 
-        emit CertificateRegistered(bytes32(value_), expirationTimestamp_);
+        certificatesSmt.add(bytes32(index_), bytes32(index_));
+
+        emit CertificateRegistered(bytes32(certificateKey_), expirationTimestamp_);
     }
 
     /**

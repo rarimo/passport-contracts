@@ -121,6 +121,8 @@ library X509 {
     /**
      * @notice extracts 4096 bit RSA X509 key from the certificate.
      *
+     * The key starts with "0282020100" sequence.
+     *
      * Straightforward approach by copying memory from the given position
      */
     function extractKey(
