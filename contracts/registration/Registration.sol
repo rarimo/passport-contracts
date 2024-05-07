@@ -4,14 +4,19 @@ pragma solidity 0.8.16;
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {TSSSigner} from "./TSSSigner.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
+import {X509} from "../utils/X509.sol";
+import {PoseidonSMT} from "./PoseidonSMT.sol";
+import {TSSSigner} from "./TSSSigner.sol";
 
-contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
+contract Registration is OwnableUpgradeable, TSSSigner {
+    using MerkleProof for bytes32[];
+    using X509 for bytes;
+
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
 
@@ -19,6 +24,10 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         bytes32 dataType;
         bytes signature;
         bytes publicKey;
+    }
+
+    struct CertificateInfo {
+        uint64 expirationTimestamp;
     }
 
     struct PassportInfo {
@@ -31,32 +40,115 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         uint64 issueTimestamp;
     }
 
+    PoseidonSMT public registrationSmt;
+    PoseidonSMT public certificatesSmt;
+
     bytes32 public icaoMasterTreeMerkleRoot;
 
     mapping(bytes32 => IPassportDispatcher) public passportDispatchers;
+
+    mapping(bytes32 => CertificateInfo) internal _certificateInfos;
 
     mapping(bytes32 => PassportInfo) internal _passportInfos;
     mapping(bytes32 => IdentityInfo) internal _identityInfos;
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
+    event CertificateRegistered(bytes32 certificateKey, uint256 expirationTimestamp);
+    event CertificateRevoked(bytes32 certificateKey);
     event Registered(bytes32 passportKey, bytes32 identityKey);
     event Revoked(bytes32 passportKey, bytes32 identityKey);
     event ReissuedIdentity(bytes32 passportKey, bytes32 identityKey);
 
     function __Registration_init(
-        uint256 treeHeight_,
         address signer_,
+        address registrationSmt_,
+        address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
         __Ownable_init();
-        __PoseidonSMT_init(treeHeight_);
         __TSSSigner_init(signer_);
+
+        registrationSmt = PoseidonSMT(registrationSmt_);
+        certificatesSmt = PoseidonSMT(certificatesSmt_);
 
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
     }
 
+    /**
+     * @notice Registers an X509 certificate in the certificates SMT.
+     * @param icaoMerkleProof_ the Merkle inlcusion proof of a ICAO member that signed the certificate
+     * @param icaoMemberKey_ the ICAO signer public key
+     * @param icaoMemberSignature_ the ICAO signer signature
+     * @param x509SignedAttributes_ the certificate signed attributes
+     * @param x509KeyOffset_ the offset in the attributes where the certificate key lives
+     * @param x509ExpirationOffset_ the offset in the attributes where the certificate expiration date lives
+     */
+    function registerCertificate(
+        bytes32[] memory icaoMerkleProof_,
+        bytes memory icaoMemberKey_,
+        bytes memory icaoMemberSignature_,
+        bytes memory x509SignedAttributes_,
+        uint256 x509KeyOffset_,
+        uint256 x509ExpirationOffset_
+    ) external {
+        bytes32 icaoMerkleRoot_ = icaoMerkleProof_.processProof(keccak256(icaoMemberKey_));
+
+        require(icaoMerkleRoot_ == icaoMasterTreeMerkleRoot, "Registration: invalid icao proof");
+        require(
+            x509SignedAttributes_.verifyICAOSignature(icaoMemberKey_, icaoMemberSignature_),
+            "Registration: invalid x509 certificate"
+        );
+
+        uint256 expirationTimestamp_ = x509SignedAttributes_.extractExpirationTimestamp(
+            x509ExpirationOffset_
+        );
+
+        require(expirationTimestamp_ > block.timestamp, "Registration: certificate is expired");
+
+        bytes memory certificatePubKey_ = x509SignedAttributes_.extractKey(x509KeyOffset_);
+
+        uint256 value_ = certificatePubKey_.hashKey();
+        uint256 index_ = PoseidonUnit1L.poseidon([value_]);
+
+        _certificateInfos[bytes32(value_)].expirationTimestamp = uint64(expirationTimestamp_);
+
+        certificatesSmt.add(bytes32(index_), bytes32(value_));
+
+        emit CertificateRegistered(bytes32(value_), expirationTimestamp_);
+    }
+
+    /**
+     * @notice Revokes an expired X509 certificate
+     * @param certificateKey_ the "fancy hashed" (see X509 util) hash of a public key of a certificate
+     */
+    function revokeCertificate(bytes32 certificateKey_) external {
+        CertificateInfo storage _info = _certificateInfos[certificateKey_];
+
+        require(
+            _info.expirationTimestamp > 0 && _info.expirationTimestamp < block.timestamp,
+            "Registration: certificate is not expired"
+        );
+
+        delete _certificateInfos[certificateKey_];
+
+        uint256 index_ = PoseidonUnit1L.poseidon([uint256(certificateKey_)]);
+
+        certificatesSmt.remove(bytes32(index_));
+
+        emit CertificateRevoked(certificateKey_);
+    }
+
+    /**
+     * @notice Registers the user passport <> user identity bond in the registration SMT.
+     * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
+     * @param identityKey_ the hash of the public key of an identity
+     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param passport_ the passport info
+     * @param zkPoints_ the passport validity ZK proof
+     */
     function register(
+        bytes32 certificatesRoot_,
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
@@ -82,7 +174,14 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
         _useSignature(passport_.signature);
         _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _verifyZKProof(
+            dispatcher_,
+            certificatesRoot_,
+            passportKey_,
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
 
@@ -94,11 +193,16 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
             [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
-        _add(bytes32(index_), bytes32(value_));
+        registrationSmt.add(bytes32(index_), bytes32(value_));
 
         emit Registered(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Revokes the passport <> idenitty bond (doesn't actually remove it, sets as "revoked")
+     * @param identityKey_ the hash of the public key of an identity
+     * @param passport_ the passport info
+     */
     function revoke(uint256 identityKey_, Passport memory passport_) external {
         IPassportDispatcher dispatcher_ = _getDispatcher(passport_.dataType);
 
@@ -127,12 +231,21 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         uint256 index_ = PoseidonUnit2L.poseidon([passportKey_, identityKey_]);
         uint256 value_ = PoseidonUnit1L.poseidon([uint256(REVOKED)]);
 
-        _update(bytes32(index_), bytes32(value_));
+        registrationSmt.update(bytes32(index_), bytes32(value_));
 
         emit Revoked(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Reissues the passport <> identity bond by migration to a new identity. The previous bond must be revoked
+     * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
+     * @param identityKey_ the hash of the public key of an identity
+     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param passport_ the passport info
+     * @param zkPoints_ the passport validity ZK proof
+     */
     function reissueIdentity(
+        bytes32 certificatesRoot_,
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
@@ -155,7 +268,14 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
         _useSignature(passport_.signature);
         _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _verifyZKProof(
+            dispatcher_,
+            certificatesRoot_,
+            passportKey_,
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
         ++_passportInfo.identityReissueCounter;
@@ -168,11 +288,17 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
             [dgCommit_, _passportInfo.identityReissueCounter, uint64(block.timestamp)]
         );
 
-        _add(bytes32(index_), bytes32(value_));
+        registrationSmt.add(bytes32(index_), bytes32(value_));
 
         emit ReissuedIdentity(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
+     * @param newRoot_ the new ICAO root
+     * @param timestamp the "nonce"
+     * @param proof_ the Rarimo TSS Merkle proof
+     */
     function changeICAOMasterTreeRoot(
         bytes32 newRoot_,
         uint256 timestamp,
@@ -186,12 +312,22 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         icaoMasterTreeMerkleRoot = newRoot_;
     }
 
+    /**
+     * @notice Change the Rarimo TSS signer via Rarimo TSS
+     * @param newSignerPubKey_ the new signer public key
+     * @param signature_ the Rarimo TSS signature
+     */
     function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
         _checkSignature(keccak256(newSignerPubKey_), signature_);
 
         signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
+    /**
+     * @notice Add new passport dispatchers if new pasport types are discovered
+     * @param dispatcherType_ the new passport type
+     * @param dispatcher_ the address of a new dispatcher
+     */
     function addDispatcher(bytes32 dispatcherType_, address dispatcher_) external onlyOwner {
         require(
             address(passportDispatchers[dispatcherType_]) == address(0),
@@ -201,10 +337,31 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
         passportDispatchers[dispatcherType_] = IPassportDispatcher(dispatcher_);
     }
 
+    /**
+     * @notice Removes the passport dispatcher
+     * @param dispatcherType_ the passport type
+     */
     function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
         delete passportDispatchers[dispatcherType_];
     }
 
+    /**
+     * @notice Get info about the registered X509 certificate
+     * @param certificateKey_ the hash of a certificate public key
+     * @return the certificate info
+     */
+    function getCertificateInfo(
+        bytes32 certificateKey_
+    ) external view returns (CertificateInfo memory) {
+        return _certificateInfos[certificateKey_];
+    }
+
+    /**
+     * @notice Get info about the registers passport + its identity
+     * @param passportKey_ the hash of a passport public key
+     * @return passportInfo_ the passport info
+     * @return identityInfo_ the attached identity info
+     */
     function getPassportInfo(
         bytes32 passportKey_
     )
@@ -240,17 +397,23 @@ contract Registration is OwnableUpgradeable, PoseidonSMT, TSSSigner {
 
     function _verifyZKProof(
         IPassportDispatcher dispatcher_,
+        bytes32 certificatesRoot_,
         uint256 passportKey_,
         uint256 identityKey_,
         uint256 dgCommit_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
+        require(
+            certificatesSmt.isRootValid(certificatesRoot_),
+            "Registration: invalid certificates root"
+        );
+
         uint256[] memory pubSignals_ = new uint256[](4);
 
         pubSignals_[0] = passportKey_; // output
         pubSignals_[1] = dgCommit_; // output
         pubSignals_[2] = identityKey_; // output
-        pubSignals_[3] = uint256(icaoMasterTreeMerkleRoot); // public input
+        pubSignals_[3] = uint256(certificatesRoot_); // public input
 
         require(
             dispatcher_.verifyZKProof(pubSignals_, zkPoints_),

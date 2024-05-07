@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 import {SHA1} from "../utils/SHA1.sol";
 
 /**
- * @notice forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
+ * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
 contract ECDSASHA1Authenticator {
     using SHA1 for bytes;
@@ -20,7 +20,8 @@ contract ECDSASHA1Authenticator {
     uint256 constant lowSmax = 0x54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb;
 
     /**
-     * @dev Validate combination of message, signature, and public key.
+     * @notice Checks active authentication of a passport. ECDSA active authentication is an ECDSA signature of
+     * raw SHA1 hash of challenge bytes. Usually brainpool256r1 elliptic curve is used.
      */
     function authenticate(
         bytes memory challenge,
@@ -29,6 +30,7 @@ contract ECDSASHA1Authenticator {
         uint256 x,
         uint256 y
     ) external pure returns (bool) {
+        /// @dev accept s only from the lower part of the curve
         if (r == 0 || r >= n || s == 0 || s > lowSmax) {
             return false;
         }

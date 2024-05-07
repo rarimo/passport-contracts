@@ -4,6 +4,10 @@ pragma solidity 0.8.16;
 import {Registration} from "../../registration/Registration.sol";
 
 contract RegistrationMock is Registration {
+    function mockChangeICAOMasterTreeRoot(bytes32 newRoot_) external {
+        icaoMasterTreeMerkleRoot = newRoot_;
+    }
+
     function mockPassportData(bytes32 passportKey_, uint256 mockIdentityKey_) external {
         _passportInfos[bytes32(passportKey_)].activeIdentity = bytes32(mockIdentityKey_);
     }
