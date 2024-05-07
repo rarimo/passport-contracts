@@ -16,7 +16,7 @@ describe("RSASHA1Dispatcher", () => {
   before("setup", async () => {
     [OWNER] = await ethers.getSigners();
 
-    const RSASHA1Verifier = await ethers.getContractFactory("RSASHA12688Verifier");
+    const RSASHA1Verifier = await ethers.getContractFactory("RSAECDSAVerifier");
     const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
     const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
       libraries: {

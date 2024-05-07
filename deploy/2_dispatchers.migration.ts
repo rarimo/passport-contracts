@@ -6,15 +6,17 @@ import {
   ECDSASHA1Dispatcher__factory,
   RSASHA1Authenticator__factory,
   ECDSASHA1Authenticator__factory,
-  RSASHA12688Verifier__factory,
-  RSASHA12688TimestampVerifier__factory,
-  VerifierMock__factory,
+  RSAECDSAVerifier__factory,
 } from "@ethers-v6";
 
 import { ECDSA_SHA1_2704, RSA_SHA1_2688, RSA_SHA1_2688_TIMESTAMP } from "@/scripts/utils/passport-types";
 
+const deployVerifiers = async (deployer: Deployer) => {
+  await deployer.deploy(RSAECDSAVerifier__factory);
+};
+
 const deployRSASHA12688Dispatcher = async (deployer: Deployer) => {
-  const verifier = await deployer.deploy(RSASHA12688Verifier__factory);
+  const verifier = await deployer.deployed(RSAECDSAVerifier__factory);
   const authenticator = await deployer.deploy(RSASHA1Authenticator__factory, { name: "RSASHA12688Authenticator" });
   const dispatcher = await deployer.deploy(RSASHA1Dispatcher__factory, { name: "RSASHA12688Dispatcher" });
 
@@ -24,7 +26,7 @@ const deployRSASHA12688Dispatcher = async (deployer: Deployer) => {
 };
 
 const deployRSASHA12688TimestampDispatcher = async (deployer: Deployer) => {
-  const verifier = await deployer.deploy(RSASHA12688TimestampVerifier__factory);
+  const verifier = await deployer.deployed(RSAECDSAVerifier__factory);
   const authenticator = await deployer.deploy(RSASHA1Authenticator__factory, {
     name: "RSASHA12688TimestampAuthenticator",
   });
@@ -36,7 +38,7 @@ const deployRSASHA12688TimestampDispatcher = async (deployer: Deployer) => {
 };
 
 const deployECDSASHA12704Dispatcher = async (deployer: Deployer) => {
-  const verifier = await deployer.deploy(VerifierMock__factory);
+  const verifier = await deployer.deployed(RSAECDSAVerifier__factory);
   const authenticator = await deployer.deploy(ECDSASHA1Authenticator__factory);
   const dispatcher = await deployer.deploy(ECDSASHA1Dispatcher__factory);
 
@@ -46,6 +48,8 @@ const deployECDSASHA12704Dispatcher = async (deployer: Deployer) => {
 };
 
 export = async (deployer: Deployer) => {
+  await deployVerifiers(deployer);
+
   const registration = await deployer.deployed(Registration__factory);
 
   const rsaSha12688Dispatcher = await deployRSASHA12688Dispatcher(deployer);

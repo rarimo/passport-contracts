@@ -6,7 +6,7 @@ import { Registration__factory, PoseidonSMT__factory } from "@ethers-v6";
 const TREE_SIZE = 80;
 
 const tssSigner = "0x038D006846a3e203738cF80A02418e124203beb2";
-const icaoMasterTreeMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
+const icaoMasterTreeMerkleRoot = "0xca09a639ceafe2c7b3d37f1ddd78ae0b203332a3e7b180aa35435a0d3a8cd8c7";
 
 export = async (deployer: Deployer) => {
   await deployPoseidons(deployer, [1, 2, 3, 5]);

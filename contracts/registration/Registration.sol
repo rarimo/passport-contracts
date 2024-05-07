@@ -9,8 +9,8 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {PoseidonSMT} from "../utils/PoseidonSMT.sol";
 import {X509} from "../utils/X509.sol";
+import {PoseidonSMT} from "./PoseidonSMT.sol";
 import {TSSSigner} from "./TSSSigner.sol";
 
 contract Registration is OwnableUpgradeable, TSSSigner {
@@ -127,6 +127,7 @@ contract Registration is OwnableUpgradeable, TSSSigner {
     }
 
     function register(
+        bytes32 certificatesRoot_,
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
@@ -152,7 +153,14 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
         _useSignature(passport_.signature);
         _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _verifyZKProof(
+            dispatcher_,
+            certificatesRoot_,
+            passportKey_,
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
 
@@ -203,6 +211,7 @@ contract Registration is OwnableUpgradeable, TSSSigner {
     }
 
     function reissueIdentity(
+        bytes32 certificatesRoot_,
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
@@ -225,7 +234,14 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
         _useSignature(passport_.signature);
         _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(dispatcher_, passportKey_, identityKey_, dgCommit_, zkPoints_);
+        _verifyZKProof(
+            dispatcher_,
+            certificatesRoot_,
+            passportKey_,
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
         _passportInfo.activeIdentity = bytes32(identityKey_);
         ++_passportInfo.identityReissueCounter;
@@ -316,17 +332,23 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
     function _verifyZKProof(
         IPassportDispatcher dispatcher_,
+        bytes32 certificatesRoot_,
         uint256 passportKey_,
         uint256 identityKey_,
         uint256 dgCommit_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
+        require(
+            certificatesSmt.isRootValid(certificatesRoot_),
+            "Registration: invalid certificates root"
+        );
+
         uint256[] memory pubSignals_ = new uint256[](4);
 
         pubSignals_[0] = passportKey_; // output
         pubSignals_[1] = dgCommit_; // output
         pubSignals_[2] = identityKey_; // output
-        pubSignals_[3] = uint256(icaoMasterTreeMerkleRoot); // public input
+        pubSignals_[3] = uint256(certificatesRoot_); // public input
 
         require(
             dispatcher_.verifyZKProof(pubSignals_, zkPoints_),

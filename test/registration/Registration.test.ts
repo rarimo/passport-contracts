@@ -72,7 +72,7 @@ describe("Registration", () => {
   let registration: RegistrationMock;
 
   const deployRSASHA1Disaptcher = async () => {
-    const RSASHA12688Verifier = await ethers.getContractFactory("RSASHA12688Verifier");
+    const RSAECDSAVerifier = await ethers.getContractFactory("RSAECDSAVerifier");
     const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
     const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
       libraries: {
@@ -80,13 +80,13 @@ describe("Registration", () => {
       },
     });
 
-    const rsaSha12688Verifier = await RSASHA12688Verifier.deploy();
+    const rsaEcdsaVerifier = await RSAECDSAVerifier.deploy();
     const rsaSha1Authenticator = await RSASHA1Authenticator.deploy();
     rsaSha1Dispatcher = await RSASHA1Dispatcher.deploy();
 
     await rsaSha1Dispatcher.__RSASHA1Dispatcher_init(
       await rsaSha1Authenticator.getAddress(),
-      await rsaSha12688Verifier.getAddress(),
+      await rsaEcdsaVerifier.getAddress(),
     );
   };
 
@@ -187,7 +187,7 @@ describe("Registration", () => {
 
         expect(await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444, 195))
           .to.emit(registration, "CertificateRegistered")
-          .withArgs("0x1d83d193df6da80bd4a8ace541bf10d90615a11d053bc2ca340cd20759e51386");
+          .withArgs("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
       });
     });
 
@@ -203,7 +203,7 @@ describe("Registration", () => {
 
         await time.increaseTo(2015341686);
 
-        await registration.revokeCertificate("0x1d83d193df6da80bd4a8ace541bf10d90615a11d053bc2ca340cd20759e51386");
+        await registration.revokeCertificate("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
       });
     });
   });
@@ -213,6 +213,7 @@ describe("Registration", () => {
       identityOverride?: string,
       signatureOverride?: string,
       proofOverride?: VerifierHelper.ProofPointsStruct,
+      certificatesRootOverride?: string,
     ) => {
       const signature =
         "0x0eefd853e9a72a4fc802336f015da6bcfe5741d6ad6b292f6907c7a9f2aa81336b7cbd68cfd959c8a1877457f14b098eeb6c7a70ffdafdeb8346ac66301b3e16fc226bc3cc803fa3f9804e7801fbdad3ec45304763bd19aa92ab8f8dc8c9d0083e6368c001b8a8c40c7fdaee40934e798b15229fc14056bad9fc26dac34125bf";
@@ -239,6 +240,8 @@ describe("Registration", () => {
         ],
       };
 
+      const certificatesRoot = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
       const passport: Registration.PassportStruct = {
         dataType: RSA_SHA1_2688,
         signature: signatureOverride ?? signature,
@@ -246,6 +249,7 @@ describe("Registration", () => {
       };
 
       return registration.register(
+        certificatesRootOverride ?? certificatesRoot,
         identityOverride ?? identityKey,
         dgCommit,
         passport,
@@ -270,6 +274,7 @@ describe("Registration", () => {
       identityOverride?: string,
       signatureOverride?: string,
       proofOverride?: VerifierHelper.ProofPointsStruct,
+      certificatesRootOverride?: string,
     ) => {
       const signature =
         "0x8020affeaf4a48fef2ad2846985a4155e05ced9d2c94be1cd2ff86fbdef8196bbbea2ab0a51b28cbb2630b232f9101d1ea09c3f4cf1599e8771219367d9f06bf3ea4968f0412926880d50cfaff35254c56f8a08e303d6ec5a3c48480b4366d4e80a6aa367af8bf9a9f42ea713c00650058d7bd7ca6ce6f4bc8782111b17bc8b9";
@@ -296,6 +301,8 @@ describe("Registration", () => {
         ],
       };
 
+      const certificatesRoot = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
       const passport: Registration.PassportStruct = {
         dataType: RSA_SHA1_2688,
         signature: signatureOverride ?? signature,
@@ -303,6 +310,7 @@ describe("Registration", () => {
       };
 
       return registration.reissueIdentity(
+        certificatesRootOverride ?? certificatesRoot,
         identityOverride ?? newIdentityKey,
         dgCommit,
         passport,

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
+
 import {Bytes2Poseidon} from "./Bytes2Poseidon.sol";
 import {RSA} from "./RSA.sol";
 import {Date2Time} from "./Date2Time.sol";
@@ -34,17 +36,35 @@ library X509 {
     }
 
     function hashKey(bytes memory x509Key_) internal pure returns (uint256 keyHash_) {
-        assembly {
-            mstore(x509Key_, 128)
-        }
-
-        keyHash_ = x509Key_.hash1024();
+        uint256[5] memory decomposed_;
 
         assembly {
-            mstore(x509Key_, X509_KEY_BYTE_LENGTH)
+            let position_ := add(x509Key_, mload(x509Key_))
+
+            for {
+                let i := 0
+            } lt(i, 5) {
+                i := add(i, 1)
+            } {
+                let element_ := mload(position_)
+                let reversed_ := 0
+
+                for {
+                    let j := 0
+                } lt(j, 3) {
+                    j := add(j, 1)
+                } {
+                    let extracted_ := and(shr(mul(j, 64), element_), 0xffffffffffffffff)
+                    reversed_ := or(shl(64, reversed_), extracted_)
+                }
+
+                mstore(add(decomposed_, mul(i, 32)), reversed_)
+
+                position_ := sub(position_, 24)
+            }
         }
 
-        return keyHash_;
+        return PoseidonUnit5L.poseidon(decomposed_);
     }
 
     function extractExpirationTimestamp(

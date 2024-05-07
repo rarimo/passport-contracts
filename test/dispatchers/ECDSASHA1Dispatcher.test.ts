@@ -16,7 +16,7 @@ describe("ECDSASHA1Dispatcher", () => {
   before("setup", async () => {
     [OWNER] = await ethers.getSigners();
 
-    const ECDSASHA1Verifier = await ethers.getContractFactory("VerifierMock");
+    const ECDSASHA1Verifier = await ethers.getContractFactory("RSAECDSAVerifier");
     const ECDSASHA1Authenticator = await ethers.getContractFactory("ECDSASHA1Authenticator");
     const ECDSASHA1Dispatcher = await ethers.getContractFactory("ECDSASHA1Dispatcher", {
       libraries: {
