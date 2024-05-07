@@ -24,6 +24,9 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
         verifier = verifier_;
     }
 
+    /**
+     * @notice Authenticate the RSASHA1 passport.
+     */
     function authenticate(
         bytes memory challenge_,
         bytes memory passportSignature_,
@@ -37,6 +40,9 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
             );
     }
 
+    /**
+     * @notice Verify passport validity ZK proof.
+     */
     function verifyZKProof(
         uint256[] memory pubSignals_,
         VerifierHelper.ProofPoints memory zkPoints_
@@ -44,6 +50,10 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
         return verifier.verifyProof(pubSignals_, zkPoints_);
     }
 
+    /**
+     * @notice Get the passport challenge to be used in active authentication. The challenge is the last 8 bytes
+     * of the identity key.
+     */
     function getPassportChallenge(
         uint256 identityKey_
     ) external pure returns (bytes memory challenge_) {
@@ -54,6 +64,9 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
         }
     }
 
+    /**
+     * @notice Get the RSASHA1 passport public key representation
+     */
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
         return passportPublicKey_.hash1024();
     }

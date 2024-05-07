@@ -24,6 +24,9 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
         verifier = verifier_;
     }
 
+    /**
+     * @notice Authenticate the ECDSA passport. Decode the pubkey and signature.
+     */
     function authenticate(
         bytes memory challenge_,
         bytes memory passportSignature_,
@@ -45,6 +48,9 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
         return ECDSASHA1Authenticator(authenticator).authenticate(challenge_, r_, s_, x_, y_);
     }
 
+    /**
+     * @notice Verify passport validity ZK proof.
+     */
     function verifyZKProof(
         uint256[] memory pubSignals_,
         VerifierHelper.ProofPoints memory zkPoints_
@@ -52,6 +58,10 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
         return verifier.verifyProof(pubSignals_, zkPoints_);
     }
 
+    /**
+     * @notice Get the passport challenge to be used in active authentication. The challenge is the last 8 bytes
+     * of the identity key.
+     */
     function getPassportChallenge(
         uint256 identityKey_
     ) external pure returns (bytes memory challenge_) {
@@ -62,6 +72,9 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
         }
     }
 
+    /**
+     * @notice Get the ECDSA passport public key representation
+     */
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
         return passportPublicKey_.hash512();
     }

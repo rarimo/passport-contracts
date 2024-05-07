@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+/**
+ * @notice Forked from https://github.com/ensdomains/solsha1/blob/master/contracts/SHA1.sol
+ */
 library SHA1 {
+    /**
+     * SHA1 hash function efficient implementation
+     */
     function sha1(bytes memory data) internal pure returns (bytes20 ret) {
         assembly {
             // Get a safe scratch location

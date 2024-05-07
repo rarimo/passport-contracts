@@ -75,6 +75,15 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
     }
 
+    /**
+     * @notice Registers an X509 certificate in the certificates SMT.
+     * @param icaoMerkleProof_ the Merkle inlcusion proof of a ICAO member that signed the certificate
+     * @param icaoMemberKey_ the ICAO signer public key
+     * @param icaoMemberSignature_ the ICAO signer signature
+     * @param x509SignedAttributes_ the certificate signed attributes
+     * @param x509KeyOffset_ the offset in the attributes where the certificate key lives
+     * @param x509ExpirationOffset_ the offset in the attributes where the certificate expiration date lives
+     */
     function registerCertificate(
         bytes32[] memory icaoMerkleProof_,
         bytes memory icaoMemberKey_,
@@ -109,6 +118,10 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         emit CertificateRegistered(bytes32(value_), expirationTimestamp_);
     }
 
+    /**
+     * @notice Revokes an expired X509 certificate
+     * @param certificateKey_ the "fancy hashed" (see X509 util) hash of a public key of a certificate
+     */
     function revokeCertificate(bytes32 certificateKey_) external {
         CertificateInfo storage _info = _certificateInfos[certificateKey_];
 
@@ -126,6 +139,14 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         emit CertificateRevoked(certificateKey_);
     }
 
+    /**
+     * @notice Registers the user passport <> user identity bond in the registration SMT.
+     * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
+     * @param identityKey_ the hash of the public key of an identity
+     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param passport_ the passport info
+     * @param zkPoints_ the passport validity ZK proof
+     */
     function register(
         bytes32 certificatesRoot_,
         uint256 identityKey_,
@@ -177,6 +198,11 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         emit Registered(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Revokes the passport <> idenitty bond (doesn't actually remove it, sets as "revoked")
+     * @param identityKey_ the hash of the public key of an identity
+     * @param passport_ the passport info
+     */
     function revoke(uint256 identityKey_, Passport memory passport_) external {
         IPassportDispatcher dispatcher_ = _getDispatcher(passport_.dataType);
 
@@ -210,6 +236,14 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         emit Revoked(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Reissues the passport <> identity bond by migration to a new identity. The previous bond must be revoked
+     * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
+     * @param identityKey_ the hash of the public key of an identity
+     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param passport_ the passport info
+     * @param zkPoints_ the passport validity ZK proof
+     */
     function reissueIdentity(
         bytes32 certificatesRoot_,
         uint256 identityKey_,
@@ -259,6 +293,12 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         emit ReissuedIdentity(bytes32(passportKey_), bytes32(identityKey_));
     }
 
+    /**
+     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
+     * @param newRoot_ the new ICAO root
+     * @param timestamp the "nonce"
+     * @param proof_ the Rarimo TSS Merkle proof
+     */
     function changeICAOMasterTreeRoot(
         bytes32 newRoot_,
         uint256 timestamp,
@@ -272,12 +312,22 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         icaoMasterTreeMerkleRoot = newRoot_;
     }
 
+    /**
+     * @notice Change the Rarimo TSS signer via Rarimo TSS
+     * @param newSignerPubKey_ the new signer public key
+     * @param signature_ the Rarimo TSS signature
+     */
     function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
         _checkSignature(keccak256(newSignerPubKey_), signature_);
 
         signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
+    /**
+     * @notice Add new passport dispatchers if new pasport types are discovered
+     * @param dispatcherType_ the new passport type
+     * @param dispatcher_ the address of a new dispatcher
+     */
     function addDispatcher(bytes32 dispatcherType_, address dispatcher_) external onlyOwner {
         require(
             address(passportDispatchers[dispatcherType_]) == address(0),
@@ -287,16 +337,31 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         passportDispatchers[dispatcherType_] = IPassportDispatcher(dispatcher_);
     }
 
+    /**
+     * @notice Removes the passport dispatcher
+     * @param dispatcherType_ the passport type
+     */
     function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
         delete passportDispatchers[dispatcherType_];
     }
 
+    /**
+     * @notice Get info about the registered X509 certificate
+     * @param certificateKey_ the hash of a certificate public key
+     * @return the certificate info
+     */
     function getCertificateInfo(
         bytes32 certificateKey_
     ) external view returns (CertificateInfo memory) {
         return _certificateInfos[certificateKey_];
     }
 
+    /**
+     * @notice Get info about the registers passport + its identity
+     * @param passportKey_ the hash of a passport public key
+     * @return passportInfo_ the passport info
+     * @return identityInfo_ the attached identity info
+     */
     function getPassportInfo(
         bytes32 passportKey_
     )

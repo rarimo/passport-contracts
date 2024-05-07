@@ -2,6 +2,9 @@
 pragma solidity 0.8.16;
 
 library RSA {
+    /**
+     * @notice RSA decryption algorithm via 0x05 modexp precompile
+     */
     function decrypt(
         bytes memory s_,
         bytes memory e_,
@@ -23,7 +26,7 @@ library RSA {
         assembly {
             pop(
                 staticcall(
-                    sub(gas(), 2000),
+                    sub(gas(), 2000), // gas buffer
                     5,
                     add(input_, 0x20),
                     inputLength_,

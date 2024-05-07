@@ -11,6 +11,13 @@ contract RSASHA1Authenticator {
     uint256 public constant E = 65537;
     uint256 public constant HASH_LEN = 20;
 
+    /**
+     * @notice Checks active authentication of a passport. The RSA algorithm is as follows:
+     *
+     * 1. Decrypt the signature
+     * 2. Remove the 1 byte (hash function indicator) suffix
+     * 3. The last 20 bytes of the decrypted signature is the SHA1 hash of random + challenge
+     */
     function authenticate(
         bytes memory challenge_,
         bytes memory s_,

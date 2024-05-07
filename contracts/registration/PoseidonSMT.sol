@@ -36,6 +36,9 @@ contract PoseidonSMT is Initializable {
         registration = registration_;
     }
 
+    /**
+     * @notice Adds the new element to the tree.
+     */
     function add(
         bytes32 keyOfElement_,
         bytes32 element_
@@ -43,10 +46,16 @@ contract PoseidonSMT is Initializable {
         _bytes32Tree.add(keyOfElement_, element_);
     }
 
+    /**
+     * @notice Removes the element from the tree.
+     */
     function remove(bytes32 keyOfElement_) external onlyRegistration withRootUpdate {
         _bytes32Tree.remove(keyOfElement_);
     }
 
+    /**
+     * @notice Updates the element in the tree.
+     */
     function update(
         bytes32 keyOfElement_,
         bytes32 newElement_
@@ -54,18 +63,30 @@ contract PoseidonSMT is Initializable {
         _bytes32Tree.update(keyOfElement_, newElement_);
     }
 
+    /**
+     * @notice Gets Merkle (inclusion/exclusion) proof of the element.
+     */
     function getProof(bytes32 key_) external view returns (SparseMerkleTree.Proof memory) {
         return _bytes32Tree.getProof(key_);
     }
 
+    /**
+     * @notice Gets the SMT root
+     */
     function getRoot() external view returns (bytes32) {
         return _bytes32Tree.getRoot();
     }
 
+    /**
+     * @notice Gets the node info by its key.
+     */
     function getNodeByKey(bytes32 key_) external view returns (SparseMerkleTree.Node memory) {
         return _bytes32Tree.getNodeByKey(key_);
     }
 
+    /**
+     * @notice Check if the SMT root is valid. Zero root in always invalid and latest root is always a valid one.
+     */
     function isRootValid(bytes32 root_) external view returns (bool) {
         if (root_ == bytes32(0)) {
             return false;
@@ -74,6 +95,9 @@ contract PoseidonSMT is Initializable {
         return isRootLatest(root_) || _roots[root_] + ROOT_VALIDITY > block.timestamp;
     }
 
+    /**
+     * @notice Check if the SMT root is a latest one
+     */
     function isRootLatest(bytes32 root_) public view returns (bool) {
         return _bytes32Tree.getRoot() == root_;
     }

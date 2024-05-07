@@ -14,6 +14,11 @@ library X509 {
     uint256 public constant X509_KEY_BYTE_LENGTH = 512;
     uint256 public constant E = 65537;
 
+    /**
+     * @notice Verifiers ICAO member RSA signature of the X509 certificate SA.
+     *
+     * The last 32 bytes of the decrypted signature is a SHA256 hash of the certificate signed attributes
+     */
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
         bytes memory icaoMemberKey_,
@@ -35,11 +40,24 @@ library X509 {
         return x509SAHash == decryptedX509SAHash_;
     }
 
+    /**
+     * @notice Poseidon5 hashed the 4096 bit RSA X509 key.
+     *
+     * Concatenates the last 8 bytes by a group of 3 to form a poseidon element.
+     *
+     * poseidon5(
+     *   x509Key_.bytes8[last] + x509Key_.bytes8[last - 1] + x509Key_.bytes8[last - 2],
+     *   x509Key_.bytes8[last - 3] + x509Key_.bytes8[last - 4] + x509Key_.bytes8[last - 5],
+     *   ...
+     * )
+     *
+     * The algorithm is such to accommodate for long arithmetic in circuits.
+     */
     function hashKey(bytes memory x509Key_) internal pure returns (uint256 keyHash_) {
         uint256[5] memory decomposed_;
 
         assembly {
-            let position_ := add(x509Key_, mload(x509Key_))
+            let position_ := add(x509Key_, mload(x509Key_)) // load the last 32 bytes
 
             for {
                 let i := 0
@@ -54,7 +72,7 @@ library X509 {
                 } lt(j, 3) {
                     j := add(j, 1)
                 } {
-                    let extracted_ := and(shr(mul(j, 64), element_), 0xffffffffffffffff)
+                    let extracted_ := and(shr(mul(j, 64), element_), 0xffffffffffffffff) // pack by 3 via shifting
                     reversed_ := or(shl(64, reversed_), extracted_)
                 }
 
@@ -67,6 +85,14 @@ library X509 {
         return PoseidonUnit5L.poseidon(decomposed_);
     }
 
+    /**
+     * @notice Extracts expiration timestamp from the certificate SA.
+     *
+     * The timestamp starts with "170d" sequence, then go hex ASCII codes of the timestamp symbols:
+     *
+     * "0x170d" + "0x333030393131303732313236" -> 0x333030393131303732313236 -> "3 0  0 9  1 1  0 7  2 1  2 6" ->
+     * convert to numbers = 2030-09-11 07:21:26 UTC
+     */
     function extractExpirationTimestamp(
         bytes memory x509SignedAttributes_,
         uint256 expirationOffset_
@@ -92,6 +118,11 @@ library X509 {
             );
     }
 
+    /**
+     * @notice extracts 4096 bit RSA X509 key from the certificate.
+     *
+     * Straightforward approach by copying memory from the given position
+     */
     function extractKey(
         bytes memory x509SignedAttributes_,
         uint256 keyOffset_
