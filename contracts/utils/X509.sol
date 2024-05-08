@@ -11,8 +11,8 @@ library X509 {
     using Bytes2Poseidon for bytes;
     using RSA for bytes;
 
-    uint256 public constant X509_KEY_BYTE_LENGTH = 512;
-    uint256 public constant E = 65537;
+    uint256 public constant X509_KEY_BYTE_LENGTH = 512; // 4096 bits
+    uint256 public constant E = 65537; // RSA exponent
 
     /**
      * @notice Verifiers ICAO member RSA signature of the X509 certificate SA.
@@ -41,7 +41,7 @@ library X509 {
     }
 
     /**
-     * @notice Poseidon5 hashed the 4096 bit RSA X509 key.
+     * @notice Poseidon5 hash of the 4096 bit RSA X509 key.
      *
      * Concatenates the last 8 bytes by a group of 3 to form a poseidon element.
      *
@@ -109,7 +109,7 @@ library X509 {
 
         return
             Date2Time.timestampFromDateTime(
-                asciiTime[0] + 2000,
+                asciiTime[0] + 2000, // only the last 2 digits of the year are encoded
                 asciiTime[1],
                 asciiTime[2],
                 asciiTime[3],

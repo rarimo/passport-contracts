@@ -30,6 +30,11 @@ abstract contract TSSSigner {
         require(signer == signer_, "TSSSigner: invalid signature");
     }
 
+    /**
+     * @dev Rarimo state is stored in a huge Merkle-Cartesian tree. Every new validated action is
+     * represented as a leaf. Rarimo TSS signs the Merkle root, which is reconstructed and verified
+     * in that function.
+     */
     function _checkMerkleSignature(bytes32 merkleLeaf_, bytes memory proof_) internal view {
         (bytes32[] memory merklePath_, bytes memory signature_) = abi.decode(
             proof_,
@@ -46,7 +51,7 @@ abstract contract TSSSigner {
 
         (uint256 x_, uint256 y_) = abi.decode(pubKey_, (uint256, uint256));
 
-        // @dev y^2 = x^3 + 7, x != 0, y != 0 (mod P)
+        /// @dev Check that public key is on the curve: y^2 = x^3 + 7, x != 0, y != 0 (mod P)
         require(x_ != 0 && y_ != 0 && x_ != P && y_ != P, "TSSSigner: zero pubKey");
         require(
             mulmod(y_, y_, P) == addmod(mulmod(mulmod(x_, x_, P), x_, P), 7, P),

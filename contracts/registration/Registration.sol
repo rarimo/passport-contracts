@@ -77,7 +77,7 @@ contract Registration is OwnableUpgradeable, TSSSigner {
 
     /**
      * @notice Registers an X509 certificate in the certificates SMT.
-     * @param icaoMerkleProof_ the Merkle inlcusion proof of a ICAO member that signed the certificate
+     * @param icaoMerkleProof_ the Merkle inclusion proof of a ICAO member that signed the certificate
      * @param icaoMemberKey_ the ICAO signer public key
      * @param icaoMemberSignature_ the ICAO signer signature
      * @param x509SignedAttributes_ the certificate signed attributes
@@ -375,6 +375,9 @@ contract Registration is OwnableUpgradeable, TSSSigner {
         }
     }
 
+    /**
+     * @dev passports AA is sufficiently randomized to use signatures as nonce.
+     */
     function _useSignature(bytes memory passportSignature_) internal {
         bytes32 sigHash_ = keccak256(passportSignature_);
 

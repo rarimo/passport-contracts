@@ -13,8 +13,8 @@ library Bytes2Poseidon {
         uint256[2] memory decomposed_;
 
         assembly {
-            mstore(decomposed_, mload(add(byteArray_, 32)))
-            mstore(add(decomposed_, 32), mload(add(byteArray_, 64)))
+            mstore(decomposed_, mload(add(byteArray_, 32))) // skip length and read first 32 bytes
+            mstore(add(decomposed_, 32), mload(add(byteArray_, 64))) // skip length and read second 32 bytes
         }
 
         decomposed_[0] %= 2 ** 248;
@@ -37,14 +37,14 @@ library Bytes2Poseidon {
             } lt(i, 5) {
                 i := add(i, 1)
             } {
-                let someData_ := mload(add(byteArray_, add(32, mul(i, 25))))
+                let someData_ := mload(add(byteArray_, add(32, mul(i, 25)))) // read current 32 bytes chunk
 
                 switch i
                 case 4 {
-                    someData_ := shr(32, someData_)
+                    someData_ := shr(32, someData_) // shift by 4 (32 - 28) bytes to the right
                 }
                 default {
-                    someData_ := shr(56, someData_)
+                    someData_ := shr(56, someData_) // shift by 7 (32 - 25) bytes to the right
                 }
 
                 mstore(add(decomposed_, mul(i, 32)), someData_)

@@ -73,7 +73,7 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
     }
 
     /**
-     * @notice Get the ECDSA passport public key representation
+     * @notice Get the ECDSA passport public key internal representation.
      */
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
         return passportPublicKey_.hash512();

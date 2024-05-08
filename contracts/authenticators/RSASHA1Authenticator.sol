@@ -8,8 +8,8 @@ contract RSASHA1Authenticator {
     using RSA for bytes;
     using SHA1 for bytes;
 
-    uint256 public constant E = 65537;
-    uint256 public constant HASH_LEN = 20;
+    uint256 public constant E = 65537; // RSA exponent
+    uint256 public constant HASH_LEN = 20; // SHA1 hash length
 
     /**
      * @notice Checks active authentication of a passport. The RSA algorithm is as follows:
