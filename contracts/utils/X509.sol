@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {MemoryUtils} from "@solarity/solidity-lib/libs/utils/MemoryUtils.sol";
+
 import {PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {Bytes2Poseidon} from "./Bytes2Poseidon.sol";
@@ -8,6 +10,7 @@ import {RSA} from "./RSA.sol";
 import {Date2Time} from "./Date2Time.sol";
 
 library X509 {
+    using MemoryUtils for bytes;
     using Bytes2Poseidon for bytes;
     using RSA for bytes;
 
@@ -128,25 +131,16 @@ library X509 {
     function extractKey(
         bytes memory x509SignedAttributes_,
         uint256 keyOffset_
-    ) internal pure returns (bytes memory x509Key_) {
+    ) internal view returns (bytes memory x509Key_) {
         _check(x509SignedAttributes_, hex"0282020100", keyOffset_);
 
         x509Key_ = new bytes(X509_KEY_BYTE_LENGTH);
 
-        assembly {
-            let length_ := X509_KEY_BYTE_LENGTH
-
-            for {
-                let i := 0
-            } lt(i, length_) {
-                i := add(i, 32)
-            } {
-                mstore(
-                    add(x509Key_, add(i, 32)),
-                    mload(add(x509SignedAttributes_, add(keyOffset_, add(i, 32))))
-                )
-            }
-        }
+        MemoryUtils.unsafeCopy(
+            x509SignedAttributes_.getDataPointer() + keyOffset_,
+            x509Key_.getDataPointer(),
+            X509_KEY_BYTE_LENGTH
+        );
     }
 
     function _check(
