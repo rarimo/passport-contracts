@@ -38,7 +38,7 @@ const deployECDSASHA12704Dispatcher = async (deployer: Deployer) => {
 export = async (deployer: Deployer) => {
   await deployVerifiers(deployer);
 
-  const registration = await deployer.deployed(Registration__factory);
+  const registration = await deployer.deployed(Registration__factory, "proxy");
 
   const rsaSha12688Dispatcher = await deployRSASHA12688Dispatcher(deployer);
   const ecdsaSha12704Dispatcher = await deployECDSASHA12704Dispatcher(deployer);

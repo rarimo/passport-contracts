@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
@@ -13,7 +14,7 @@ import {X509} from "../utils/X509.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 import {TSSSigner} from "./TSSSigner.sol";
 
-contract Registration is OwnableUpgradeable, TSSSigner {
+contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     using MerkleProof for bytes32[];
     using X509 for bytes;
 
@@ -374,6 +375,11 @@ contract Registration is OwnableUpgradeable, TSSSigner {
             identityInfo_ = _identityInfos[passportInfo_.activeIdentity];
         }
     }
+
+    /**
+     * @notice UUPS upgradeability function
+     */
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
      * @dev passports AA is sufficiently randomized to use signatures as nonce.

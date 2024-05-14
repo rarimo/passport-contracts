@@ -19,14 +19,17 @@ contract PoseidonSMT is Initializable {
 
     SparseMerkleTree.Bytes32SMT internal _bytes32Tree;
 
+    event RootUpdated(bytes32 root);
+
     modifier onlyRegistration() {
         _onlyRegistration();
         _;
     }
 
     modifier withRootUpdate() {
+        _saveRoot();
         _;
-        _updateRoot();
+        _notifyRoot();
     }
 
     function __PoseidonSMT_init(uint256 treeHeight_, address registration_) external initializer {
@@ -102,8 +105,12 @@ contract PoseidonSMT is Initializable {
         return _bytes32Tree.getRoot() == root_;
     }
 
-    function _updateRoot() internal {
+    function _saveRoot() internal {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
+    }
+
+    function _notifyRoot() internal {
+        emit RootUpdated(_bytes32Tree.getRoot());
     }
 
     function _onlyRegistration() internal view {

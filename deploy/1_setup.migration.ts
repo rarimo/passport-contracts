@@ -1,7 +1,7 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 import { deployPoseidons } from "./helpers/helper";
 
-import { Registration__factory, PoseidonSMT__factory } from "@ethers-v6";
+import { Registration__factory, PoseidonSMT__factory, ERC1967Proxy__factory } from "@ethers-v6";
 
 const TREE_SIZE = 80;
 
@@ -13,7 +13,13 @@ export = async (deployer: Deployer) => {
 
   const registrationSmt = await deployer.deploy(PoseidonSMT__factory, { name: "RegistrationSMT" });
   const certificatesSmt = await deployer.deploy(PoseidonSMT__factory, { name: "CertificatesSMT" });
-  const registration = await deployer.deploy(Registration__factory);
+
+  const registrationImpl = await deployer.deploy(Registration__factory);
+  await deployer.deploy(ERC1967Proxy__factory, [await registrationImpl.getAddress(), "0x"], {
+    name: "proxy",
+  });
+
+  const registration = await deployer.deployed(Registration__factory, "proxy");
 
   await registrationSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
   await certificatesSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
@@ -27,6 +33,7 @@ export = async (deployer: Deployer) => {
 
   Reporter.reportContracts(
     ["Registration", `${await registration.getAddress()}`],
+    ["RegistrationImpl", `${await registrationImpl.getAddress()}`],
     ["RegistrationSMT", `${await registrationSmt.getAddress()}`],
     ["CertificatesSMT", `${await certificatesSmt.getAddress()}`],
   );
