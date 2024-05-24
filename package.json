@@ -25,7 +25,7 @@
     "coverage": "npx hardhat coverage --solcoverjs ./.solcover.ts",
     "clean": "npx hardhat clean",
     "test": "npx hardhat test",
-    "test-all": "npm run deploy-localhost && npm run test",
+    "test-all": "npx hardhat migrate && npm run test",
     "private-network": "npx hardhat node",
     "private-network-fork": "npx hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '\"' -f2)",
     "deploy-localhost": "npx hardhat migrate --network localhost",
@@ -49,8 +49,8 @@
   },
   "dependencies": {
     "@iden3/contracts": "1.4.7",
-    "@openzeppelin/contracts": "4.9.5",
-    "@openzeppelin/contracts-upgradeable": "4.9.5",
+    "@openzeppelin/contracts": "4.9.6",
+    "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@solarity/solidity-lib": "2.7.6"
   },
   "devDependencies": {

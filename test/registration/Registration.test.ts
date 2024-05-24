@@ -115,7 +115,16 @@ describe("Registration", () => {
 
     await deployRSASHA1Disaptcher();
 
+    const Proxy = await ethers.getContractFactory("ERC1967Proxy");
+    let proxy = await Proxy.deploy(await registration.getAddress(), "0x");
+    registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+
+    proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
+    registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMT;
     await registrationSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
+
+    proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
+    certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMT;
     await certificatesSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
 
     await registration.__Registration_init(

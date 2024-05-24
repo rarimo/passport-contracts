@@ -3,12 +3,12 @@ pragma solidity 0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {PermanentOwnable} from "@solarity/solidity-lib/access/PermanentOwnable.sol";
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-contract PoseidonSMT is Initializable {
+contract PoseidonSMT is Initializable, UUPSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
@@ -30,6 +30,10 @@ contract PoseidonSMT is Initializable {
         _saveRoot();
         _;
         _notifyRoot();
+    }
+
+    constructor() {
+        _disableInitializers();
     }
 
     function __PoseidonSMT_init(uint256 treeHeight_, address registration_) external initializer {
@@ -133,4 +137,9 @@ contract PoseidonSMT is Initializable {
                 )
             );
     }
+
+    /**
+     * @notice UUPS upgradability function
+     */
+    function _authorizeUpgrade(address) internal override {}
 }

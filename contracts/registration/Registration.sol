@@ -61,6 +61,10 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     event Revoked(bytes32 passportKey, bytes32 identityKey);
     event ReissuedIdentity(bytes32 passportKey, bytes32 identityKey);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function __Registration_init(
         address signer_,
         address registrationSmt_,
