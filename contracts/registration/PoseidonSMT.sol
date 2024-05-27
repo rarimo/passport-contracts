@@ -1,19 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-contract PoseidonSMT is Initializable, UUPSUpgradeable {
+import {UUPSSignableUpgradeable} from "@rarimo/evm-bridge-contracts/bridge/proxy/UUPSSignableUpgradeable.sol";
+
+import {TSSSigner} from "./TSSSigner.sol";
+
+contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
+
+    using SetHelper for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
 
-    address public registration;
+    enum MethodId {
+        None,
+        AuthorizeUpgrade,
+        AddRegistrations,
+        RemoveRegistrations
+    }
+
+    EnumerableSet.AddressSet internal _registrations;
 
     mapping(bytes32 => uint256) internal _roots;
 
@@ -36,11 +51,51 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function __PoseidonSMT_init(uint256 treeHeight_, address registration_) external initializer {
+    function __PoseidonSMT_init(
+        address signer_,
+        string calldata chainName_,
+        uint256 treeHeight_,
+        address registration_
+    ) external initializer {
+        __TSSSigner_init(signer_, chainName_);
+
         _bytes32Tree.initialize(uint32(treeHeight_));
         _bytes32Tree.setHashers(_hash2, _hash3);
 
-        registration = registration_;
+        _registrations.add(registration_);
+    }
+
+    function updateRegistrationSet(
+        MethodId methodId_,
+        bytes calldata data_,
+        bytes calldata signature_
+    ) external {
+        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+        bytes32 signHash_ = keccak256(
+            abi.encodePacked(methodId_, data_, "Rarimo", nonce_, address(this))
+        );
+
+        _checkSignature(signHash_, signature_);
+        _useNonce(uint8(methodId_), nonce_);
+
+        if (methodId_ == MethodId.AddRegistrations) {
+            _registrations.add(abi.decode(data_, (address[])));
+        } else if (methodId_ == MethodId.RemoveRegistrations) {
+            _registrations.remove(abi.decode(data_, (address[])));
+        } else {
+            revert("PoseidonSMT: Invalid method");
+        }
+    }
+
+    /**
+     * @notice Change the Rarimo TSS signer via Rarimo TSS
+     * @param newSignerPubKey_ the new signer public key
+     * @param signature_ the Rarimo TSS signature
+     */
+    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
+        _checkSignature(keccak256(newSignerPubKey_), signature_);
+
+        signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
     /**
@@ -118,7 +173,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
     }
 
     function _onlyRegistration() internal view {
-        require(msg.sender == registration, "PoseidonSMT: not registration");
+        require(_registrations.contains(msg.sender), "PoseidonSMT: not registration");
     }
 
     function _hash2(bytes32 element1_, bytes32 element2_) internal pure returns (bytes32) {
@@ -138,8 +193,28 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
             );
     }
 
-    /**
-     * @notice UUPS upgradability function
-     */
-    function _authorizeUpgrade(address) internal override {}
+    function _authorizeUpgrade(address) internal pure virtual override {
+        revert("PoseidonSMT: This upgrade method is off");
+    }
+
+    function _authorizeUpgrade(
+        address newImplementation_,
+        bytes calldata signature_
+    ) internal override {
+        require(newImplementation_ != address(0), "PoseidonSMT: Zero address");
+
+        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.AuthorizeUpgrade));
+        bytes32 signHash_ = keccak256(
+            abi.encodePacked(
+                uint8(MethodId.AuthorizeUpgrade),
+                newImplementation_,
+                "Rarimo",
+                nonce_,
+                address(this)
+            )
+        );
+
+        _checkSignature(signHash_, signature_);
+        _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
+    }
 }

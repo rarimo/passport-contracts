@@ -51,6 +51,7 @@
     "@iden3/contracts": "1.4.7",
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "@rarimo/evm-bridge-contracts": "^1.0.3",
     "@solarity/solidity-lib": "2.7.6"
   },
   "devDependencies": {
