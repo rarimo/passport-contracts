@@ -14,6 +14,8 @@ import { ZERO_ADDR } from "@/scripts/utils/constants";
 import { RegistrationMethodId } from "@/test/helpers/constants";
 
 const TREE_SIZE = 80;
+const CHAIN_NAME = "Tests";
+
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 // private key: 0x163501939792ae27dcef29e894119236a12c76964d378514daa582195ea90c38
@@ -57,8 +59,6 @@ b3301f0603551d23041830168014f4ce2f8ca64b63b3f1d0ea751fabef7ef452358d302b0603551d
 08020100310313015030310603551d12042a3028a40f300d310b300906035504070c0255418115706b69407\
 06b2d756b7261696e612e676f762e7561";
 
-const CHAIN_NAME = "Tests";
-
 describe("Registration", () => {
   const reverter = new Reverter();
 
@@ -91,6 +91,27 @@ describe("Registration", () => {
       await rsaSha1Authenticator.getAddress(),
       await rsaEcdsaVerifier.getAddress(),
     );
+  };
+
+  const addDispatcher = async (dispatcherType: string, dispatcher: string) => {
+    const operation = signHelper.signAddDispatcherOperation(
+      dispatcherType,
+      dispatcher,
+      CHAIN_NAME,
+      await registration.getNonce(RegistrationMethodId.AddDispatcher),
+      await registration.getAddress(),
+    );
+    return registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.signature);
+  };
+
+  const removeDispatcher = async (dispatcherType: string) => {
+    const operation = signHelper.signRemoveDispatcherOperation(
+      dispatcherType,
+      CHAIN_NAME,
+      await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
+      await registration.getAddress(),
+    );
+    return registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.signature);
   };
 
   before("setup", async () => {
@@ -146,27 +167,6 @@ describe("Registration", () => {
     await reverter.snapshot();
   });
 
-  async function addDispatcher(dispatcherType: string, dispatcher: string) {
-    const operation = signHelper.signAddDispatcherOperation(
-      dispatcherType,
-      dispatcher,
-      CHAIN_NAME,
-      await registration.getNonce(RegistrationMethodId.AddDispatcher),
-      await registration.getAddress(),
-    );
-    return registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.signature);
-  }
-
-  async function removeDispatcher(dispatcherType: string) {
-    const operation = signHelper.signRemoveDispatcherOperation(
-      dispatcherType,
-      CHAIN_NAME,
-      await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
-      await registration.getAddress(),
-    );
-    return registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.signature);
-  }
-
   afterEach(reverter.revert);
 
   describe("$init flow", () => {
@@ -192,6 +192,9 @@ describe("Registration", () => {
           "Registration: dispatcher already exists",
         );
         expect(await registration.passportDispatchers(someType)).to.equal(SIGNER.address);
+
+        await removeDispatcher(ethers.hexlify(someType));
+        expect(await registration.passportDispatchers(someType)).to.equal(ethers.ZeroAddress);
       });
 
       it("should not be called by not owner", async () => {
@@ -222,6 +225,22 @@ describe("Registration", () => {
           registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.signature),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
+    });
+
+    it("should revert if invalid operation was signed", async () => {
+      const hash = signHelper.getArbitraryDataSignHash(
+        RegistrationMethodId.None,
+        ethers.ZeroHash,
+        CHAIN_NAME,
+        await registration.getNonce(RegistrationMethodId.None),
+        await registration.getAddress(),
+      );
+
+      const signature = signHelper.sign(hash);
+
+      await expect(
+        registration.updateDispatcher(RegistrationMethodId.None, ethers.ZeroHash, signature),
+      ).to.be.rejectedWith("Registration: invalid methodId");
     });
   });
 
@@ -615,6 +634,71 @@ describe("Registration", () => {
           "TSSSigner: nonce used",
         );
       });
+    });
+  });
+
+  describe("$upgrade flow", () => {
+    describe("#upgrade", () => {
+      it("should upgrade the contract", async () => {
+        const Registration = await ethers.getContractFactory("RegistrationMock", {
+          libraries: {
+            PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
+            PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+            PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+            PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
+          },
+        });
+        const newRegistration = await Registration.deploy();
+
+        const signature = signHelper.signAuthorizeUpgradeOperation(
+          RegistrationMethodId.AuthorizeUpgrade,
+          await newRegistration.getAddress(),
+          CHAIN_NAME,
+          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          await registration.getAddress(),
+        );
+
+        await registration.upgradeToWithSig(await newRegistration.getAddress(), signature);
+
+        expect(await registration.implementation()).to.be.eq(await newRegistration.getAddress());
+      });
+
+      it("should revert if trying to upgrade to zero address", async () => {
+        const signature = signHelper.signAuthorizeUpgradeOperation(
+          RegistrationMethodId.AuthorizeUpgrade,
+          ethers.ZeroAddress,
+          CHAIN_NAME,
+          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          await registration.getAddress(),
+        );
+
+        await expect(registration.upgradeToWithSig(ethers.ZeroAddress, signature)).to.be.rejectedWith(
+          "Registration: Zero address",
+        );
+      });
+
+      it("should revert if operation was signed by the invalid signer", async () => {
+        const ANOTHER_SIGNER = ethers.Wallet.createRandom();
+
+        const signature = signHelper.signAuthorizeUpgradeOperation(
+          RegistrationMethodId.AuthorizeUpgrade,
+          await registration.getAddress(),
+          CHAIN_NAME,
+          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          await registration.getAddress(),
+          ANOTHER_SIGNER,
+        );
+
+        await expect(registration.upgradeToWithSig(await registration.getAddress(), signature)).to.be.rejectedWith(
+          "TSSSigner: invalid signature",
+        );
+      });
+    });
+
+    it("should revert if trying to use default `upgradeTo` method", async () => {
+      await expect(registration.upgradeTo(ethers.ZeroAddress)).to.be.rejectedWith(
+        "Registration: This upgrade method is off",
+      );
     });
   });
 });

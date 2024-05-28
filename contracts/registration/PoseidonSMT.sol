@@ -65,6 +65,12 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
         _registrations.add(registration_);
     }
 
+    /**
+     * @notice Add or Remove registrations via Rarimo TSS
+     * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
+     * @param data_ An ABI encoded array of addresses to add or remove
+     * @param signature_ the Rarimo TSS signature
+     */
     function updateRegistrationSet(
         MethodId methodId_,
         bytes calldata data_,
@@ -72,7 +78,7 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
     ) external {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
         bytes32 signHash_ = keccak256(
-            abi.encodePacked(methodId_, data_, "Rarimo", nonce_, address(this))
+            abi.encodePacked(methodId_, data_, chainName, nonce_, address(this))
         );
 
         _checkSignature(signHash_, signature_);
@@ -164,6 +170,14 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
         return _bytes32Tree.getRoot() == root_;
     }
 
+    function getRegistrations() external view returns (address[] memory) {
+        return _registrations.values();
+    }
+
+    function isRegistrationExists(address registration_) external view returns (bool) {
+        return _registrations.contains(registration_);
+    }
+
     function _saveRoot() internal {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
@@ -208,7 +222,7 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
             abi.encodePacked(
                 uint8(MethodId.AuthorizeUpgrade),
                 newImplementation_,
-                "Rarimo",
+                chainName,
                 nonce_,
                 address(this)
             )
@@ -216,5 +230,9 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
 
         _checkSignature(signHash_, signature_);
         _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
+    }
+
+    function implementation() external view returns (address) {
+        return _getImplementation();
     }
 }

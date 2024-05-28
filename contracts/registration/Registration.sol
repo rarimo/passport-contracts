@@ -47,8 +47,8 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     enum MethodId {
         None,
         AuthorizeUpgrade,
-        AddDispatchers,
-        RemoveDispatchers
+        AddDispatcher,
+        RemoveDispatcher
     }
 
     PoseidonSMT public registrationSmt;
@@ -337,6 +337,14 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
         signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
+    /**
+     * @notice Adds or removes a dispatcher via Rarimo TSS
+     * @param methodId_ the method id (AddDispatcher or RemoveDispatcher)
+     * @param data_ an ABI encoded data for the method
+     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
+     * - `dispatcherType` of bytes32 for RemoveDispatcher
+     * @param signature_ the Rarimo TSS signature
+     */
     function updateDispatcher(
         MethodId methodId_,
         bytes calldata data_,
@@ -344,17 +352,17 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     ) external {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
         bytes32 signHash_ = keccak256(
-            abi.encodePacked(methodId_, data_, "Rarimo", nonce_, address(this))
+            abi.encodePacked(methodId_, data_, chainName, nonce_, address(this))
         );
 
         _checkSignature(signHash_, signature_);
         _useNonce(uint8(methodId_), nonce_);
 
-        if (methodId_ == MethodId.AddDispatchers) {
+        if (methodId_ == MethodId.AddDispatcher) {
             (bytes32 dispatcherType_, address dispatcher_) = abi.decode(data_, (bytes32, address));
 
             _addDispatcher(dispatcherType_, dispatcher_);
-        } else if (methodId_ == MethodId.RemoveDispatchers) {
+        } else if (methodId_ == MethodId.RemoveDispatcher) {
             bytes32 dispatcherType_ = abi.decode(data_, (bytes32));
 
             _removeDispatcher(dispatcherType_);
@@ -417,21 +425,21 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     }
 
     function _authorizeUpgrade(address) internal pure virtual override {
-        revert("PoseidonSMT: This upgrade method is off");
+        revert("Registration: This upgrade method is off");
     }
 
     function _authorizeUpgrade(
         address newImplementation_,
         bytes calldata signature_
     ) internal override {
-        require(newImplementation_ != address(0), "PoseidonSMT: Zero address");
+        require(newImplementation_ != address(0), "Registration: Zero address");
 
         uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.AuthorizeUpgrade));
         bytes32 signHash_ = keccak256(
             abi.encodePacked(
                 uint8(MethodId.AuthorizeUpgrade),
                 newImplementation_,
-                "Rarimo",
+                chainName,
                 nonce_,
                 address(this)
             )
@@ -439,6 +447,10 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
 
         _checkSignature(signHash_, signature_);
         _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
+    }
+
+    function implementation() external view returns (address) {
+        return _getImplementation();
     }
 
     /**
