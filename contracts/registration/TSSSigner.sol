@@ -21,6 +21,10 @@ abstract contract TSSSigner {
         chainName = chainName_;
     }
 
+    function getNonce(uint8 methodId_) external view returns (uint256) {
+        return _nonces[methodId_];
+    }
+
     function _getAndIncrementNonce(uint8 methodId_) internal returns (uint256) {
         return _nonces[methodId_]++;
     }

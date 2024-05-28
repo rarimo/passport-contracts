@@ -11,6 +11,7 @@ import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/
 
 import { TSSMerkleTree, TSSSigner } from "../helpers";
 import { ZERO_ADDR } from "@/scripts/utils/constants";
+import { RegistrationMethodId } from "@/test/helpers/constants";
 
 const TREE_SIZE = 80;
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
@@ -55,6 +56,8 @@ b3301f0603551d23041830168014f4ce2f8ca64b63b3f1d0ea751fabef7ef452358d302b0603551d
 261696e612e676f762e75612f646f776e6c6f61642f66756c6c2e63726c3015060767810801010602040a30\
 08020100310313015030310603551d12042a3028a40f300d310b300906035504070c0255418115706b69407\
 06b2d756b7261696e612e676f762e7561";
+
+const CHAIN_NAME = "Tests";
 
 describe("Registration", () => {
   const reverter = new Reverter();
@@ -121,26 +124,48 @@ describe("Registration", () => {
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
     registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMT;
-    await registrationSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
+    await registrationSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMT;
-    await certificatesSmt.__PoseidonSMT_init(TREE_SIZE, await registration.getAddress());
+    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
 
     await registration.__Registration_init(
       SIGNER.address,
+      CHAIN_NAME,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
 
-    await registration.addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
-
     signHelper = new TSSSigner(SIGNER);
     merkleTree = new TSSMerkleTree(signHelper);
 
+    await addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
+
     await reverter.snapshot();
   });
+
+  async function addDispatcher(dispatcherType: string, dispatcher: string) {
+    const operation = signHelper.signAddDispatcherOperation(
+      dispatcherType,
+      dispatcher,
+      CHAIN_NAME,
+      await registration.getNonce(RegistrationMethodId.AddDispatcher),
+      await registration.getAddress(),
+    );
+    return registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.signature);
+  }
+
+  async function removeDispatcher(dispatcherType: string) {
+    const operation = signHelper.signRemoveDispatcherOperation(
+      dispatcherType,
+      CHAIN_NAME,
+      await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
+      await registration.getAddress(),
+    );
+    return registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.signature);
+  }
 
   afterEach(reverter.revert);
 
@@ -148,7 +173,7 @@ describe("Registration", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
         expect(
-          registration.__Registration_init(SIGNER.address, ZERO_ADDR, ZERO_ADDR, icaoMerkleRoot),
+          registration.__Registration_init(SIGNER.address, CHAIN_NAME, ZERO_ADDR, ZERO_ADDR, icaoMerkleRoot),
         ).to.be.revertedWith("Initializable: contract is already initialized");
       });
     });
@@ -161,21 +186,41 @@ describe("Registration", () => {
 
         expect(await registration.passportDispatchers(someType)).to.equal(ZERO_ADDR);
 
-        await registration.addDispatcher(someType, SIGNER.address);
+        await addDispatcher(ethers.hexlify(someType), SIGNER.address);
 
-        expect(registration.addDispatcher(someType, SIGNER.address)).to.be.revertedWith(
+        expect(addDispatcher(ethers.hexlify(someType), SIGNER.address)).to.be.revertedWith(
           "Registration: dispatcher already exists",
         );
         expect(await registration.passportDispatchers(someType)).to.equal(SIGNER.address);
       });
 
       it("should not be called by not owner", async () => {
-        expect(registration.connect(SECOND).addDispatcher(ethers.randomBytes(32), SIGNER.address)).to.be.rejectedWith(
-          "Ownable: caller is not the owner",
+        const ANOTHER_SIGNER = ethers.Wallet.createRandom();
+
+        let operation = signHelper.signAddDispatcherOperation(
+          ethers.hexlify(ethers.randomBytes(32)),
+          SIGNER.address,
+          CHAIN_NAME,
+          await registration.getNonce(RegistrationMethodId.AddDispatcher),
+          await registration.getAddress(),
+          ANOTHER_SIGNER,
         );
-        expect(registration.connect(SECOND).removeDispatcher(ethers.randomBytes(32))).to.be.rejectedWith(
-          "Ownable: caller is not the owner",
+
+        await expect(
+          registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.signature),
+        ).to.be.rejectedWith("TSSSigner: invalid signature");
+
+        operation = signHelper.signRemoveDispatcherOperation(
+          ethers.hexlify(ethers.randomBytes(32)),
+          CHAIN_NAME,
+          await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
+          await registration.getAddress(),
+          ANOTHER_SIGNER,
         );
+
+        await expect(
+          registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.signature),
+        ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
     });
   });
