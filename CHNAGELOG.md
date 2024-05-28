@@ -14,9 +14,3 @@
 * Added the ability to set `chainName` in the `TSSSigner` contract.
     * The `chainName` field is used to add support for contract upgradability and other actions via TSS.
     * It was also added due to current conventions in the existing system.
-
-
-
-
-
-
