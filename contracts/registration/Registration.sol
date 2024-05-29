@@ -47,6 +47,7 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     enum MethodId {
         None,
         AuthorizeUpgrade,
+        ChangeICAOMasterTreeRoot,
         AddDispatcher,
         RemoveDispatcher
     }
@@ -320,7 +321,7 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     ) external {
         bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
 
-        _useNonce(uint8(MethodId.None), timestamp);
+        _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
         _checkMerkleSignature(leaf_, proof_);
 
         icaoMasterTreeMerkleRoot = newRoot_;

@@ -1,6 +1,7 @@
 export enum RegistrationMethodId {
   None,
   AuthorizeUpgrade,
+  ChangeICAOMasterTreeRoot,
   AddDispatcher,
   RemoveDispatcher,
 }
