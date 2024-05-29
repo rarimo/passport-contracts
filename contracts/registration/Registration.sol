@@ -158,7 +158,7 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
      * @notice Registers the user passport <> user identity bond in the registration SMT.
      * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
      * @param identityKey_ the hash of the public key of an identity
-     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param dgCommit_ the commitment of DG1 (is used for identity query proof)
      * @param passport_ the passport info
      * @param zkPoints_ the passport validity ZK proof
      */
@@ -255,7 +255,7 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
      * @notice Reissues the passport <> identity bond by migration to a new identity. The previous bond must be revoked
      * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
      * @param identityKey_ the hash of the public key of an identity
-     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param dgCommit_ the commitment of DG1 (is used for identity query proof)
      * @param passport_ the passport info
      * @param zkPoints_ the passport validity ZK proof
      */

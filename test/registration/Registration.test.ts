@@ -11,7 +11,12 @@ import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/
 
 import { TSSMerkleTree, TSSSigner } from "../helpers";
 import { ZERO_ADDR } from "@/scripts/utils/constants";
-import { RegistrationMethodId } from "@/test/helpers/constants";
+import {
+  RegistrationMethodId,
+  RegistrationProof,
+  RegistrationPublicSignalsRSA,
+  RegistrationSignatureRSA,
+} from "@/test/helpers/constants";
 
 const TREE_SIZE = 80;
 const CHAIN_NAME = "Tests";
@@ -288,36 +293,13 @@ describe("Registration", () => {
       proofOverride?: VerifierHelper.ProofPointsStruct,
       certificatesRootOverride?: string,
     ) => {
-      const signature =
-        "0x0eefd853e9a72a4fc802336f015da6bcfe5741d6ad6b292f6907c7a9f2aa81336b7cbd68cfd959c8a1877457f14b098eeb6c7a70ffdafdeb8346ac66301b3e16fc226bc3cc803fa3f9804e7801fbdad3ec45304763bd19aa92ab8f8dc8c9d0083e6368c001b8a8c40c7fdaee40934e798b15229fc14056bad9fc26dac34125bf";
-      const dgCommit = "0x2d7a28fe5dcf90a75e00ebb85bf867efec70b2644f4533e617710ed8b816c5f8";
-
-      const formattedProof: VerifierHelper.ProofPointsStruct = {
-        a: [
-          "0x15de5889727e79822971005ea72180c8725d2e6ac54b328943ef6271c187dd0d",
-          "0x2519660da877dc05ac6a4a13fd726ac4a0ee4684a19cd1113706a8d07a7f8933",
-        ],
-        b: [
-          [
-            "0x0aba84f244e63a6881796d00a1bf83d14d52cd158c603bfeabc7e2d259173fd4",
-            "0x0c21c15d954f8606fc0ca9fbb4fc7685f483d375c3cf56b1a2c527617614f8c0",
-          ],
-          [
-            "0x2f959e54d27c6f631e386acb62055e3b76dfb11bb1ba3b959e42f4795172502f",
-            "0x0b376e519853315c8d9de4bdddeadadeaffb92a8e67655e015a3701f2129e959",
-          ],
-        ],
-        c: [
-          "0x1830b4a1177c4c723642de99d1dbac59d039a5ec854487dc02ea78fce09518e3",
-          "0x2dfadba71d1a6cf7d004f7b149228af6135896691c712cfac7320bf5a32cbd57",
-        ],
-      };
+      const dgCommit = RegistrationPublicSignalsRSA[1];
 
       const certificatesRoot = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
       const passport: Registration.PassportStruct = {
         dataType: RSA_SHA1_2688,
-        signature: signatureOverride ?? signature,
+        signature: signatureOverride ?? RegistrationSignatureRSA,
         publicKey: passportPubKey,
       };
 
@@ -326,7 +308,7 @@ describe("Registration", () => {
         identityOverride ?? identityKey,
         dgCommit,
         passport,
-        proofOverride ?? formattedProof,
+        proofOverride ?? RegistrationProof,
       );
     };
 
