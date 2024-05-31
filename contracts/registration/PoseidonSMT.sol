@@ -9,9 +9,9 @@ import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/Spar
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {UUPSSignableUpgradeable} from "@rarimo/evm-bridge-contracts/bridge/proxy/UUPSSignableUpgradeable.sol";
-
 import {TSSSigner} from "./TSSSigner.sol";
+
+import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
 
 contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
@@ -69,19 +69,19 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
      * @notice Add or Remove registrations via Rarimo TSS
      * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
      * @param data_ An ABI encoded array of addresses to add or remove
-     * @param signature_ the Rarimo TSS signature
+     * @param proof_ the Rarimo TSS signature with MTP
      */
     function updateRegistrationSet(
         MethodId methodId_,
         bytes calldata data_,
-        bytes calldata signature_
+        bytes calldata proof_
     ) external {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-        bytes32 signHash_ = keccak256(
-            abi.encodePacked(methodId_, data_, chainName, nonce_, address(this))
+        bytes32 leaf_ = keccak256(
+            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
         );
 
-        _checkSignature(signHash_, signature_);
+        _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(methodId_), nonce_);
 
         if (methodId_ == MethodId.AddRegistrations) {
@@ -213,22 +213,22 @@ contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
 
     function _authorizeUpgrade(
         address newImplementation_,
-        bytes calldata signature_
+        bytes calldata proof_
     ) internal override {
         require(newImplementation_ != address(0), "PoseidonSMT: Zero address");
 
         uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.AuthorizeUpgrade));
-        bytes32 signHash_ = keccak256(
+        bytes32 leaf_ = keccak256(
             abi.encodePacked(
+                address(this),
                 uint8(MethodId.AuthorizeUpgrade),
                 newImplementation_,
                 chainName,
-                nonce_,
-                address(this)
+                nonce_
             )
         );
 
-        _checkSignature(signHash_, signature_);
+        _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
     }
 

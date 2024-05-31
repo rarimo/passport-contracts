@@ -8,12 +8,11 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {UUPSSignableUpgradeable} from "@rarimo/evm-bridge-contracts/bridge/proxy/UUPSSignableUpgradeable.sol";
-
 import {TSSSigner} from "./TSSSigner.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
 import {X509} from "../utils/X509.sol";
+import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 
@@ -344,19 +343,19 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
      * @param data_ an ABI encoded data for the method
      * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
      * - `dispatcherType` of bytes32 for RemoveDispatcher
-     * @param signature_ the Rarimo TSS signature
+     * @param proof_ the Rarimo TSS signature with MTP
      */
     function updateDispatcher(
         MethodId methodId_,
         bytes calldata data_,
-        bytes calldata signature_
+        bytes calldata proof_
     ) external {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-        bytes32 signHash_ = keccak256(
-            abi.encodePacked(methodId_, data_, chainName, nonce_, address(this))
+        bytes32 leaf_ = keccak256(
+            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
         );
 
-        _checkSignature(signHash_, signature_);
+        _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(methodId_), nonce_);
 
         if (methodId_ == MethodId.AddDispatcher) {
@@ -431,22 +430,22 @@ contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
 
     function _authorizeUpgrade(
         address newImplementation_,
-        bytes calldata signature_
+        bytes calldata proof_
     ) internal override {
         require(newImplementation_ != address(0), "Registration: Zero address");
 
         uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.AuthorizeUpgrade));
-        bytes32 signHash_ = keccak256(
+        bytes32 leaf_ = keccak256(
             abi.encodePacked(
+                address(this),
                 uint8(MethodId.AuthorizeUpgrade),
                 newImplementation_,
                 chainName,
-                nonce_,
-                address(this)
+                nonce_
             )
         );
 
-        _checkSignature(signHash_, signature_);
+        _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
     }
 

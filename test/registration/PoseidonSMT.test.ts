@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { ERC1967Proxy__factory, PoseidonSMT } from "@ethers-v6";
 
-import { getPoseidon, Reverter, TSSSigner } from "@/test/helpers";
+import { getPoseidon, Reverter, TSSMerkleTree, TSSSigner } from "@/test/helpers";
 import { PoseidonSMTMethodId } from "@/test/helpers/constants";
 
 const TREE_SIZE = 80;
@@ -16,6 +16,7 @@ describe("PoseidonSMT", () => {
   const reverter = new Reverter();
 
   let signHelper: TSSSigner;
+  let merkleTree: TSSMerkleTree;
 
   let SIGNER: HDNodeWallet;
   let REGISTRATION: SignerWithAddress;
@@ -26,25 +27,25 @@ describe("PoseidonSMT", () => {
   let tree: PoseidonSMT;
 
   const addRegistrations = async (registrations: string[]) => {
-    const operations = signHelper.signAddRegistrationsOperation(
+    const operations = merkleTree.addRegistrationsOperation(
       registrations,
       CHAIN_NAME,
       await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
       await tree.getAddress(),
     );
 
-    await tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operations.data, operations.signature);
+    await tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operations.data, operations.proof);
   };
 
   const removeRegistrations = async (registrations: string[]) => {
-    const operations = signHelper.signRemoveRegistrationsOperation(
+    const operations = merkleTree.removeRegistrationsOperation(
       registrations,
       CHAIN_NAME,
       await tree.getNonce(PoseidonSMTMethodId.RemoveRegistrations),
       await tree.getAddress(),
     );
 
-    await tree.updateRegistrationSet(PoseidonSMTMethodId.RemoveRegistrations, operations.data, operations.signature);
+    await tree.updateRegistrationSet(PoseidonSMTMethodId.RemoveRegistrations, operations.data, operations.proof);
   };
 
   before("setup", async () => {
@@ -66,6 +67,7 @@ describe("PoseidonSMT", () => {
     await tree.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, REGISTRATION.address);
 
     signHelper = new TSSSigner(SIGNER);
+    merkleTree = new TSSMerkleTree(signHelper);
 
     await reverter.snapshot();
   });
@@ -104,7 +106,7 @@ describe("PoseidonSMT", () => {
       it("should not be able to add/remove with invalid signer", async () => {
         const ANOTHER_SIGNER = ethers.Wallet.createRandom();
 
-        let operation = signHelper.signAddRegistrationsOperation(
+        let operation = merkleTree.addRegistrationsOperation(
           [ADDRESS1.address],
           CHAIN_NAME,
           await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
@@ -113,10 +115,10 @@ describe("PoseidonSMT", () => {
         );
 
         await expect(
-          tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.signature),
+          tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
 
-        operation = signHelper.signRemoveRegistrationsOperation(
+        operation = merkleTree.removeRegistrationsOperation(
           [ADDRESS1.address],
           CHAIN_NAME,
           await tree.getNonce(PoseidonSMTMethodId.RemoveRegistrations),
@@ -125,28 +127,28 @@ describe("PoseidonSMT", () => {
         );
 
         await expect(
-          tree.updateRegistrationSet(PoseidonSMTMethodId.RemoveRegistrations, operation.data, operation.signature),
+          tree.updateRegistrationSet(PoseidonSMTMethodId.RemoveRegistrations, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
 
       it("should revert if trying to use same signature twice", async () => {
-        const operation = signHelper.signAddRegistrationsOperation(
+        const operation = merkleTree.addRegistrationsOperation(
           [ADDRESS1.address],
           CHAIN_NAME,
           await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
           await tree.getAddress(),
         );
 
-        await tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.signature);
+        await tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.proof);
 
         await expect(
-          tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.signature),
+          tree.updateRegistrationSet(PoseidonSMTMethodId.AddRegistrations, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
     });
 
     it("should revert if invalid operation was signed", async () => {
-      const signature = signHelper.signAuthorizeUpgradeOperation(
+      const signature = merkleTree.authorizeUpgradeOperation(
         PoseidonSMTMethodId.None,
         ethers.ZeroAddress,
         CHAIN_NAME,
@@ -188,7 +190,7 @@ describe("PoseidonSMT", () => {
         });
         const newTree = await PoseidonSMT.deploy();
 
-        const signature = signHelper.signAuthorizeUpgradeOperation(
+        const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           await newTree.getAddress(),
           CHAIN_NAME,
@@ -196,13 +198,13 @@ describe("PoseidonSMT", () => {
           await tree.getAddress(),
         );
 
-        await tree.upgradeToWithSig(await newTree.getAddress(), signature);
+        await tree.upgradeToWithProof(await newTree.getAddress(), signature);
 
         expect(await tree.implementation()).to.be.eq(await newTree.getAddress());
       });
 
       it("should revert if trying to upgrade to zero address", async () => {
-        const signature = signHelper.signAuthorizeUpgradeOperation(
+        const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           ethers.ZeroAddress,
           CHAIN_NAME,
@@ -210,7 +212,7 @@ describe("PoseidonSMT", () => {
           await tree.getAddress(),
         );
 
-        await expect(tree.upgradeToWithSig(ethers.ZeroAddress, signature)).to.be.rejectedWith(
+        await expect(tree.upgradeToWithProof(ethers.ZeroAddress, signature)).to.be.rejectedWith(
           "PoseidonSMT: Zero address",
         );
       });
@@ -218,7 +220,7 @@ describe("PoseidonSMT", () => {
       it("should revert if operation was signed by the invalid signer", async () => {
         const ANOTHER_SIGNER = ethers.Wallet.createRandom();
 
-        const signature = signHelper.signAuthorizeUpgradeOperation(
+        const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           await tree.getAddress(),
           CHAIN_NAME,
@@ -227,7 +229,7 @@ describe("PoseidonSMT", () => {
           ANOTHER_SIGNER,
         );
 
-        await expect(tree.upgradeToWithSig(await tree.getAddress(), signature)).to.be.rejectedWith(
+        await expect(tree.upgradeToWithProof(await tree.getAddress(), signature)).to.be.rejectedWith(
           "TSSSigner: invalid signature",
         );
       });
