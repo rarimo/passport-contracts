@@ -3,18 +3,20 @@ pragma solidity 0.8.16;
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {X509} from "../utils/X509.sol";
-import {PoseidonSMT} from "./PoseidonSMT.sol";
 import {TSSSigner} from "./TSSSigner.sol";
+import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
+import {X509} from "../utils/X509.sol";
+import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
+
+import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
+
+contract Registration is Initializable, UUPSSignableUpgradeable, TSSSigner {
     using MerkleProof for bytes32[];
     using X509 for bytes;
 
@@ -41,6 +43,14 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
         uint64 issueTimestamp;
     }
 
+    enum MethodId {
+        None,
+        AuthorizeUpgrade,
+        ChangeICAOMasterTreeRoot,
+        AddDispatcher,
+        RemoveDispatcher
+    }
+
     PoseidonSMT public registrationSmt;
     PoseidonSMT public certificatesSmt;
 
@@ -61,14 +71,18 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     event Revoked(bytes32 passportKey, bytes32 identityKey);
     event ReissuedIdentity(bytes32 passportKey, bytes32 identityKey);
 
+    constructor() {
+        _disableInitializers();
+    }
+
     function __Registration_init(
         address signer_,
+        string calldata chainName_,
         address registrationSmt_,
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
-        __Ownable_init();
-        __TSSSigner_init(signer_);
+        __TSSSigner_init(signer_, chainName_);
 
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);
@@ -143,7 +157,7 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
      * @notice Registers the user passport <> user identity bond in the registration SMT.
      * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
      * @param identityKey_ the hash of the public key of an identity
-     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param dgCommit_ the commitment of DG1 (is used for identity query proof)
      * @param passport_ the passport info
      * @param zkPoints_ the passport validity ZK proof
      */
@@ -240,7 +254,7 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
      * @notice Reissues the passport <> identity bond by migration to a new identity. The previous bond must be revoked
      * @param certificatesRoot_ the root of certificates MT (prevents accidental frontrunning)
      * @param identityKey_ the hash of the public key of an identity
-     * @param dgCommit_ the commitment of DG15 (proves the passport ownership)
+     * @param dgCommit_ the commitment of DG1 (is used for identity query proof)
      * @param passport_ the passport info
      * @param zkPoints_ the passport validity ZK proof
      */
@@ -306,7 +320,7 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     ) external {
         bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
 
-        _useNonce(timestamp);
+        _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
         _checkMerkleSignature(leaf_, proof_);
 
         icaoMasterTreeMerkleRoot = newRoot_;
@@ -324,25 +338,37 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     }
 
     /**
-     * @notice Add new passport dispatchers if new pasport types are discovered
-     * @param dispatcherType_ the new passport type
-     * @param dispatcher_ the address of a new dispatcher
+     * @notice Adds or removes a dispatcher via Rarimo TSS
+     * @param methodId_ the method id (AddDispatcher or RemoveDispatcher)
+     * @param data_ an ABI encoded data for the method
+     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
+     * - `dispatcherType` of bytes32 for RemoveDispatcher
+     * @param proof_ the Rarimo TSS signature with MTP
      */
-    function addDispatcher(bytes32 dispatcherType_, address dispatcher_) external onlyOwner {
-        require(
-            address(passportDispatchers[dispatcherType_]) == address(0),
-            "Registration: dispatcher already exists"
+    function updateDispatcher(
+        MethodId methodId_,
+        bytes calldata data_,
+        bytes calldata proof_
+    ) external {
+        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+        bytes32 leaf_ = keccak256(
+            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
         );
 
-        passportDispatchers[dispatcherType_] = IPassportDispatcher(dispatcher_);
-    }
+        _checkMerkleSignature(leaf_, proof_);
+        _useNonce(uint8(methodId_), nonce_);
 
-    /**
-     * @notice Removes the passport dispatcher
-     * @param dispatcherType_ the passport type
-     */
-    function removeDispatcher(bytes32 dispatcherType_) external onlyOwner {
-        delete passportDispatchers[dispatcherType_];
+        if (methodId_ == MethodId.AddDispatcher) {
+            (bytes32 dispatcherType_, address dispatcher_) = abi.decode(data_, (bytes32, address));
+
+            _addDispatcher(dispatcherType_, dispatcher_);
+        } else if (methodId_ == MethodId.RemoveDispatcher) {
+            bytes32 dispatcherType_ = abi.decode(data_, (bytes32));
+
+            _removeDispatcher(dispatcherType_);
+        } else {
+            revert("Registration: invalid methodId");
+        }
     }
 
     /**
@@ -377,9 +403,55 @@ contract Registration is OwnableUpgradeable, UUPSUpgradeable, TSSSigner {
     }
 
     /**
-     * @notice UUPS upgradeability function
+     * @notice Add new passport dispatchers if new passport types are discovered
+     * @param dispatcherType_ the new passport type
+     * @param dispatcher_ the address of a new dispatcher
      */
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _addDispatcher(bytes32 dispatcherType_, address dispatcher_) internal {
+        require(
+            address(passportDispatchers[dispatcherType_]) == address(0),
+            "Registration: dispatcher already exists"
+        );
+
+        passportDispatchers[dispatcherType_] = IPassportDispatcher(dispatcher_);
+    }
+
+    /**
+     * @notice Removes the passport dispatcher
+     * @param dispatcherType_ the passport type
+     */
+    function _removeDispatcher(bytes32 dispatcherType_) internal {
+        delete passportDispatchers[dispatcherType_];
+    }
+
+    function _authorizeUpgrade(address) internal pure virtual override {
+        revert("Registration: This upgrade method is off");
+    }
+
+    function _authorizeUpgrade(
+        address newImplementation_,
+        bytes calldata proof_
+    ) internal override {
+        require(newImplementation_ != address(0), "Registration: Zero address");
+
+        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.AuthorizeUpgrade));
+        bytes32 leaf_ = keccak256(
+            abi.encodePacked(
+                address(this),
+                uint8(MethodId.AuthorizeUpgrade),
+                newImplementation_,
+                chainName,
+                nonce_
+            )
+        );
+
+        _checkMerkleSignature(leaf_, proof_);
+        _useNonce(uint8(MethodId.AuthorizeUpgrade), nonce_);
+    }
+
+    function implementation() external view returns (address) {
+        return _getImplementation();
+    }
 
     /**
      * @dev passports AA is sufficiently randomized to use signatures as nonce.

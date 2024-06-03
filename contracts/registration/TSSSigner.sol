@@ -11,17 +11,28 @@ abstract contract TSSSigner {
     uint256 public constant P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
 
     address public signer;
+    string public chainName;
 
-    mapping(uint256 => bool) internal _nonces;
+    mapping(uint8 => uint256) internal _nonces;
+    mapping(uint8 => mapping(uint256 => bool)) internal _usedNonces;
 
-    function __TSSSigner_init(address signer_) internal {
+    function __TSSSigner_init(address signer_, string calldata chainName_) internal {
         signer = signer_;
+        chainName = chainName_;
     }
 
-    function _useNonce(uint256 nonce_) internal {
-        require(!_nonces[nonce_], "TSSSigner: nonce used");
+    function getNonce(uint8 methodId_) external view returns (uint256) {
+        return _nonces[methodId_];
+    }
 
-        _nonces[nonce_] = true;
+    function _getAndIncrementNonce(uint8 methodId_) internal returns (uint256) {
+        return _nonces[methodId_]++;
+    }
+
+    function _useNonce(uint8 methodId_, uint256 nonce_) internal {
+        require(!_usedNonces[methodId_][nonce_], "TSSSigner: nonce used");
+
+        _usedNonces[methodId_][nonce_] = true;
     }
 
     function _checkSignature(bytes32 signHash_, bytes memory signature_) internal view {
@@ -61,5 +72,5 @@ abstract contract TSSSigner {
         return address(uint160(uint256(keccak256(pubKey_))));
     }
 
-    uint256[48] private _gap;
+    uint256[46] private _gap;
 }
