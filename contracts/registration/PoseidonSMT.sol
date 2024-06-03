@@ -15,7 +15,6 @@ import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
 
 contract PoseidonSMT is Initializable, UUPSSignableUpgradeable, TSSSigner {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
-
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 
