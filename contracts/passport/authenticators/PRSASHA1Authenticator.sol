@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {RSA} from "../utils/RSA.sol";
-import {SHA1} from "../utils/SHA1.sol";
+import {RSA} from "../../utils/RSA.sol";
+import {SHA1} from "../../utils/SHA1.sol";
 
-contract RSASHA1Authenticator {
+contract PRSASHA1Authenticator {
     using RSA for bytes;
     using SHA1 for bytes;
 

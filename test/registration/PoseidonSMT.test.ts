@@ -9,8 +9,8 @@ import { ERC1967Proxy__factory, PoseidonSMT } from "@ethers-v6";
 import { getPoseidon, Reverter, TSSMerkleTree, TSSSigner } from "@/test/helpers";
 import { PoseidonSMTMethodId } from "@/test/helpers/constants";
 
-const TREE_SIZE = 80;
-const CHAIN_NAME = "Tests";
+const treeSize = 80;
+const chainName = "Tests";
 
 describe("PoseidonSMT", () => {
   const reverter = new Reverter();
@@ -29,7 +29,7 @@ describe("PoseidonSMT", () => {
   const addRegistrations = async (registrations: string[]) => {
     const operations = merkleTree.addRegistrationsOperation(
       registrations,
-      CHAIN_NAME,
+      chainName,
       await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
       await tree.getAddress(),
     );
@@ -40,7 +40,7 @@ describe("PoseidonSMT", () => {
   const removeRegistrations = async (registrations: string[]) => {
     const operations = merkleTree.removeRegistrationsOperation(
       registrations,
-      CHAIN_NAME,
+      chainName,
       await tree.getNonce(PoseidonSMTMethodId.RemoveRegistrations),
       await tree.getAddress(),
     );
@@ -64,7 +64,7 @@ describe("PoseidonSMT", () => {
 
     const proxy = await Proxy.deploy(await tree.getAddress(), "0x");
     tree = tree.attach(await proxy.getAddress()) as PoseidonSMT;
-    await tree.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, REGISTRATION.address);
+    await tree.__PoseidonSMT_init(SIGNER.address, chainName, treeSize, REGISTRATION.address);
 
     signHelper = new TSSSigner(SIGNER);
     merkleTree = new TSSMerkleTree(signHelper);
@@ -77,7 +77,7 @@ describe("PoseidonSMT", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(tree.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, REGISTRATION.address)).to.be.revertedWith(
+        expect(tree.__PoseidonSMT_init(SIGNER.address, chainName, treeSize, REGISTRATION.address)).to.be.revertedWith(
           "Initializable: contract is already initialized",
         );
       });
@@ -108,7 +108,7 @@ describe("PoseidonSMT", () => {
 
         let operation = merkleTree.addRegistrationsOperation(
           [ADDRESS1.address],
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
           await tree.getAddress(),
           ANOTHER_SIGNER,
@@ -120,7 +120,7 @@ describe("PoseidonSMT", () => {
 
         operation = merkleTree.removeRegistrationsOperation(
           [ADDRESS1.address],
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.RemoveRegistrations),
           await tree.getAddress(),
           ANOTHER_SIGNER,
@@ -134,7 +134,7 @@ describe("PoseidonSMT", () => {
       it("should revert if trying to use same signature twice", async () => {
         const operation = merkleTree.addRegistrationsOperation(
           [ADDRESS1.address],
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
           await tree.getAddress(),
         );
@@ -151,7 +151,7 @@ describe("PoseidonSMT", () => {
       const signature = merkleTree.authorizeUpgradeOperation(
         PoseidonSMTMethodId.None,
         ethers.ZeroAddress,
-        CHAIN_NAME,
+        chainName,
         await tree.getNonce(PoseidonSMTMethodId.AddRegistrations),
         await tree.getAddress(),
       );
@@ -193,7 +193,7 @@ describe("PoseidonSMT", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           await newTree.getAddress(),
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.AuthorizeUpgrade),
           await tree.getAddress(),
         );
@@ -207,7 +207,7 @@ describe("PoseidonSMT", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           ethers.ZeroAddress,
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.AuthorizeUpgrade),
           await tree.getAddress(),
         );
@@ -223,7 +223,7 @@ describe("PoseidonSMT", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           PoseidonSMTMethodId.AuthorizeUpgrade,
           await tree.getAddress(),
-          CHAIN_NAME,
+          chainName,
           await tree.getNonce(PoseidonSMTMethodId.AuthorizeUpgrade),
           await tree.getAddress(),
           ANOTHER_SIGNER,

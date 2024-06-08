@@ -5,18 +5,18 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {ECDSASHA1Authenticator} from "../authenticators/ECDSASHA1Authenticator.sol";
-import {Bytes2Poseidon} from "../utils/Bytes2Poseidon.sol";
+import {IPassportDispatcher} from "../../interfaces/dispatchers/IPassportDispatcher.sol";
+import {PECDSASHA1Authenticator} from "../authenticators/PECDSASHA1Authenticator.sol";
+import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 
-contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
+contract PECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
     using Bytes2Poseidon for bytes;
     using VerifierHelper for address;
 
     address public authenticator;
     address public verifier;
 
-    function __ECDSASHA1Dispatcher_init(
+    function __PECDSASHA1Dispatcher_init(
         address authenticator_,
         address verifier_
     ) external initializer {
@@ -45,7 +45,7 @@ contract ECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
             y_ := mload(add(passportPublicKey_, 64))
         }
 
-        return ECDSASHA1Authenticator(authenticator).authenticate(challenge_, r_, s_, x_, y_);
+        return PECDSASHA1Authenticator(authenticator).authenticate(challenge_, r_, s_, x_, y_);
     }
 
     /**

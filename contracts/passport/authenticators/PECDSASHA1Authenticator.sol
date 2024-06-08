@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {SHA1} from "../utils/SHA1.sol";
+import {SHA1} from "../../utils/SHA1.sol";
 
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract ECDSASHA1Authenticator {
+contract PECDSASHA1Authenticator {
     using SHA1 for bytes;
 
     // brainpool256r1 parameters

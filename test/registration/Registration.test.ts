@@ -27,8 +27,8 @@ import {
   ECDSAPassportNewIdentityPublicSignals,
 } from "@/test/helpers/constants";
 
-const TREE_SIZE = 80;
-const CHAIN_NAME = "Tests";
+const treeSize = 80;
+const chainName = "Tests";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
@@ -91,7 +91,7 @@ describe("Registration", () => {
     const operation = merkleTree.addDispatcherOperation(
       dispatcherType,
       dispatcher,
-      CHAIN_NAME,
+      chainName,
       await registration.getNonce(RegistrationMethodId.AddDispatcher),
       await registration.getAddress(),
     );
@@ -101,7 +101,7 @@ describe("Registration", () => {
   const removeDispatcher = async (dispatcherType: string) => {
     const operation = merkleTree.removeDispatcherOperation(
       dispatcherType,
-      CHAIN_NAME,
+      chainName,
       await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
       await registration.getAddress(),
     );
@@ -140,15 +140,15 @@ describe("Registration", () => {
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
     registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
+    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, treeSize, await registration.getAddress());
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
+    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, treeSize, await registration.getAddress());
 
     await registration.__Registration_init(
       SIGNER.address,
-      CHAIN_NAME,
+      chainName,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
@@ -171,7 +171,7 @@ describe("Registration", () => {
         expect(
           registration.__Registration_init(
             SIGNER.address,
-            CHAIN_NAME,
+            chainName,
             ethers.ZeroAddress,
             ethers.ZeroAddress,
             icaoMerkleRoot,
@@ -205,7 +205,7 @@ describe("Registration", () => {
         let operation = merkleTree.addDispatcherOperation(
           ethers.hexlify(ethers.randomBytes(32)),
           SIGNER.address,
-          CHAIN_NAME,
+          chainName,
           await registration.getNonce(RegistrationMethodId.AddDispatcher),
           await registration.getAddress(),
           ANOTHER_SIGNER,
@@ -217,7 +217,7 @@ describe("Registration", () => {
 
         operation = merkleTree.removeDispatcherOperation(
           ethers.hexlify(ethers.randomBytes(32)),
-          CHAIN_NAME,
+          chainName,
           await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
           await registration.getAddress(),
           ANOTHER_SIGNER,
@@ -233,7 +233,7 @@ describe("Registration", () => {
       const hash = merkleTree.getArbitraryDataSignHash(
         RegistrationMethodId.None,
         ethers.ZeroHash,
-        CHAIN_NAME,
+        chainName,
         await registration.getNonce(RegistrationMethodId.None),
         await registration.getAddress(),
       );
@@ -603,7 +603,7 @@ describe("Registration", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           RegistrationMethodId.AuthorizeUpgrade,
           await newRegistration.getAddress(),
-          CHAIN_NAME,
+          chainName,
           await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
           await registration.getAddress(),
         );
@@ -617,7 +617,7 @@ describe("Registration", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           RegistrationMethodId.AuthorizeUpgrade,
           ethers.ZeroAddress,
-          CHAIN_NAME,
+          chainName,
           await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
           await registration.getAddress(),
         );
@@ -633,7 +633,7 @@ describe("Registration", () => {
         const signature = merkleTree.authorizeUpgradeOperation(
           RegistrationMethodId.AuthorizeUpgrade,
           await registration.getAddress(),
-          CHAIN_NAME,
+          chainName,
           await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
           await registration.getAddress(),
           ANOTHER_SIGNER,
