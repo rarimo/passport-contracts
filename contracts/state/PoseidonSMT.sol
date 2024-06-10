@@ -9,10 +9,9 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
-import {TSSSigner} from "./TSSSigner.sol";
-import {Upgradeable} from "./Upgradeable.sol";
+import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 
-contract PoseidonSMT is Initializable, Upgradeable {
+contract PoseidonSMT is Initializable, TSSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;

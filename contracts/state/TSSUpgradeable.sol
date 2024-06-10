@@ -5,7 +5,7 @@ import {TSSSigner} from "./TSSSigner.sol";
 
 import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
 
-abstract contract Upgradeable is UUPSSignableUpgradeable, TSSSigner {
+abstract contract TSSUpgradeable is UUPSSignableUpgradeable, TSSSigner {
     uint8 public constant MAGIC_ID = 255;
 
     function implementation() external view returns (address) {

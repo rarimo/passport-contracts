@@ -8,11 +8,10 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 
-import {Upgradeable} from "./Upgradeable.sol";
+import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
-import {TSSSigner} from "./TSSSigner.sol";
 
-contract StateKeeper is Initializable, Upgradeable {
+contract StateKeeper is Initializable, TSSUpgradeable {
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 

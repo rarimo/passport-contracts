@@ -1,26 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
-
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {Upgradeable} from "../state/Upgradeable.sol";
+import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
-import {TSSSigner} from "../state/TSSSigner.sol";
-
-import {X509} from "../utils/X509.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract Registration is Initializable, Upgradeable {
+contract Registration is Initializable, TSSUpgradeable {
     using MerkleProof for bytes32[];
-    using X509 for bytes;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
@@ -280,7 +274,7 @@ contract Registration is Initializable, Upgradeable {
     ) internal {
         require(
             dispatchers[dispatcherType_] == address(0),
-            "Registration: passport dispatcher already exists"
+            "Registration: dispatcher already exists"
         );
 
         dispatchers[dispatcherType_] = dispatcher_;
@@ -366,7 +360,7 @@ contract Registration is Initializable, Upgradeable {
 
         require(
             address(dispatcher_) != address(0),
-            "Registration: icao dispatcher does not exist"
+            "Registration: certificate dispatcher does not exist"
         );
     }
 
