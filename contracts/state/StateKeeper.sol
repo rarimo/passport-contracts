@@ -3,17 +3,15 @@ pragma solidity 0.8.16;
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
+import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
 import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
 contract StateKeeper is Initializable, TSSUpgradeable {
-    using SetHelper for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using DynamicSet for DynamicSet.StringSet;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
@@ -51,7 +49,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
 
     mapping(bytes32 => bool) internal _usedSignatures;
 
-    EnumerableSet.AddressSet internal _registrations;
+    DynamicSet.StringSet internal _registrationKeys;
+    mapping(string => address) internal _registrations;
+    mapping(address => bool) internal _registrationExists;
 
     event CertificateAdded(bytes32 certificateKey, uint256 expirationTimestamp);
     event CertificateRemoved(bytes32 certificateKey);
@@ -253,9 +253,24 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         _useNonce(uint8(methodId_), nonce_);
 
         if (methodId_ == MethodId.AddRegistrations) {
-            _registrations.add(abi.decode(data_, (address[])));
+            (string[] memory keys_, address[] memory values_) = abi.decode(
+                data_,
+                (string[], address[])
+            );
+
+            for (uint256 i = 0; i < keys_.length; i++) {
+                require(_registrationKeys.add(keys_[i]), "StateKeeper: duplicate registration");
+                _registrations[keys_[i]] = values_[i];
+                _registrationExists[values_[i]] = true;
+            }
         } else if (methodId_ == MethodId.RemoveRegistrations) {
-            _registrations.remove(abi.decode(data_, (address[])));
+            string[] memory keys_ = abi.decode(data_, (string[]));
+
+            for (uint256 i = 0; i < keys_.length; i++) {
+                delete _registrationExists[_registrations[keys_[i]]];
+                delete _registrations[keys_[i]];
+                _registrationKeys.remove(keys_[i]);
+            }
         } else {
             revert("StateKeeper: Invalid method");
         }
@@ -292,7 +307,24 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         }
     }
 
+    function getRegistrations()
+        external
+        view
+        returns (string[] memory keys_, address[] memory values_)
+    {
+        keys_ = _registrationKeys.values();
+        values_ = new address[](keys_.length);
+
+        for (uint256 i = 0; i < keys_.length; i++) {
+            values_[i] = _registrations[keys_[i]];
+        }
+    }
+
+    function getRegistrationByKey(string memory key_) external view returns (address) {
+        return _registrations[key_];
+    }
+
     function _onlyRegistration() internal view {
-        require(_registrations.contains(msg.sender), "StateKeeper: not a registration");
+        require(_registrationExists[msg.sender], "StateKeeper: not a registration");
     }
 }
