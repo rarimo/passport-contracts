@@ -223,17 +223,6 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     }
 
     /**
-     * @notice Change the Rarimo TSS signer via Rarimo TSS
-     * @param newSignerPubKey_ the new signer public key
-     * @param signature_ the Rarimo TSS signature
-     */
-    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
-        _checkSignature(keccak256(newSignerPubKey_), signature_);
-
-        signer = _convertPubKeyToAddress(newSignerPubKey_);
-    }
-
-    /**
      * @notice Add or Remove registrations via Rarimo TSS
      * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
      * @param data_ An ABI encoded array of addresses to add or remove
@@ -322,6 +311,10 @@ contract StateKeeper is Initializable, TSSUpgradeable {
 
     function getRegistrationByKey(string memory key_) external view returns (address) {
         return _registrations[key_];
+    }
+
+    function isRegistration(address registration_) external view returns (bool) {
+        return _registrationExists[registration_];
     }
 
     function _onlyRegistration() internal view {

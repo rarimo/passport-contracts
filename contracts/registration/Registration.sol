@@ -201,17 +201,6 @@ contract Registration is Initializable, TSSUpgradeable {
     }
 
     /**
-     * @notice Change the Rarimo TSS signer via Rarimo TSS
-     * @param newSignerPubKey_ the new signer public key
-     * @param signature_ the Rarimo TSS signature
-     */
-    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
-        _checkSignature(keccak256(newSignerPubKey_), signature_);
-
-        signer = _convertPubKeyToAddress(newSignerPubKey_);
-    }
-
-    /**
      * @notice Adds or removes a dispatcher via Rarimo TSS
      * @param methodId_ the method id (AddDispatcher or RemoveDispatcher)
      * @param data_ an ABI encoded data for the method

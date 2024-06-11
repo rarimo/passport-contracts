@@ -56,17 +56,6 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     }
 
     /**
-     * @notice Change the Rarimo TSS signer via Rarimo TSS
-     * @param newSignerPubKey_ the new signer public key
-     * @param signature_ the Rarimo TSS signature
-     */
-    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
-        _checkSignature(keccak256(newSignerPubKey_), signature_);
-
-        signer = _convertPubKeyToAddress(newSignerPubKey_);
-    }
-
-    /**
      * @notice Adds the new element to the tree.
      */
     function add(bytes32 keyOfElement_, bytes32 element_) external onlyStateKeeper withRootUpdate {

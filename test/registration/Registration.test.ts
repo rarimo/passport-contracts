@@ -165,6 +165,7 @@ describe("Registration", () => {
       },
     });
     const Registration = await ethers.getContractFactory("RegistrationMock");
+    const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
     registrationSmt = await PoseidonSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
@@ -175,20 +176,20 @@ describe("Registration", () => {
     await deployPRSASHA1Dispatcher();
     await deployPECDSASHA1Dispatcher();
 
-    const Proxy = await ethers.getContractFactory("ERC1967Proxy");
     let proxy = await Proxy.deploy(await stateKeeper.getAddress(), "0x");
     stateKeeper = stateKeeper.attach(await proxy.getAddress()) as StateKeeperMock;
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
     registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
 
     proxy = await Proxy.deploy(await registration.getAddress(), "0x");
     registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+
+    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
 
     await stateKeeper.__StateKeeper_init(
       SIGNER.address,
