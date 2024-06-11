@@ -6,7 +6,7 @@ import { MerkleTree } from "merkletreejs";
 import { TSSSigner } from "./TSSSigner";
 
 import { TSSOperation } from "@/test/helpers/types";
-import { PoseidonSMTMethodId, RegistrationMethodId } from "@/test/helpers/constants";
+import { TSSUpgradeableId, StateKeeperMethodId, RegistrationMethodId } from "@/test/helpers/constants";
 
 export class TSSMerkleTree {
   public tree: MerkleTree;
@@ -59,6 +59,7 @@ export class TSSMerkleTree {
   }
 
   public addDispatcherOperation(
+    operationType: RegistrationMethodId.AddPassportDispatcher | RegistrationMethodId.AddCertificateDispatcher,
     dispatcherType: string,
     dispatcher: string,
     chaneName: string,
@@ -69,13 +70,7 @@ export class TSSMerkleTree {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32", "address"], [dispatcherType, dispatcher]);
 
-    const hash = this.getArbitraryDataSignHash(
-      RegistrationMethodId.AddDispatcher,
-      data,
-      chaneName,
-      nonce,
-      contractAddress,
-    );
+    const hash = this.getArbitraryDataSignHash(operationType, data, chaneName, nonce, contractAddress);
 
     return {
       data,
@@ -84,6 +79,7 @@ export class TSSMerkleTree {
   }
 
   public removeDispatcherOperation(
+    operationType: RegistrationMethodId.RemovePassportDispatcher | RegistrationMethodId.RemoveCertificateDispatcher,
     dispatcherType: string,
     chaneName: string,
     nonce: BigNumberish,
@@ -93,13 +89,7 @@ export class TSSMerkleTree {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32"], [dispatcherType]);
 
-    const hash = this.getArbitraryDataSignHash(
-      RegistrationMethodId.RemoveDispatcher,
-      data,
-      chaneName,
-      nonce,
-      contractAddress,
-    );
+    const hash = this.getArbitraryDataSignHash(operationType, data, chaneName, nonce, contractAddress);
 
     return {
       data,
@@ -118,7 +108,7 @@ export class TSSMerkleTree {
     const data = encoder.encode(["address[]"], [registrations]);
 
     const hash = this.getArbitraryDataSignHash(
-      PoseidonSMTMethodId.AddRegistrations,
+      StateKeeperMethodId.AddRegistrations,
       data,
       chaneName,
       nonce,
@@ -142,7 +132,7 @@ export class TSSMerkleTree {
     const data = encoder.encode(["address[]"], [registrations]);
 
     const hash = this.getArbitraryDataSignHash(
-      PoseidonSMTMethodId.RemoveRegistrations,
+      StateKeeperMethodId.RemoveRegistrations,
       data,
       chaneName,
       nonce,
@@ -156,7 +146,6 @@ export class TSSMerkleTree {
   }
 
   public authorizeUpgradeOperation(
-    methodId: number,
     newImplementation: string,
     chaneName: string,
     nonce: BigNumberish,
@@ -165,7 +154,7 @@ export class TSSMerkleTree {
   ): string {
     const hash = ethers.solidityPackedKeccak256(
       ["address", "uint8", "address", "string", "uint256"],
-      [contractAddress, methodId, newImplementation, chaneName, nonce],
+      [contractAddress, TSSUpgradeableId.MAGIC_ID, newImplementation, chaneName, nonce],
     );
 
     return this.getProof(hash, true, anotherSigner);

@@ -1,18 +1,22 @@
-import { VerifierHelper } from "@/generated-types/ethers/contracts/dispatchers/RSASHA1Dispatcher";
+import { VerifierHelper } from "@/generated-types/ethers/contracts/passport/dispatchers/PRSASHA1Dispatcher";
+
+export enum StateKeeperMethodId {
+  None,
+  ChangeICAOMasterTreeRoot,
+  AddRegistrations,
+  RemoveRegistrations,
+}
 
 export enum RegistrationMethodId {
   None,
-  AuthorizeUpgrade,
-  ChangeICAOMasterTreeRoot,
-  AddDispatcher,
-  RemoveDispatcher,
+  AddCertificateDispatcher,
+  RemoveCertificateDispatcher,
+  AddPassportDispatcher,
+  RemovePassportDispatcher,
 }
 
-export enum PoseidonSMTMethodId {
-  None,
-  AuthorizeUpgrade,
-  AddRegistrations,
-  RemoveRegistrations,
+export enum TSSUpgradeableId {
+  MAGIC_ID = 255,
 }
 
 export const RSAPassportIdentityProof: VerifierHelper.ProofPointsStruct = {

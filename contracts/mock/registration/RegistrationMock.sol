@@ -6,11 +6,11 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {Registration} from "../../registration/Registration.sol";
 
 contract RegistrationMock is Registration {
-    function addPassportDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
+    function mockAddPassportDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
         _addDispatcher(passportDispatchers, dispatcherType_, dispatcher_);
     }
 
-    function addCertificateDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
+    function mockAddCertificateDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
         _addDispatcher(certificateDispatchers, dispatcherType_, dispatcher_);
     }
 

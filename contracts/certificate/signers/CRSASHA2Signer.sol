@@ -12,8 +12,8 @@ contract CRSASHA2Signer {
 
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
-        bytes memory icaoMemberKey_,
-        bytes memory icaoMemberSignature_
+        bytes memory icaoMemberSignature_,
+        bytes memory icaoMemberKey_
     ) external view returns (bool) {
         bytes32 x509SAHash = sha256(x509SignedAttributes_);
 

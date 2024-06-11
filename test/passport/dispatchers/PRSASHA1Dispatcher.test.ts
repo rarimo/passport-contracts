@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { RSASHA1Dispatcher } from "@ethers-v6";
+import { PRSASHA1Dispatcher } from "@ethers-v6";
 
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import {
@@ -13,27 +13,27 @@ import {
   RSAPassportIdentityPublicSignals,
 } from "@/test/helpers/constants";
 
-describe("RSASHA1Dispatcher", () => {
+describe("PRSASHA1Dispatcher", () => {
   const reverter = new Reverter();
 
-  let dispatcher: RSASHA1Dispatcher;
+  let dispatcher: PRSASHA1Dispatcher;
 
   before("setup", async () => {
-    const RSASHA1Verifier = await ethers.getContractFactory("RSAECDSAVerifier");
-    const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
-    const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
+    const PRSASHA1Verifier = await ethers.getContractFactory("PRSAECDSAVerifier");
+    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
+    const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
-    dispatcher = await RSASHA1Dispatcher.deploy();
+    dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    const rsaSha1Verifier = await RSASHA1Verifier.deploy();
-    const rsaSha1Authenticator = await RSASHA1Authenticator.deploy();
-    dispatcher = await RSASHA1Dispatcher.deploy();
+    const rsaSha1Verifier = await PRSASHA1Verifier.deploy();
+    const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
+    dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    await dispatcher.__RSASHA1Dispatcher_init(
+    await dispatcher.__PRSASHA1Dispatcher_init(
       await rsaSha1Authenticator.getAddress(),
       await rsaSha1Verifier.getAddress(),
     );
@@ -46,7 +46,7 @@ describe("RSASHA1Dispatcher", () => {
   describe("#init", () => {
     it("should not init twice", async () => {
       expect(
-        dispatcher.__RSASHA1Dispatcher_init(
+        dispatcher.__PRSASHA1Dispatcher_init(
           ethers.hexlify(ethers.randomBytes(20)),
           ethers.hexlify(ethers.randomBytes(20)),
         ),

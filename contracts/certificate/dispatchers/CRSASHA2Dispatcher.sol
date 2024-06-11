@@ -31,14 +31,14 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
      */
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
-        bytes memory icaoMemberKey_,
-        bytes memory icaoMemberSignature_
+        bytes memory icaoMemberSignature_,
+        bytes memory icaoMemberKey_
     ) external view override returns (bool) {
         return
             CRSASHA2Signer(signer).verifyICAOSignature(
                 x509SignedAttributes_,
-                icaoMemberKey_,
-                icaoMemberSignature_
+                icaoMemberSignature_,
+                icaoMemberKey_
             );
     }
 
