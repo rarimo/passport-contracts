@@ -9,19 +9,28 @@ import {ICertificateDispatcher} from "../../interfaces/dispatchers/ICertificateD
 
 import {CRSASHA2Signer} from "../signers/CRSASHA2Signer.sol";
 
+import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 import {RSA} from "../../utils/RSA.sol";
 import {X509} from "../../utils/X509.sol";
 
 contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
+    using Bytes2Poseidon for bytes;
     using X509 for bytes;
     using RSA for bytes;
 
-    uint256 public constant X509_KEY_BYTE_LENGTH = 512; // 4096 bits
+    uint256 public keyByteLength;
+    bytes public keyCheckPrefix;
 
     address public signer;
 
-    function __CRSASHA2Dispatcher_init(address signer_) external initializer {
+    function __CRSASHA2Dispatcher_init(
+        address signer_,
+        uint256 keyByteLength_,
+        bytes calldata keyCheckPrefix_
+    ) external initializer {
         signer = signer_;
+        keyByteLength = keyByteLength_;
+        keyCheckPrefix = keyCheckPrefix_;
     }
 
     /**
@@ -53,53 +62,17 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
         bytes memory x509SignedAttributes_,
         uint256 byteOffset_
     ) external view override returns (bytes memory) {
-        return x509SignedAttributes_.extractPublicKey(byteOffset_, X509_KEY_BYTE_LENGTH);
+        return x509SignedAttributes_.extractPublicKey(keyCheckPrefix, byteOffset_, keyByteLength);
     }
 
     /**
-     * @notice Poseidon5 hash of the 4096 bit RSA X509 key.
+     * @notice Poseidon5 hash of the `x509KeyByteLength` long RSA X509 key.
      *
-     * Concatenates the last 8 bytes by a group of 3 to form a poseidon element.
-     *
-     * poseidon5(
-     *   x509Key_.bytes8[last] + x509Key_.bytes8[last - 1] + x509Key_.bytes8[last - 2],
-     *   x509Key_.bytes8[last - 3] + x509Key_.bytes8[last - 4] + x509Key_.bytes8[last - 5],
-     *   ...
-     * )
-     *
-     * The algorithm is such to accommodate for long arithmetic in circuits.
+     * See X509 library for more information
      */
     function getCertificateKey(
         bytes memory certificatePublicKey_
     ) external pure override returns (uint256 keyHash_) {
-        uint256[5] memory decomposed_;
-
-        assembly {
-            let position_ := add(certificatePublicKey_, mload(certificatePublicKey_)) // load the last 32 bytes
-
-            for {
-                let i := 0
-            } lt(i, 5) {
-                i := add(i, 1)
-            } {
-                let element_ := mload(position_)
-                let reversed_ := 0
-
-                for {
-                    let j := 0
-                } lt(j, 3) {
-                    j := add(j, 1)
-                } {
-                    let extracted_ := and(shr(mul(j, 64), element_), 0xffffffffffffffff) // pack by 3 via shifting
-                    reversed_ := or(shl(64, reversed_), extracted_)
-                }
-
-                mstore(add(decomposed_, mul(i, 32)), reversed_)
-
-                position_ := sub(position_, 24)
-            }
-        }
-
-        return PoseidonUnit5L.poseidon(decomposed_);
+        return certificatePublicKey_.hashPacked();
     }
 }

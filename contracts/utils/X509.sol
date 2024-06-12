@@ -42,18 +42,19 @@ library X509 {
     }
 
     /**
-     * @notice extracts 4096 bit RSA X509 public key from the certificate.
+     * @notice extracts `keyLength_` bit X509 public key from the certificate.
      *
-     * The key starts with "0282020100" sequence.
+     * The key starts with `checkPrefix_` bytes sequence.
      *
      * Straightforward approach by copying memory from the given position
      */
     function extractPublicKey(
         bytes memory x509SignedAttributes_,
+        bytes memory checkPrefix_,
         uint256 keyOffset_,
         uint256 keyLength_
     ) internal view returns (bytes memory x509Key_) {
-        _checkPrefix(x509SignedAttributes_, hex"0282020100", keyOffset_);
+        _checkPrefix(x509SignedAttributes_, checkPrefix_, keyOffset_);
 
         x509Key_ = new bytes(keyLength_);
 

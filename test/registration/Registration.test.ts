@@ -5,7 +5,7 @@ import { HDNodeWallet } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import { C_RSA, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
+import { C_RSA_4096, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
 
 import {
   Registration,
@@ -33,6 +33,7 @@ import {
   ECDSAPassportIdentityProof,
   ECDSAPassportPubKey,
   ECDSAPassportIdentityPublicSignals,
+  x509CertificateKeyCheckPrefix,
   x509CertificateSA,
   ECDSAPassportNewIdentityPublicSignals,
 } from "@/test/helpers/constants";
@@ -73,7 +74,11 @@ describe("Registration", () => {
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
     cRsaSha2Dispatcher = await CRSASHA2Dispatcher.deploy();
 
-    await cRsaSha2Dispatcher.__CRSASHA2Dispatcher_init(await rsaSha2Signer.getAddress());
+    await cRsaSha2Dispatcher.__CRSASHA2Dispatcher_init(
+      await rsaSha2Signer.getAddress(),
+      512,
+      x509CertificateKeyCheckPrefix,
+    );
   };
 
   const deployPRSASHA1Dispatcher = async () => {
@@ -206,7 +211,11 @@ describe("Registration", () => {
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registration.getAddress()]);
 
-    await addDispatcher(RegistrationMethodId.AddCertificateDispatcher, C_RSA, await cRsaSha2Dispatcher.getAddress());
+    await addDispatcher(
+      RegistrationMethodId.AddCertificateDispatcher,
+      C_RSA_4096,
+      await cRsaSha2Dispatcher.getAddress(),
+    );
     await addDispatcher(
       RegistrationMethodId.AddPassportDispatcher,
       P_RSA_SHA1_2688,
@@ -313,7 +322,7 @@ describe("Registration", () => {
         const root = merkleTree.getRoot();
 
         const certificate: Registration.CertificateStruct = {
-          dataType: C_RSA,
+          dataType: C_RSA_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
@@ -342,7 +351,7 @@ describe("Registration", () => {
         const root = merkleTree.getRoot();
 
         const certificate: Registration.CertificateStruct = {
-          dataType: C_RSA,
+          dataType: C_RSA_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,

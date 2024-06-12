@@ -8,7 +8,7 @@ import {
   PECDSASHA1Dispatcher__factory,
 } from "@ethers-v6";
 
-import { C_RSA, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
+import { C_RSA_4096, C_RSA_2048, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
 
@@ -19,12 +19,14 @@ export = async (deployer: Deployer) => {
 
   const registration = await deployer.deployed(RegistrationMock__factory, "Registration Proxy");
 
-  const cRsaDispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory);
+  const cRsa4096Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 512");
+  const cRsa2048Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 256");
 
   const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory);
   const pEcdsaSha12704Dispatcher = await deployer.deployed(PECDSASHA1Dispatcher__factory);
 
-  await registration.mockAddCertificateDispatcher(C_RSA, await cRsaDispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_4096, await cRsa4096Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_2048, await cRsa2048Dispatcher.getAddress());
 
   await registration.mockAddPassportDispatcher(P_RSA_SHA1_2688, await pRsaSha12688Dispatcher.getAddress());
   await registration.mockAddPassportDispatcher(P_ECDSA_SHA1_2704, await pEcdsaSha12704Dispatcher.getAddress());

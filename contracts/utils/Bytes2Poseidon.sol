@@ -53,4 +53,47 @@ library Bytes2Poseidon {
 
         return PoseidonUnit5L.poseidon(decomposed_);
     }
+
+    /**
+     * @notice Concatenates the last 8 bytes by a group of 3 to form a poseidon element.
+     *
+     * poseidon5(
+     *   byteArray_.bytes8[last] + byteArray_.bytes8[last - 1] + byteArray_.bytes8[last - 2],
+     *   byteArray_.bytes8[last - 3] + byteArray_.bytes8[last - 4] + byteArray_.bytes8[last - 5],
+     *   ...
+     * )
+     *
+     * The algorithm is such to accommodate for long arithmetic in circuits.
+     */
+    function hashPacked(bytes memory byteArray_) internal pure returns (uint256) {
+        uint256[5] memory decomposed_;
+
+        assembly {
+            let position_ := add(byteArray_, mload(byteArray_)) // load the last 32 bytes
+
+            for {
+                let i := 0
+            } lt(i, 5) {
+                i := add(i, 1)
+            } {
+                let element_ := mload(position_)
+                let reversed_ := 0
+
+                for {
+                    let j := 0
+                } lt(j, 3) {
+                    j := add(j, 1)
+                } {
+                    let extracted_ := and(shr(mul(j, 64), element_), 0xffffffffffffffff) // pack by 3 via shifting
+                    reversed_ := or(shl(64, reversed_), extracted_)
+                }
+
+                mstore(add(decomposed_, mul(i, 32)), reversed_)
+
+                position_ := sub(position_, 24)
+            }
+        }
+
+        return PoseidonUnit5L.poseidon(decomposed_);
+    }
 }
