@@ -329,6 +329,9 @@ describe("Registration", () => {
         expect(await registration.registerCertificate(certificate, icaoMember, proof))
           .to.emit(registration, "CertificateRegistered")
           .withArgs("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
+        expect(
+          await stateKeeper.getCertificateInfo("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72"),
+        ).to.deep.equal([1915341686n]);
       });
     });
 

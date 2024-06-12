@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { HDNodeWallet } from "ethers";
+import { HDNodeWallet, ZeroHash } from "ethers";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -50,6 +50,18 @@ describe("PoseidonSMT", () => {
   });
 
   afterEach(reverter.revert);
+
+  describe("access", () => {
+    it("should not be called by non-registrations", async () => {
+      await expect(tree.connect(ADDRESS1).add(ZeroHash, ZeroHash)).to.be.rejectedWith(
+        "PoseidonSMT: not a state keeper",
+      );
+      await expect(tree.connect(ADDRESS1).update(ZeroHash, ZeroHash)).to.be.rejectedWith(
+        "PoseidonSMT: not a state keeper",
+      );
+      await expect(tree.connect(ADDRESS1).remove(ZeroHash)).to.be.rejectedWith("PoseidonSMT: not a state keeper");
+    });
+  });
 
   describe("$init flow", () => {
     describe("#init", () => {

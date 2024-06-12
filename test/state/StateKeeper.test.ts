@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { HDNodeWallet } from "ethers";
+import { HDNodeWallet, ZeroAddress, ZeroHash } from "ethers";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -81,7 +81,20 @@ describe("StateKeeper", () => {
 
   afterEach(reverter.revert);
 
-  describe("$TSS flow", async () => {
+  describe("access", () => {
+    it("should not be called by non-registrations", async () => {
+      await expect(stateKeeper.addCertificate(ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
+      await expect(stateKeeper.removeCertificate(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
+      await expect(stateKeeper.addBond(ZeroHash, ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
+      await expect(stateKeeper.revokeBond(ZeroHash, ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
+      await expect(stateKeeper.reissueBondIdentity(ZeroHash, ZeroHash, 0)).to.be.rejectedWith(
+        "StateKeeper: not a registration",
+      );
+      await expect(stateKeeper.useSignature(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
+    });
+  });
+
+  describe("$TSS flow", () => {
     describe("#changeICAOMasterTreeRoot", () => {
       const newIcaoMerkleRoot = "0x3c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
       const timestamp = "123456";
@@ -170,6 +183,8 @@ describe("StateKeeper", () => {
 
         expect(await stateKeeper.isRegistration(ADDRESS1.address)).to.be.true;
         expect(await stateKeeper.isRegistration(ADDRESS2.address)).to.be.false;
+        expect(await stateKeeper.getRegistrationByKey(REG1)).to.equal(ADDRESS1.address);
+        expect(await stateKeeper.getRegistrationByKey(REG2)).to.equal(ZeroAddress);
       });
 
       it("should not be able to add/remove with invalid signer", async () => {
@@ -215,6 +230,21 @@ describe("StateKeeper", () => {
         await expect(
           stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
+      });
+
+      it("should revert if invalid operation was signed", async () => {
+        const hash = merkleTree.getArbitraryDataSignHash(
+          StateKeeperMethodId.None,
+          ethers.ZeroAddress,
+          chainName,
+          await stateKeeper.getNonce(StateKeeperMethodId.None),
+          await stateKeeper.getAddress(),
+        );
+        const signature = merkleTree.getProof(hash, true, undefined);
+
+        await expect(
+          stateKeeper.updateRegistrationSet(StateKeeperMethodId.None, ethers.ZeroAddress, signature),
+        ).to.be.rejectedWith("StateKeeper: Invalid method");
       });
     });
   });
