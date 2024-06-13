@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
 import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 
 contract PoseidonSMT is Initializable, TSSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
-    using SetHelper for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
 

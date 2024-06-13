@@ -149,7 +149,7 @@ contract Registration is Initializable, TSSUpgradeable {
     }
 
     /**
-     * @notice Revokes the passport <> idenitty bond (doesn't actually remove it, sets as "revoked")
+     * @notice Revokes the passport <> identity bond (doesn't actually remove it, sets as "revoked")
      * @param identityKey_ the hash of the public key of an identity
      * @param passport_ the passport info
      */
