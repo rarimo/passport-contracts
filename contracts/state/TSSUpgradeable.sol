@@ -8,6 +8,9 @@ import {UUPSSignableUpgradeable} from "../utils/UUPSSignableUpgradeable.sol";
 abstract contract TSSUpgradeable is UUPSSignableUpgradeable, TSSSigner {
     uint8 public constant MAGIC_ID = 255;
 
+    /**
+     * @notice Etherscan compatibility
+     */
     function implementation() external view returns (address) {
         return _getImplementation();
     }

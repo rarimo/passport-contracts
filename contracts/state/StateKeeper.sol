@@ -42,12 +42,12 @@ contract StateKeeper is Initializable, TSSUpgradeable {
 
     bytes32 public icaoMasterTreeMerkleRoot;
 
+    mapping(bytes32 => bool) public usedSignatures;
+
     mapping(bytes32 => CertificateInfo) internal _certificateInfos;
 
     mapping(bytes32 => PassportInfo) internal _passportInfos;
     mapping(bytes32 => IdentityInfo) internal _identityInfos;
-
-    mapping(bytes32 => bool) internal _usedSignatures;
 
     DynamicSet.StringSet internal _registrationKeys;
     mapping(string => address) internal _registrations;
@@ -83,6 +83,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
     }
 
+    /**
+     * @notice Adds passport's certificate
+     */
     function addCertificate(
         bytes32 certificateKey_,
         uint256 expirationTimestamp_
@@ -96,6 +99,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         emit CertificateAdded(certificateKey_, expirationTimestamp_);
     }
 
+    /**
+     * @notice Removes passport's certificate
+     */
     function removeCertificate(bytes32 certificateKey_) external onlyRegistration {
         CertificateInfo storage _info = _certificateInfos[certificateKey_];
 
@@ -111,6 +117,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         emit CertificateRemoved(certificateKey_);
     }
 
+    /**
+     * @notice Adds new identity bond
+     */
     function addBond(
         bytes32 passportKey_,
         bytes32 identityKey_,
@@ -143,6 +152,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         emit BondAdded(passportKey_, identityKey_);
     }
 
+    /**
+     * @notice Revoked identity bond
+     */
     function revokeBond(bytes32 passportKey_, bytes32 identityKey_) external onlyRegistration {
         PassportInfo storage _passportInfo = _passportInfos[passportKey_];
         IdentityInfo storage _identityInfo = _identityInfos[identityKey_];
@@ -167,6 +179,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         emit BondRevoked(passportKey_, identityKey_);
     }
 
+    /**
+     * @notice Reissues identity bond
+     */
     function reissueBondIdentity(
         bytes32 passportKey_,
         bytes32 identityKey_,
@@ -197,10 +212,13 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         emit BondIdentityReissued(passportKey_, identityKey_);
     }
 
+    /**
+     * @notice Stores used signatures throughout the registrations
+     */
     function useSignature(bytes32 sigHash_) external onlyRegistration {
-        require(!_usedSignatures[sigHash_], "StateKeeper: signature used");
+        require(!usedSignatures[sigHash_], "StateKeeper: signature used");
 
-        _usedSignatures[sigHash_] = true;
+        usedSignatures[sigHash_] = true;
     }
 
     /**
@@ -225,7 +243,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Add or Remove registrations via Rarimo TSS
      * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
-     * @param data_ An ABI encoded array of addresses to add or remove
+     * @param data_ An ABI encoded arrays of string keys addresses to add or remove
      * @param proof_ the Rarimo TSS signature with MTP
      */
     function updateRegistrationSet(
@@ -296,6 +314,9 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         }
     }
 
+    /**
+     * @notice Lists all the registrations with their keys
+     */
     function getRegistrations()
         external
         view
@@ -309,10 +330,16 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         }
     }
 
+    /**
+     * @notice Get the registration address by its key
+     */
     function getRegistrationByKey(string memory key_) external view returns (address) {
         return _registrations[key_];
     }
 
+    /**
+     * @notice Checks whether the passed address is a registration
+     */
     function isRegistration(address registration_) external view returns (bool) {
         return _registrationExists[registration_];
     }

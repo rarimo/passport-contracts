@@ -66,6 +66,9 @@ contract Registration is Initializable, TSSUpgradeable {
 
     /**
      * @notice Registers an X509 certificate in the certificates SMT.
+     * @param certificate_ the X509 certificate struct
+     * @param icaoMember_ the ICAO master signer struct
+     * @param icaoMerkleProof_ the ICAO list membership Merkle proof
      */
     function registerCertificate(
         Certificate memory certificate_,
@@ -202,7 +205,8 @@ contract Registration is Initializable, TSSUpgradeable {
 
     /**
      * @notice Adds or removes a dispatcher via Rarimo TSS
-     * @param methodId_ the method id (AddDispatcher or RemoveDispatcher)
+     * @param methodId_ the method id
+     * (AddCertificateDispatcher, AddPassportDispatcher or RemoveCertificateDispatcher, RemovePassportDispatcher)
      * @param data_ an ABI encoded data for the method
      * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
      * - `dispatcherType` of bytes32 for RemoveDispatcher

@@ -3,6 +3,9 @@ pragma solidity 0.8.16;
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
+/**
+ * @notice Certificate dispatcher interface
+ */
 interface ICertificateDispatcher {
     function verifyICAOSignature(
         bytes calldata x509SignedAttributes_,

@@ -10,6 +10,11 @@ contract CRSASHA2Signer {
     uint256 public constant E = 65537; // RSA exponent
     uint256 public constant X509_KEY_BYTE_LENGTH = 512; // 4096 bits
 
+    /**
+     * @notice Verifies ICAO member RSA signature of the X509 certificate SA.
+     *
+     * The last 32 bytes of the decrypted signature is a SHA256 hash of the certificate signed attributes
+     */
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
         bytes memory icaoMemberSignature_,

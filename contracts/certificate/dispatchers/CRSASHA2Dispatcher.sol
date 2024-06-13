@@ -34,9 +34,7 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
     }
 
     /**
-     * @notice Verifiers ICAO member RSA signature of the X509 certificate SA.
-     *
-     * The last 32 bytes of the decrypted signature is a SHA256 hash of the certificate signed attributes
+     * @notice Verifies the ICAO master signature over certificate's signed attributes
      */
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
@@ -51,6 +49,9 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
             );
     }
 
+    /**
+     * @notice Extracts the certificate's expiration timestamp from its signed attributes
+     */
     function getCertificateExpirationTimestamp(
         bytes memory x509SignedAttributes_,
         uint256 byteOffset_
@@ -58,6 +59,9 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
         return x509SignedAttributes_.extractExpirationTimestamp(byteOffset_);
     }
 
+    /**
+     * @notice Extracts the certificate's public key from its signed attributes
+     */
     function getCertificatePublicKey(
         bytes memory x509SignedAttributes_,
         uint256 byteOffset_
