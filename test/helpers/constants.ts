@@ -1,18 +1,22 @@
-import { VerifierHelper } from "@/generated-types/ethers/contracts/dispatchers/RSASHA1Dispatcher";
+import { VerifierHelper } from "@/generated-types/ethers/contracts/passport/dispatchers/PRSASHA1Dispatcher";
+
+export enum StateKeeperMethodId {
+  None,
+  ChangeICAOMasterTreeRoot,
+  AddRegistrations,
+  RemoveRegistrations,
+}
 
 export enum RegistrationMethodId {
   None,
-  AuthorizeUpgrade,
-  ChangeICAOMasterTreeRoot,
-  AddDispatcher,
-  RemoveDispatcher,
+  AddCertificateDispatcher,
+  RemoveCertificateDispatcher,
+  AddPassportDispatcher,
+  RemovePassportDispatcher,
 }
 
-export enum PoseidonSMTMethodId {
-  None,
-  AuthorizeUpgrade,
-  AddRegistrations,
-  RemoveRegistrations,
+export enum TSSUpgradeableId {
+  MAGIC_ID = 255,
 }
 
 export const RSAPassportIdentityProof: VerifierHelper.ProofPointsStruct = {
@@ -178,6 +182,8 @@ export const ECDSAPassportNewIdentitySignature2 =
 
 export const ECDSAPassportNewIdentitySignature3 =
   "0x7fc99586ff8f94aa926a5cf1574df37c19089c4ee8c3d444898ba6e18f6c0dfa514b63f11733823ce0b411ba0fee8b7bfdfeb561748abebbbad093754235d536";
+
+export const x509CertificateKeyCheckPrefix = "0x0282020100";
 
 export const x509CertificateSA =
   "0x308204cda00302010202031870b2300d06092a864886f70d01010b0500308190310b3009060355040613\

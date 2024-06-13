@@ -6,15 +6,13 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {Registration} from "../../registration/Registration.sol";
 
 contract RegistrationMock is Registration {
-    function mockChangeICAOMasterTreeRoot(bytes32 newRoot_) external {
-        icaoMasterTreeMerkleRoot = newRoot_;
+    function mockAddPassportDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
+        _addDispatcher(passportDispatchers, dispatcherType_, dispatcher_);
     }
 
-    function mockPassportData(bytes32 passportKey_, uint256 mockIdentityKey_) external {
-        _passportInfos[bytes32(passportKey_)].activeIdentity = bytes32(mockIdentityKey_);
+    function mockAddCertificateDispatcher(bytes32 dispatcherType_, address dispatcher_) external {
+        _addDispatcher(certificateDispatchers, dispatcherType_, dispatcher_);
     }
 
-    function mockIdentityData(uint256 identityKey_, bytes32 mockPassportKey_) external {
-        _identityInfos[bytes32(identityKey_)].activePassport = bytes32(mockPassportKey_);
-    }
+    function _authorizeUpgrade(address) internal pure virtual override {}
 }

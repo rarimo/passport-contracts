@@ -2,17 +2,17 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 
-import { ECDSASHA1Authenticator } from "@ethers-v6";
+import { PECDSASHA1Authenticator } from "@ethers-v6";
 
-describe("ECDSASHA1Authenticator", () => {
+describe("PECDSASHA1Authenticator", () => {
   const reverter = new Reverter();
 
-  let auth: ECDSASHA1Authenticator;
+  let auth: PECDSASHA1Authenticator;
 
   before("setup", async () => {
-    const ECDSASHA1Authenticator = await ethers.getContractFactory("ECDSASHA1Authenticator");
+    const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
 
-    auth = await ECDSASHA1Authenticator.deploy();
+    auth = await PECDSASHA1Authenticator.deploy();
 
     await reverter.snapshot();
   });

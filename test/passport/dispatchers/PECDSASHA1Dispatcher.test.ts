@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { ECDSASHA1Dispatcher } from "@ethers-v6";
+import { PECDSASHA1Dispatcher } from "@ethers-v6";
 
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
@@ -14,27 +14,27 @@ import {
   identityKeyChallenge,
 } from "@/test/helpers/constants";
 
-describe("ECDSASHA1Dispatcher", () => {
+describe("PECDSASHA1Dispatcher", () => {
   const reverter = new Reverter();
 
-  let dispatcher: ECDSASHA1Dispatcher;
+  let dispatcher: PECDSASHA1Dispatcher;
 
   before("setup", async () => {
-    const ECDSASHA1Verifier = await ethers.getContractFactory("RSAECDSAVerifier");
-    const ECDSASHA1Authenticator = await ethers.getContractFactory("ECDSASHA1Authenticator");
-    const ECDSASHA1Dispatcher = await ethers.getContractFactory("ECDSASHA1Dispatcher", {
+    const PECDSASHA1Verifier = await ethers.getContractFactory("PRSAECDSAVerifier");
+    const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
+    const PECDSASHA1Dispatcher = await ethers.getContractFactory("PECDSASHA1Dispatcher", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
       },
     });
 
-    dispatcher = await ECDSASHA1Dispatcher.deploy();
+    dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    const ecdsaSha1Verifier = await ECDSASHA1Verifier.deploy();
-    const ecdsaSha1Authenticator = await ECDSASHA1Authenticator.deploy();
-    dispatcher = await ECDSASHA1Dispatcher.deploy();
+    const ecdsaSha1Verifier = await PECDSASHA1Verifier.deploy();
+    const ecdsaSha1Authenticator = await PECDSASHA1Authenticator.deploy();
+    dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    await dispatcher.__ECDSASHA1Dispatcher_init(
+    await dispatcher.__PECDSASHA1Dispatcher_init(
       await ecdsaSha1Authenticator.getAddress(),
       await ecdsaSha1Verifier.getAddress(),
     );
@@ -47,7 +47,7 @@ describe("ECDSASHA1Dispatcher", () => {
   describe("#init", () => {
     it("should not init twice", async () => {
       expect(
-        dispatcher.__ECDSASHA1Dispatcher_init(
+        dispatcher.__PECDSASHA1Dispatcher_init(
           ethers.hexlify(ethers.randomBytes(20)),
           ethers.hexlify(ethers.randomBytes(20)),
         ),

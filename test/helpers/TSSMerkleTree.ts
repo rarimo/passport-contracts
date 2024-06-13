@@ -6,7 +6,7 @@ import { MerkleTree } from "merkletreejs";
 import { TSSSigner } from "./TSSSigner";
 
 import { TSSOperation } from "@/test/helpers/types";
-import { PoseidonSMTMethodId, RegistrationMethodId } from "@/test/helpers/constants";
+import { TSSUpgradeableId, StateKeeperMethodId, RegistrationMethodId } from "@/test/helpers/constants";
 
 export class TSSMerkleTree {
   public tree: MerkleTree;
@@ -59,9 +59,10 @@ export class TSSMerkleTree {
   }
 
   public addDispatcherOperation(
+    operationType: RegistrationMethodId.AddPassportDispatcher | RegistrationMethodId.AddCertificateDispatcher,
     dispatcherType: string,
     dispatcher: string,
-    chaneName: string,
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
     anotherSigner: HDNodeWallet | undefined = undefined,
@@ -69,13 +70,7 @@ export class TSSMerkleTree {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32", "address"], [dispatcherType, dispatcher]);
 
-    const hash = this.getArbitraryDataSignHash(
-      RegistrationMethodId.AddDispatcher,
-      data,
-      chaneName,
-      nonce,
-      contractAddress,
-    );
+    const hash = this.getArbitraryDataSignHash(operationType, data, chainName, nonce, contractAddress);
 
     return {
       data,
@@ -84,8 +79,9 @@ export class TSSMerkleTree {
   }
 
   public removeDispatcherOperation(
+    operationType: RegistrationMethodId.RemovePassportDispatcher | RegistrationMethodId.RemoveCertificateDispatcher,
     dispatcherType: string,
-    chaneName: string,
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
     anotherSigner: HDNodeWallet | undefined = undefined,
@@ -93,13 +89,7 @@ export class TSSMerkleTree {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32"], [dispatcherType]);
 
-    const hash = this.getArbitraryDataSignHash(
-      RegistrationMethodId.RemoveDispatcher,
-      data,
-      chaneName,
-      nonce,
-      contractAddress,
-    );
+    const hash = this.getArbitraryDataSignHash(operationType, data, chainName, nonce, contractAddress);
 
     return {
       data,
@@ -108,19 +98,20 @@ export class TSSMerkleTree {
   }
 
   public addRegistrationsOperation(
+    registrationKeys: string[],
     registrations: string[],
-    chaneName: string,
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
     anotherSigner: HDNodeWallet | undefined = undefined,
   ): TSSOperation {
     const encoder = new ethers.AbiCoder();
-    const data = encoder.encode(["address[]"], [registrations]);
+    const data = encoder.encode(["string[]", "address[]"], [registrationKeys, registrations]);
 
     const hash = this.getArbitraryDataSignHash(
-      PoseidonSMTMethodId.AddRegistrations,
+      StateKeeperMethodId.AddRegistrations,
       data,
-      chaneName,
+      chainName,
       nonce,
       contractAddress,
     );
@@ -132,19 +123,19 @@ export class TSSMerkleTree {
   }
 
   public removeRegistrationsOperation(
-    registrations: string[],
-    chaneName: string,
+    registrationKeys: string[],
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
     anotherSigner: HDNodeWallet | undefined = undefined,
   ): TSSOperation {
     const encoder = new ethers.AbiCoder();
-    const data = encoder.encode(["address[]"], [registrations]);
+    const data = encoder.encode(["string[]"], [registrationKeys]);
 
     const hash = this.getArbitraryDataSignHash(
-      PoseidonSMTMethodId.RemoveRegistrations,
+      StateKeeperMethodId.RemoveRegistrations,
       data,
-      chaneName,
+      chainName,
       nonce,
       contractAddress,
     );
@@ -156,16 +147,15 @@ export class TSSMerkleTree {
   }
 
   public authorizeUpgradeOperation(
-    methodId: number,
     newImplementation: string,
-    chaneName: string,
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
     anotherSigner: HDNodeWallet | undefined = undefined,
   ): string {
     const hash = ethers.solidityPackedKeccak256(
       ["address", "uint8", "address", "string", "uint256"],
-      [contractAddress, methodId, newImplementation, chaneName, nonce],
+      [contractAddress, TSSUpgradeableId.MAGIC_ID, newImplementation, chainName, nonce],
     );
 
     return this.getProof(hash, true, anotherSigner);
@@ -174,13 +164,13 @@ export class TSSMerkleTree {
   public getArbitraryDataSignHash(
     methodId: number,
     data: string,
-    chaneName: string,
+    chainName: string,
     nonce: BigNumberish,
     contractAddress: string,
   ): string {
     return ethers.solidityPackedKeccak256(
       ["address", "uint8", "bytes", "string", "uint256"],
-      [contractAddress, methodId, data, chaneName, nonce],
+      [contractAddress, methodId, data, chainName, nonce],
     );
   }
 }

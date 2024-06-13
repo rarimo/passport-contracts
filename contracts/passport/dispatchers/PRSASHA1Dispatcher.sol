@@ -5,18 +5,18 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {RSASHA1Authenticator} from "../authenticators/RSASHA1Authenticator.sol";
-import {Bytes2Poseidon} from "../utils/Bytes2Poseidon.sol";
+import {IPassportDispatcher} from "../../interfaces/dispatchers/IPassportDispatcher.sol";
+import {PRSASHA1Authenticator} from "../authenticators/PRSASHA1Authenticator.sol";
+import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 
-contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
+contract PRSASHA1Dispatcher is IPassportDispatcher, Initializable {
     using Bytes2Poseidon for bytes;
     using VerifierHelper for address;
 
     address public authenticator;
     address public verifier;
 
-    function __RSASHA1Dispatcher_init(
+    function __PRSASHA1Dispatcher_init(
         address authenticator_,
         address verifier_
     ) external initializer {
@@ -33,7 +33,7 @@ contract RSASHA1Dispatcher is IPassportDispatcher, Initializable {
         bytes memory passportPublicKey_
     ) external view returns (bool) {
         return
-            RSASHA1Authenticator(authenticator).authenticate(
+            PRSASHA1Authenticator(authenticator).authenticate(
                 challenge_,
                 passportSignature_,
                 passportPublicKey_

@@ -5,30 +5,43 @@ import { HDNodeWallet } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import { ECDSA_SHA1_2704, RSA_SHA1_2688 } from "@/scripts/utils/passport-types";
+import { C_RSA_4096, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
 
-import { Registration, RegistrationMock, RSASHA1Dispatcher, ECDSASHA1Dispatcher, PoseidonSMTMock } from "@ethers-v6";
+import {
+  Registration,
+  StateKeeperMock,
+  RegistrationMock,
+  CRSASHA2Dispatcher,
+  PRSASHA1Dispatcher,
+  PECDSASHA1Dispatcher,
+  PoseidonSMTMock,
+} from "@ethers-v6";
+
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 import { TSSMerkleTree, TSSSigner } from "@/test/helpers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import {
-  ECDSAPassportNewIdentityProof,
   identityKey,
   newIdentityKey,
   RegistrationMethodId,
+  TSSUpgradeableId,
+  ECDSAPassportNewIdentityProof,
   ECDSAPassportIdentitySignature1,
   ECDSAPassportIdentitySignature2,
   ECDSAPassportNewIdentitySignature1,
   ECDSAPassportIdentityProof,
   ECDSAPassportPubKey,
   ECDSAPassportIdentityPublicSignals,
+  x509CertificateKeyCheckPrefix,
   x509CertificateSA,
   ECDSAPassportNewIdentityPublicSignals,
 } from "@/test/helpers/constants";
 
-const TREE_SIZE = 80;
-const CHAIN_NAME = "Tests";
+const treeSize = 80;
+const chainName = "Tests";
+
+const registrationName = "Initial";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
@@ -42,123 +55,177 @@ describe("Registration", () => {
   let SECOND: SignerWithAddress;
   let SIGNER: HDNodeWallet;
 
-  let rsaSha1Dispatcher: RSASHA1Dispatcher;
-  let ecdsaSha1Dispatcher: ECDSASHA1Dispatcher;
+  let pRsaSha1Dispatcher: PRSASHA1Dispatcher;
+  let pEcdsaSha1Dispatcher: PECDSASHA1Dispatcher;
+  let cRsaSha2Dispatcher: CRSASHA2Dispatcher;
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let registration: RegistrationMock;
+  let stateKeeper: StateKeeperMock;
 
-  const deployRSASHA1Disaptcher = async () => {
-    const RSAECDSAVerifier = await ethers.getContractFactory("RSAECDSAVerifier");
-    const RSASHA1Authenticator = await ethers.getContractFactory("RSASHA1Authenticator");
-
-    const RSASHA1Dispatcher = await ethers.getContractFactory("RSASHA1Dispatcher", {
+  const deployCRSASHA2Dispatcher = async () => {
+    const CRSASHA2Signer = await ethers.getContractFactory("CRSASHA2Signer");
+    const CRSASHA2Dispatcher = await ethers.getContractFactory("CRSASHA2Dispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
-    const rsaEcdsaVerifier = await RSAECDSAVerifier.deploy();
-    const rsaSha1Authenticator = await RSASHA1Authenticator.deploy();
-    rsaSha1Dispatcher = await RSASHA1Dispatcher.deploy();
+    const rsaSha2Signer = await CRSASHA2Signer.deploy();
+    cRsaSha2Dispatcher = await CRSASHA2Dispatcher.deploy();
 
-    await rsaSha1Dispatcher.__RSASHA1Dispatcher_init(
+    await cRsaSha2Dispatcher.__CRSASHA2Dispatcher_init(
+      await rsaSha2Signer.getAddress(),
+      512,
+      x509CertificateKeyCheckPrefix,
+    );
+  };
+
+  const deployPRSASHA1Dispatcher = async () => {
+    const PRSAECDSAVerifier = await ethers.getContractFactory("PRSAECDSAVerifier");
+    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
+
+    const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
+      libraries: {
+        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
+      },
+    });
+
+    const rsaEcdsaVerifier = await PRSAECDSAVerifier.deploy();
+    const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
+    pRsaSha1Dispatcher = await PRSASHA1Dispatcher.deploy();
+
+    await pRsaSha1Dispatcher.__PRSASHA1Dispatcher_init(
       await rsaSha1Authenticator.getAddress(),
       await rsaEcdsaVerifier.getAddress(),
     );
   };
 
-  const deployECDSASHA1Disaptcher = async () => {
-    const RSAECDSAVerifier = await ethers.getContractFactory("RSAECDSAVerifier");
-    const ECDSASHA1Authenticator = await ethers.getContractFactory("ECDSASHA1Authenticator");
-    const ECDSASHA1Dispatcher = await ethers.getContractFactory("ECDSASHA1Dispatcher", {
+  const deployPECDSASHA1Dispatcher = async () => {
+    const PRSAECDSAVerifier = await ethers.getContractFactory("PRSAECDSAVerifier");
+    const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
+    const PECDSASHA1Dispatcher = await ethers.getContractFactory("PECDSASHA1Dispatcher", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
       },
     });
 
-    const ecdsaSha1Verifier = await RSAECDSAVerifier.deploy();
-    const ecdsaSha1Authenticator = await ECDSASHA1Authenticator.deploy();
-    ecdsaSha1Dispatcher = await ECDSASHA1Dispatcher.deploy();
+    const ecdsaSha1Verifier = await PRSAECDSAVerifier.deploy();
+    const ecdsaSha1Authenticator = await PECDSASHA1Authenticator.deploy();
+    pEcdsaSha1Dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    await ecdsaSha1Dispatcher.__ECDSASHA1Dispatcher_init(
+    await pEcdsaSha1Dispatcher.__PECDSASHA1Dispatcher_init(
       await ecdsaSha1Authenticator.getAddress(),
       await ecdsaSha1Verifier.getAddress(),
     );
   };
 
-  const addDispatcher = async (dispatcherType: string, dispatcher: string) => {
+  const addDispatcher = async (
+    operationType: RegistrationMethodId.AddPassportDispatcher | RegistrationMethodId.AddCertificateDispatcher,
+    dispatcherType: string,
+    dispatcher: string,
+  ) => {
     const operation = merkleTree.addDispatcherOperation(
+      operationType,
       dispatcherType,
       dispatcher,
-      CHAIN_NAME,
-      await registration.getNonce(RegistrationMethodId.AddDispatcher),
+      chainName,
+      await registration.getNonce(operationType),
       await registration.getAddress(),
     );
-    return registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.proof);
+
+    return registration.updateDispatcher(operationType, operation.data, operation.proof);
   };
 
-  const removeDispatcher = async (dispatcherType: string) => {
+  const removeDispatcher = async (
+    operationType: RegistrationMethodId.RemovePassportDispatcher | RegistrationMethodId.RemoveCertificateDispatcher,
+    dispatcherType: string,
+  ) => {
     const operation = merkleTree.removeDispatcherOperation(
+      operationType,
       dispatcherType,
-      CHAIN_NAME,
-      await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
+      chainName,
+      await registration.getNonce(operationType),
       await registration.getAddress(),
     );
-    return registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.proof);
+
+    return registration.updateDispatcher(operationType, operation.data, operation.proof);
   };
 
   before("setup", async () => {
     [OWNER, SECOND] = await ethers.getSigners();
     SIGNER = ethers.Wallet.createRandom();
 
+    const StateKeeper = await ethers.getContractFactory("StateKeeperMock", {
+      libraries: {
+        PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
     const PoseidonSMT = await ethers.getContractFactory("PoseidonSMTMock", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
-    const Registration = await ethers.getContractFactory("RegistrationMock", {
-      libraries: {
-        PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
-        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
-        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
-        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
-      },
-    });
+    const Registration = await ethers.getContractFactory("RegistrationMock");
+    const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
     registrationSmt = await PoseidonSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
     registration = await Registration.deploy();
+    stateKeeper = await StateKeeper.deploy();
 
-    await deployRSASHA1Disaptcher();
-    await deployECDSASHA1Disaptcher();
+    await deployCRSASHA2Dispatcher();
+    await deployPRSASHA1Dispatcher();
+    await deployPECDSASHA1Dispatcher();
 
-    const Proxy = await ethers.getContractFactory("ERC1967Proxy");
-    let proxy = await Proxy.deploy(await registration.getAddress(), "0x");
-    registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+    let proxy = await Proxy.deploy(await stateKeeper.getAddress(), "0x");
+    stateKeeper = stateKeeper.attach(await proxy.getAddress()) as StateKeeperMock;
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
     registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, CHAIN_NAME, TREE_SIZE, await registration.getAddress());
 
-    await registration.__Registration_init(
+    proxy = await Proxy.deploy(await registration.getAddress(), "0x");
+    registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+
+    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+
+    await stateKeeper.__StateKeeper_init(
       SIGNER.address,
-      CHAIN_NAME,
+      chainName,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
 
+    await registration.__Registration_init(SIGNER.address, chainName, await stateKeeper.getAddress());
+
     signHelper = new TSSSigner(SIGNER);
     merkleTree = new TSSMerkleTree(signHelper);
 
-    await addDispatcher(RSA_SHA1_2688, await rsaSha1Dispatcher.getAddress());
-    await addDispatcher(ECDSA_SHA1_2704, await ecdsaSha1Dispatcher.getAddress());
+    await stateKeeper.mockAddRegistrations([registrationName], [await registration.getAddress()]);
+
+    await addDispatcher(
+      RegistrationMethodId.AddCertificateDispatcher,
+      C_RSA_4096,
+      await cRsaSha2Dispatcher.getAddress(),
+    );
+    await addDispatcher(
+      RegistrationMethodId.AddPassportDispatcher,
+      P_RSA_SHA1_2688,
+      await pRsaSha1Dispatcher.getAddress(),
+    );
+    await addDispatcher(
+      RegistrationMethodId.AddPassportDispatcher,
+      P_ECDSA_SHA1_2704,
+      await pEcdsaSha1Dispatcher.getAddress(),
+    );
 
     await reverter.snapshot();
   });
@@ -168,34 +235,28 @@ describe("Registration", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(
-          registration.__Registration_init(
-            SIGNER.address,
-            CHAIN_NAME,
-            ethers.ZeroAddress,
-            ethers.ZeroAddress,
-            icaoMerkleRoot,
-          ),
-        ).to.be.revertedWith("Initializable: contract is already initialized");
+        expect(registration.__Registration_init(SIGNER.address, chainName, ethers.ZeroAddress)).to.be.revertedWith(
+          "Initializable: contract is already initialized",
+        );
       });
     });
   });
 
   describe("$ownable flow", () => {
     describe("#addDispatcher, #removeDispatcher", () => {
-      it("should add and remove dispatchers", async () => {
+      it("should add and remove passport dispatchers", async () => {
         const someType = ethers.randomBytes(32);
 
         expect(await registration.passportDispatchers(someType)).to.equal(ethers.ZeroAddress);
 
-        await addDispatcher(ethers.hexlify(someType), SIGNER.address);
+        await addDispatcher(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address);
 
-        expect(addDispatcher(ethers.hexlify(someType), SIGNER.address)).to.be.revertedWith(
-          "Registration: dispatcher already exists",
-        );
+        expect(
+          addDispatcher(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address),
+        ).to.be.revertedWith("Registration: dispatcher already exists");
         expect(await registration.passportDispatchers(someType)).to.equal(SIGNER.address);
 
-        await removeDispatcher(ethers.hexlify(someType));
+        await removeDispatcher(RegistrationMethodId.RemovePassportDispatcher, ethers.hexlify(someType));
         expect(await registration.passportDispatchers(someType)).to.equal(ethers.ZeroAddress);
       });
 
@@ -203,28 +264,30 @@ describe("Registration", () => {
         const ANOTHER_SIGNER = ethers.Wallet.createRandom();
 
         let operation = merkleTree.addDispatcherOperation(
+          RegistrationMethodId.AddPassportDispatcher,
           ethers.hexlify(ethers.randomBytes(32)),
           SIGNER.address,
-          CHAIN_NAME,
-          await registration.getNonce(RegistrationMethodId.AddDispatcher),
+          chainName,
+          await registration.getNonce(RegistrationMethodId.AddPassportDispatcher),
           await registration.getAddress(),
           ANOTHER_SIGNER,
         );
 
         await expect(
-          registration.updateDispatcher(RegistrationMethodId.AddDispatcher, operation.data, operation.proof),
+          registration.updateDispatcher(RegistrationMethodId.AddPassportDispatcher, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
 
         operation = merkleTree.removeDispatcherOperation(
+          RegistrationMethodId.RemovePassportDispatcher,
           ethers.hexlify(ethers.randomBytes(32)),
-          CHAIN_NAME,
-          await registration.getNonce(RegistrationMethodId.RemoveDispatcher),
+          chainName,
+          await registration.getNonce(RegistrationMethodId.RemovePassportDispatcher),
           await registration.getAddress(),
           ANOTHER_SIGNER,
         );
 
         await expect(
-          registration.updateDispatcher(RegistrationMethodId.RemoveDispatcher, operation.data, operation.proof),
+          registration.updateDispatcher(RegistrationMethodId.RemovePassportDispatcher, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
     });
@@ -233,7 +296,7 @@ describe("Registration", () => {
       const hash = merkleTree.getArbitraryDataSignHash(
         RegistrationMethodId.None,
         ethers.ZeroHash,
-        CHAIN_NAME,
+        chainName,
         await registration.getNonce(RegistrationMethodId.None),
         await registration.getAddress(),
       );
@@ -258,11 +321,26 @@ describe("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        await registration.mockChangeICAOMasterTreeRoot(root);
+        const certificate: Registration.CertificateStruct = {
+          dataType: C_RSA_4096,
+          signedAttributes: x509CertificateSA,
+          keyOffset: 444,
+          expirationOffset: 195,
+        };
 
-        expect(await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444, 195))
+        const icaoMember: Registration.ICAOMemberStruct = {
+          signature: icaoSignature,
+          publicKey: icaoPublicKey,
+        };
+
+        await stateKeeper.mockChangeICAOMasterTreeRoot(root);
+
+        expect(await registration.registerCertificate(certificate, icaoMember, proof))
           .to.emit(registration, "CertificateRegistered")
           .withArgs("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
+        expect(
+          await stateKeeper.getCertificateInfo("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72"),
+        ).to.deep.equal([1915341686n]);
       });
     });
 
@@ -272,9 +350,21 @@ describe("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        await registration.mockChangeICAOMasterTreeRoot(root);
+        const certificate: Registration.CertificateStruct = {
+          dataType: C_RSA_4096,
+          signedAttributes: x509CertificateSA,
+          keyOffset: 444,
+          expirationOffset: 195,
+        };
 
-        await registration.registerCertificate(proof, icaoPublicKey, icaoSignature, x509CertificateSA, 444, 195);
+        const icaoMember: Registration.ICAOMemberStruct = {
+          signature: icaoSignature,
+          publicKey: icaoPublicKey,
+        };
+
+        await stateKeeper.mockChangeICAOMasterTreeRoot(root);
+
+        await registration.registerCertificate(certificate, icaoMember, proof);
 
         await time.increaseTo(2015341686);
 
@@ -295,7 +385,7 @@ describe("Registration", () => {
       await certificatesSmt.mockRoot(ECDSAPassportIdentityPublicSignals[3]);
 
       const passport: Registration.PassportStruct = {
-        dataType: ECDSA_SHA1_2704,
+        dataType: P_ECDSA_SHA1_2704,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
       };
@@ -311,7 +401,7 @@ describe("Registration", () => {
 
     const revoke = async (identityOverride?: string, signatureOverride?: string) => {
       const passport: Registration.PassportStruct = {
-        dataType: ECDSA_SHA1_2704,
+        dataType: P_ECDSA_SHA1_2704,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature2,
         publicKey: ECDSAPassportPubKey,
       };
@@ -330,7 +420,7 @@ describe("Registration", () => {
       await certificatesSmt.mockRoot(ECDSAPassportNewIdentityPublicSignals[3]);
 
       const passport: Registration.PassportStruct = {
-        dataType: ECDSA_SHA1_2704,
+        dataType: P_ECDSA_SHA1_2704,
         signature: signatureOverride ?? ECDSAPassportNewIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
       };
@@ -348,8 +438,8 @@ describe("Registration", () => {
       it("should register", async () => {
         await register();
 
-        const passportInfo = await registration.getPassportInfo(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        const passportInfo = await stateKeeper.getPassportInfo(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
         );
 
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(identityKey, 32));
@@ -378,8 +468,8 @@ describe("Registration", () => {
       });
 
       it("should revert if passport already registered", async () => {
-        await registration.mockPassportData(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        await stateKeeper.mockPassportData(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
           identityKey,
         );
 
@@ -387,9 +477,9 @@ describe("Registration", () => {
       });
 
       it("should revert if identity already registered", async () => {
-        await registration.mockIdentityData(
+        await stateKeeper.mockIdentityData(
           identityKey,
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
         );
 
         expect(register()).to.be.revertedWith("Registration: identity already registered");
@@ -405,8 +495,8 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        const passportInfo = await registration.getPassportInfo(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        const passportInfo = await stateKeeper.getPassportInfo(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
         );
 
         const revoked = ethers.keccak256(ethers.toUtf8Bytes("REVOKED"));
@@ -423,8 +513,8 @@ describe("Registration", () => {
       it("should revert if passport already revoked", async () => {
         await register();
 
-        await registration.mockPassportData(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        await stateKeeper.mockPassportData(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
           newIdentityKey,
         );
 
@@ -434,9 +524,9 @@ describe("Registration", () => {
       it("should revert if identity already revoked", async () => {
         await register();
 
-        await registration.mockIdentityData(
+        await stateKeeper.mockIdentityData(
           identityKey,
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32).slice(0, -2) + "aa",
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32).slice(0, -2) + "aa",
         );
 
         expect(revoke()).to.be.revertedWith("Registration: identity already revoked");
@@ -453,8 +543,8 @@ describe("Registration", () => {
         await revoke();
         await reissueIdentity();
 
-        const passportInfo = await registration.getPassportInfo(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        const passportInfo = await stateKeeper.getPassportInfo(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
         );
 
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(newIdentityKey, 32));
@@ -465,8 +555,8 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        await registration.mockPassportData(
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+        await stateKeeper.mockPassportData(
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
           newIdentityKey,
         );
 
@@ -477,9 +567,9 @@ describe("Registration", () => {
         await register();
         await revoke();
 
-        await registration.mockIdentityData(
+        await stateKeeper.mockIdentityData(
           newIdentityKey,
-          ethers.toBeHex(await ecdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
+          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
         );
 
         expect(reissueIdentity()).to.be.revertedWith("Registration: identity already registered");
@@ -550,61 +640,18 @@ describe("Registration", () => {
         expect(await registration.getFunction("signer").staticCall()).to.eq(newSigner.address);
       });
     });
-
-    describe("#changeICAOMasterTreeRoot", () => {
-      const newIcaoMerkleRoot = "0x3c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
-      const timestamp = "123456";
-
-      it("should change the root", async () => {
-        expect(await registration.icaoMasterTreeMerkleRoot()).to.equal(icaoMerkleRoot);
-
-        const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint256"],
-          ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
-        );
-
-        const proof = merkleTree.getProof(leaf, true);
-
-        await registration.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof);
-
-        expect(await registration.icaoMasterTreeMerkleRoot()).to.equal(newIcaoMerkleRoot);
-      });
-
-      it("should not reuse the signature", async () => {
-        const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint256"],
-          ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
-        );
-
-        const proof = merkleTree.getProof(leaf, true);
-
-        await registration.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof);
-
-        expect(registration.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof)).to.be.revertedWith(
-          "TSSSigner: nonce used",
-        );
-      });
-    });
   });
 
   describe("$upgrade flow", () => {
     describe("#upgrade", () => {
       it("should upgrade the contract", async () => {
-        const Registration = await ethers.getContractFactory("RegistrationMock", {
-          libraries: {
-            PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
-            PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
-            PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
-            PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
-          },
-        });
+        const Registration = await ethers.getContractFactory("RegistrationMock");
         const newRegistration = await Registration.deploy();
 
         const signature = merkleTree.authorizeUpgradeOperation(
-          RegistrationMethodId.AuthorizeUpgrade,
           await newRegistration.getAddress(),
-          CHAIN_NAME,
-          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          chainName,
+          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
           await registration.getAddress(),
         );
 
@@ -615,15 +662,14 @@ describe("Registration", () => {
 
       it("should revert if trying to upgrade to zero address", async () => {
         const signature = merkleTree.authorizeUpgradeOperation(
-          RegistrationMethodId.AuthorizeUpgrade,
           ethers.ZeroAddress,
-          CHAIN_NAME,
-          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          chainName,
+          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
           await registration.getAddress(),
         );
 
         await expect(registration.upgradeToWithProof(ethers.ZeroAddress, signature)).to.be.rejectedWith(
-          "Registration: Zero address",
+          "Upgradeable: Zero address",
         );
       });
 
@@ -631,10 +677,9 @@ describe("Registration", () => {
         const ANOTHER_SIGNER = ethers.Wallet.createRandom();
 
         const signature = merkleTree.authorizeUpgradeOperation(
-          RegistrationMethodId.AuthorizeUpgrade,
           await registration.getAddress(),
-          CHAIN_NAME,
-          await registration.getNonce(RegistrationMethodId.AuthorizeUpgrade),
+          chainName,
+          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
           await registration.getAddress(),
           ANOTHER_SIGNER,
         );
@@ -646,8 +691,15 @@ describe("Registration", () => {
     });
 
     it("should revert if trying to use default `upgradeTo` method", async () => {
+      const Proxy = await ethers.getContractFactory("ERC1967Proxy");
+      const Registration = await ethers.getContractFactory("Registration");
+
+      let registration: Registration = await Registration.deploy();
+      const proxy = await Proxy.deploy(await registration.getAddress(), "0x");
+      registration = registration.attach(await proxy.getAddress()) as Registration;
+
       await expect(registration.upgradeTo(ethers.ZeroAddress)).to.be.rejectedWith(
-        "Registration: This upgrade method is off",
+        "Upgradeable: This upgrade method is off",
       );
     });
   });

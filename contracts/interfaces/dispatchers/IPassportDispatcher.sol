@@ -3,6 +3,9 @@ pragma solidity 0.8.16;
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
+/**
+ * @notice Passport dispatcher interface
+ */
 interface IPassportDispatcher {
     function authenticate(
         bytes calldata challenge_,
