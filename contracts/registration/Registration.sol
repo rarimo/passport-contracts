@@ -13,22 +13,27 @@ import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
+import {P_NO_AA} from "./types.sol";
+
 contract Registration is Initializable, TSSUpgradeable {
     using MerkleProof for bytes32[];
+    using VerifierHelper for address;
 
-    string public constant ICAO_PREFIX = "Rarimo CSCA root";
-    bytes32 public constant REVOKED = keccak256("REVOKED");
+    uint256 internal constant _PROOF_SIGNALS_COUNT = 5;
 
     enum MethodId {
         None,
         AddCertificateDispatcher,
         RemoveCertificateDispatcher,
         AddPassportDispatcher,
-        RemovePassportDispatcher
+        RemovePassportDispatcher,
+        AddPassportVerifier,
+        RemovePassportVerifier
     }
 
     struct Passport {
         bytes32 dataType;
+        bytes32 zkType;
         bytes signature;
         bytes publicKey;
     }
@@ -47,8 +52,9 @@ contract Registration is Initializable, TSSUpgradeable {
 
     StateKeeper public stateKeeper;
 
-    mapping(bytes32 => address) public passportDispatchers;
     mapping(bytes32 => address) public certificateDispatchers;
+    mapping(bytes32 => address) public passportDispatchers;
+    mapping(bytes32 => address) public passportVerifiers;
 
     constructor() {
         _disableInitializers();
@@ -130,6 +136,7 @@ contract Registration is Initializable, TSSUpgradeable {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
+        address verifier_ = _getPassportVerifier(passport_.zkType);
 
         bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
         uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
@@ -138,6 +145,7 @@ contract Registration is Initializable, TSSUpgradeable {
         _authenticate(dispatcher_, challenge_, passport_);
         _verifyZKProof(
             dispatcher_,
+            verifier_,
             certificatesRoot_,
             passportKey_,
             identityKey_,
@@ -185,6 +193,7 @@ contract Registration is Initializable, TSSUpgradeable {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
+        address verifier_ = _getPassportVerifier(passport_.zkType);
 
         bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
         uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
@@ -193,6 +202,7 @@ contract Registration is Initializable, TSSUpgradeable {
         _authenticate(dispatcher_, challenge_, passport_);
         _verifyZKProof(
             dispatcher_,
+            verifier_,
             certificatesRoot_,
             passportKey_,
             identityKey_,
@@ -212,7 +222,7 @@ contract Registration is Initializable, TSSUpgradeable {
      * - `dispatcherType` of bytes32 for RemoveDispatcher
      * @param proof_ the Rarimo TSS signature with MTP
      */
-    function updateDispatcher(
+    function updateDependencies(
         MethodId methodId_,
         bytes calldata data_,
         bytes calldata proof_
@@ -227,61 +237,43 @@ contract Registration is Initializable, TSSUpgradeable {
 
         if (
             methodId_ == MethodId.AddCertificateDispatcher ||
-            methodId_ == MethodId.AddPassportDispatcher
+            methodId_ == MethodId.AddPassportDispatcher ||
+            methodId_ == MethodId.AddPassportVerifier
         ) {
-            (bytes32 dispatcherType_, address dispatcher_) = abi.decode(data_, (bytes32, address));
+            (bytes32 dependencyType_, address dependency_) = abi.decode(data_, (bytes32, address));
 
-            _addDispatcher(
-                methodId_ == MethodId.AddCertificateDispatcher
-                    ? certificateDispatchers
-                    : passportDispatchers,
-                dispatcherType_,
-                dispatcher_
-            );
+            _addDependency(_getDependency(methodId_), dependencyType_, dependency_);
         } else if (
             methodId_ == MethodId.RemoveCertificateDispatcher ||
-            methodId_ == MethodId.RemovePassportDispatcher
+            methodId_ == MethodId.RemovePassportDispatcher ||
+            methodId_ == MethodId.RemovePassportVerifier
         ) {
-            bytes32 dispatcherType_ = abi.decode(data_, (bytes32));
+            bytes32 dependencyType_ = abi.decode(data_, (bytes32));
 
-            _removeDispatcher(
-                methodId_ == MethodId.RemoveCertificateDispatcher
-                    ? certificateDispatchers
-                    : passportDispatchers,
-                dispatcherType_
-            );
+            _removeDependency(_getDependency(methodId_), dependencyType_);
         } else {
             revert("Registration: invalid methodId");
         }
     }
 
-    /**
-     * @notice Add new dispatchers if new passport types are discovered
-     * @param dispatcherType_ the new passport type
-     * @param dispatcher_ the address of a new dispatcher
-     */
-    function _addDispatcher(
-        mapping(bytes32 => address) storage dispatchers,
-        bytes32 dispatcherType_,
-        address dispatcher_
+    function _addDependency(
+        mapping(bytes32 => address) storage dependencies,
+        bytes32 dependencyType_,
+        address dependency_
     ) internal {
         require(
-            dispatchers[dispatcherType_] == address(0),
+            dependencies[dependencyType_] == address(0),
             "Registration: dispatcher already exists"
         );
 
-        dispatchers[dispatcherType_] = dispatcher_;
+        dependencies[dependencyType_] = dependency_;
     }
 
-    /**
-     * @notice Removes the dispatcher
-     * @param dispatcherType_ the passport type
-     */
-    function _removeDispatcher(
-        mapping(bytes32 => address) storage dispatchers,
-        bytes32 dispatcherType_
+    function _removeDependency(
+        mapping(bytes32 => address) storage dependencies,
+        bytes32 dependencyType_
     ) internal {
-        delete dispatchers[dispatcherType_];
+        delete dependencies[dependencyType_];
     }
 
     /**
@@ -322,6 +314,7 @@ contract Registration is Initializable, TSSUpgradeable {
 
     function _verifyZKProof(
         IPassportDispatcher dispatcher_,
+        address verifier_,
         bytes32 certificatesRoot_,
         uint256 passportKey_,
         uint256 identityKey_,
@@ -333,17 +326,21 @@ contract Registration is Initializable, TSSUpgradeable {
             "Registration: invalid certificates root"
         );
 
-        uint256[] memory pubSignals_ = new uint256[](4);
+        uint256[] memory pubSignals_ = new uint256[](_PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = passportKey_; // output
-        pubSignals_[1] = dgCommit_; // output
-        pubSignals_[2] = identityKey_; // output
-        pubSignals_[3] = uint256(certificatesRoot_); // public input
+        pubSignals_[1] = 0; // output
 
-        require(
-            dispatcher_.verifyZKProof(pubSignals_, zkPoints_),
-            "Registration: invalid zk proof"
-        );
+        // if there is no active authentication, swap first two outputs
+        if (_getPassportDispatcher(P_NO_AA) == dispatcher_) {
+            (pubSignals_[0], pubSignals_[1]) = (pubSignals_[1], pubSignals_[0]);
+        }
+
+        pubSignals_[2] = dgCommit_; // output
+        pubSignals_[3] = identityKey_; // output
+        pubSignals_[4] = uint256(certificatesRoot_); // public input
+
+        require(verifier_.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
     }
 
     function _getCertificateDispatcher(
@@ -366,5 +363,34 @@ contract Registration is Initializable, TSSUpgradeable {
             address(dispatcher_) != address(0),
             "Registration: passport dispatcher does not exist"
         );
+    }
+
+    function _getPassportVerifier(bytes32 zkType_) internal view returns (address verifier_) {
+        verifier_ = passportVerifiers[zkType_];
+
+        require(verifier_ != address(0), "Registration: passport verifier does not exist");
+    }
+
+    function _getDependency(
+        MethodId methodId_
+    ) internal view returns (mapping(bytes32 => address) storage) {
+        if (
+            methodId_ == MethodId.AddCertificateDispatcher ||
+            methodId_ == MethodId.RemoveCertificateDispatcher
+        ) {
+            return certificateDispatchers;
+        } else if (
+            methodId_ == MethodId.AddPassportDispatcher ||
+            methodId_ == MethodId.RemovePassportDispatcher
+        ) {
+            return passportDispatchers;
+        } else if (
+            methodId_ == MethodId.AddPassportVerifier ||
+            methodId_ == MethodId.RemovePassportVerifier
+        ) {
+            return passportVerifiers;
+        } else {
+            revert("Registration: unknown dependency");
+        }
     }
 }
