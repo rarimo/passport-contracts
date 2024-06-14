@@ -8,9 +8,7 @@ import {
   identityKey,
   identityKeyChallenge,
   RSAPassportIdentitySignature1,
-  RSAPassportIdentityProof,
   RSAPassportPubKey,
-  RSAPassportIdentityPublicSignals,
 } from "@/test/helpers/constants";
 
 describe("PRSASHA1Dispatcher", () => {
@@ -19,7 +17,6 @@ describe("PRSASHA1Dispatcher", () => {
   let dispatcher: PRSASHA1Dispatcher;
 
   before("setup", async () => {
-    const PRSASHA1Verifier = await ethers.getContractFactory("PRSAECDSAVerifier");
     const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
     const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
       libraries: {
@@ -29,14 +26,10 @@ describe("PRSASHA1Dispatcher", () => {
 
     dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    const rsaSha1Verifier = await PRSASHA1Verifier.deploy();
     const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
     dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    await dispatcher.__PRSASHA1Dispatcher_init(
-      await rsaSha1Authenticator.getAddress(),
-      await rsaSha1Verifier.getAddress(),
-    );
+    await dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
 
     await reverter.snapshot();
   });
@@ -45,12 +38,9 @@ describe("PRSASHA1Dispatcher", () => {
 
   describe("#init", () => {
     it("should not init twice", async () => {
-      expect(
-        dispatcher.__PRSASHA1Dispatcher_init(
-          ethers.hexlify(ethers.randomBytes(20)),
-          ethers.hexlify(ethers.randomBytes(20)),
-        ),
-      ).to.be.revertedWith("Initializable: contract is already initialized");
+      expect(dispatcher.__PRSASHA1Dispatcher_init(ethers.hexlify(ethers.randomBytes(20)))).to.be.revertedWith(
+        "Initializable: contract is already initialized",
+      );
     });
   });
 
@@ -58,12 +48,6 @@ describe("PRSASHA1Dispatcher", () => {
     it("should authenticate", async () => {
       expect(await dispatcher.authenticate(identityKeyChallenge, RSAPassportIdentitySignature1, RSAPassportPubKey)).to
         .be.true;
-    });
-  });
-
-  describe("#zkProof", () => {
-    it("should verify the zk proof", async () => {
-      expect(await dispatcher.verifyZKProof(RSAPassportIdentityPublicSignals, RSAPassportIdentityProof)).to.be.true;
     });
   });
 

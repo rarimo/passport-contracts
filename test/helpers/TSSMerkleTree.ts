@@ -58,8 +58,11 @@ export class TSSMerkleTree {
     return "0x" + this.tree.getRoot().toString("hex");
   }
 
-  public addDispatcherOperation(
-    operationType: RegistrationMethodId.AddPassportDispatcher | RegistrationMethodId.AddCertificateDispatcher,
+  public addDependencyOperation(
+    operationType:
+      | RegistrationMethodId.AddPassportDispatcher
+      | RegistrationMethodId.AddCertificateDispatcher
+      | RegistrationMethodId.AddPassportVerifier,
     dispatcherType: string,
     dispatcher: string,
     chainName: string,
@@ -78,8 +81,11 @@ export class TSSMerkleTree {
     };
   }
 
-  public removeDispatcherOperation(
-    operationType: RegistrationMethodId.RemovePassportDispatcher | RegistrationMethodId.RemoveCertificateDispatcher,
+  public removeDependencyOperation(
+    operationType:
+      | RegistrationMethodId.RemovePassportDispatcher
+      | RegistrationMethodId.RemoveCertificateDispatcher
+      | RegistrationMethodId.RemovePassportVerifier,
     dispatcherType: string,
     chainName: string,
     nonce: BigNumberish,

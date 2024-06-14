@@ -1,4 +1,4 @@
-import { VerifierHelper } from "@/generated-types/ethers/contracts/passport/dispatchers/PRSASHA1Dispatcher";
+import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 export enum StateKeeperMethodId {
   None,
@@ -13,6 +13,8 @@ export enum RegistrationMethodId {
   RemoveCertificateDispatcher,
   AddPassportDispatcher,
   RemovePassportDispatcher,
+  AddPassportVerifier,
+  RemovePassportVerifier,
 }
 
 export enum TSSUpgradeableId {

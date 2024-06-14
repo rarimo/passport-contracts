@@ -3,25 +3,17 @@ pragma solidity 0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
-
 import {IPassportDispatcher} from "../../interfaces/dispatchers/IPassportDispatcher.sol";
 import {PECDSASHA1Authenticator} from "../authenticators/PECDSASHA1Authenticator.sol";
 import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 
 contract PECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
     using Bytes2Poseidon for bytes;
-    using VerifierHelper for address;
 
     address public authenticator;
-    address public verifier;
 
-    function __PECDSASHA1Dispatcher_init(
-        address authenticator_,
-        address verifier_
-    ) external initializer {
+    function __PECDSASHA1Dispatcher_init(address authenticator_) external initializer {
         authenticator = authenticator_;
-        verifier = verifier_;
     }
 
     /**
@@ -46,16 +38,6 @@ contract PECDSASHA1Dispatcher is IPassportDispatcher, Initializable {
         }
 
         return PECDSASHA1Authenticator(authenticator).authenticate(challenge_, r_, s_, x_, y_);
-    }
-
-    /**
-     * @notice Verify passport validity ZK proof.
-     */
-    function verifyZKProof(
-        uint256[] memory pubSignals_,
-        VerifierHelper.ProofPoints memory zkPoints_
-    ) external view returns (bool) {
-        return verifier.verifyProof(pubSignals_, zkPoints_);
     }
 
     /**
