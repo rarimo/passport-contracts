@@ -1,5 +1,51 @@
 # Changelog
 
+## [Unreleased 2.0]
+
+* Added `StateKeeper` contract that acts as a singleton state instance that registrations interact with.
+    * `StateKeeper` integrates with `PoseidonSMT` contracts and manages the way how "certificates" and "identity bonds" are assembled.
+    * The contract centralized the "passport <> identity" bond storage. `getPassportInfo()` method has been moved there.
+    * New `getCertificateInfo()` and `usedSignatures()` methods have been added.
+    * It is now possible to have multiple independent registrations that verify users' passports. The registrations can be added to the `StateKeeper` via `updateRegistrationSet()` method that requires Rarimo TSS. The ability to add new registrations opens the doors for the support of new passports at the extremisis.
+    * New methods `getRegistrations()`, `getRegistrationByKey()`, and `isRegistration()` have been implemented. Each registration can be associated with a `string` key with the meaning of that key delegated to the front end (mobile app).
+* Refactored `Registration` contract in order to be forward compatible as possible. The contract now has 3 types of dispatchers:
+    1. **Passport dispatchers**. The same ones as before, though the constants have changed.
+
+    ```solidity
+    P_NO_AA = keccak256("P_NO_AA")
+    P_RSA_SHA1_2688 = keccak256("P_RSA_SHA1_2688")
+    P_ECDSA_SHA1_2704 = keccak256("P_ECDSA_SHA1_2704")
+    ```
+
+    2. **Certificate dispatchers**. The new ones.
+
+    ```solidity
+    C_RSA_4096 = keccak256("C_RSA_4096")
+    C_RSA_2048 = keccak256("C_RSA_2048")
+    ```
+
+    3. **Passport verifiers**. The new ones.
+
+    ```solidity
+    Z_UNIVERSAL_4096 = keccak256("Z_UNIVERSAL_4096")
+    Z_UNIVERSAL_2048 = keccak256("Z_UNIVERSAL_2048")
+    ```
+
+    Check [types file](scripts/utils/types.ts) for more information.
+    
+    Every category of dispatchers is completely independent from the other, which contributes to high flexibility and linear dependencies complexity growth. The front end now has to deduce the correct dispatcher type not for one category, but for three.
+
+    * `updateDispatcher()` method has been renamed to `updateDependency()` to broaden its meaning.
+    * Added `zkType` variable to `Passport` struct to resolve the correct passport verifier.
+    * Changed the interface of `registerCertificate()` method. Packed up variables in structs.
+    * Moved all the events from `Registration` to `StateKeeper` and renamed them.
+    * Moved `icaoMasterTreeMerkleRoot` and its update logic from `Registration` to `StateKeeper`.
+* Refactored upgradeability mechanics and encapsulated them in a new `TSSUpgradeable` abstract smart contract.
+* Integrated with the newest circuits that support passport without active authentication and have 5 public inputs (instead of 4).
+* Fixed all the tests except ZK.
+* Fixed migration scripts. Added config resolution based on deployment chain.
+* Updated natspec.
+
 ## [Unreleased]
 
 * Made the `PoseidonSMT` and `Registration` contracts upgradable via TSS.
