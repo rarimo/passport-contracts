@@ -5,13 +5,23 @@ import { HDNodeWallet } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import { C_RSA_4096, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688 } from "@/scripts/utils/types";
+import {
+  Z_UNIVERSAL_2048,
+  Z_UNIVERSAL_4096,
+  C_RSA_4096,
+  P_ECDSA_SHA1_2704,
+  P_RSA_SHA1_2688,
+  P_NO_AA,
+} from "@/scripts/utils/types";
 
 import {
   Registration,
   StateKeeperMock,
   RegistrationMock,
+  PUniversal2048Verifier,
+  PUniversal4096Verifier,
   CRSASHA2Dispatcher,
+  PNOAADispatcher,
   PRSASHA1Dispatcher,
   PECDSASHA1Dispatcher,
   PoseidonSMTMock,
@@ -55,13 +65,26 @@ describe("Registration", () => {
   let SECOND: SignerWithAddress;
   let SIGNER: HDNodeWallet;
 
+  let pUniversal2048Verifier: PUniversal2048Verifier;
+  let pUniversal4096Verifier: PUniversal4096Verifier;
+
+  let pNoAaDispatcher: PNOAADispatcher;
   let pRsaSha1Dispatcher: PRSASHA1Dispatcher;
   let pEcdsaSha1Dispatcher: PECDSASHA1Dispatcher;
   let cRsaSha2Dispatcher: CRSASHA2Dispatcher;
+
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let registration: RegistrationMock;
   let stateKeeper: StateKeeperMock;
+
+  const deployPUniversalVerifiers = async () => {
+    const PUniversal2048Verifier = await ethers.getContractFactory("PUniversal2048Verifier");
+    const PUniversal4096Verifier = await ethers.getContractFactory("PUniversal4096Verifier");
+
+    pUniversal2048Verifier = await PUniversal2048Verifier.deploy();
+    pUniversal4096Verifier = await PUniversal4096Verifier.deploy();
+  };
 
   const deployCRSASHA2Dispatcher = async () => {
     const CRSASHA2Signer = await ethers.getContractFactory("CRSASHA2Signer");
@@ -81,28 +104,27 @@ describe("Registration", () => {
     );
   };
 
-  const deployPRSASHA1Dispatcher = async () => {
-    const PRSAECDSAVerifier = await ethers.getContractFactory("PRSAECDSAVerifier");
-    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
+  const deployPNOAADispatcher = async () => {
+    const PNOAADispatcher = await ethers.getContractFactory("PNOAADispatcher");
 
+    pNoAaDispatcher = await PNOAADispatcher.deploy();
+  };
+
+  const deployPRSASHA1Dispatcher = async () => {
+    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
     const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
-    const rsaEcdsaVerifier = await PRSAECDSAVerifier.deploy();
     const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
     pRsaSha1Dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    await pRsaSha1Dispatcher.__PRSASHA1Dispatcher_init(
-      await rsaSha1Authenticator.getAddress(),
-      await rsaEcdsaVerifier.getAddress(),
-    );
+    await pRsaSha1Dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
   };
 
   const deployPECDSASHA1Dispatcher = async () => {
-    const PRSAECDSAVerifier = await ethers.getContractFactory("PRSAECDSAVerifier");
     const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
     const PECDSASHA1Dispatcher = await ethers.getContractFactory("PECDSASHA1Dispatcher", {
       libraries: {
@@ -110,22 +132,21 @@ describe("Registration", () => {
       },
     });
 
-    const ecdsaSha1Verifier = await PRSAECDSAVerifier.deploy();
     const ecdsaSha1Authenticator = await PECDSASHA1Authenticator.deploy();
     pEcdsaSha1Dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    await pEcdsaSha1Dispatcher.__PECDSASHA1Dispatcher_init(
-      await ecdsaSha1Authenticator.getAddress(),
-      await ecdsaSha1Verifier.getAddress(),
-    );
+    await pEcdsaSha1Dispatcher.__PECDSASHA1Dispatcher_init(await ecdsaSha1Authenticator.getAddress());
   };
 
-  const addDispatcher = async (
-    operationType: RegistrationMethodId.AddPassportDispatcher | RegistrationMethodId.AddCertificateDispatcher,
+  const addDependency = async (
+    operationType:
+      | RegistrationMethodId.AddPassportDispatcher
+      | RegistrationMethodId.AddCertificateDispatcher
+      | RegistrationMethodId.AddPassportVerifier,
     dispatcherType: string,
     dispatcher: string,
   ) => {
-    const operation = merkleTree.addDispatcherOperation(
+    const operation = merkleTree.addDependencyOperation(
       operationType,
       dispatcherType,
       dispatcher,
@@ -134,14 +155,17 @@ describe("Registration", () => {
       await registration.getAddress(),
     );
 
-    return registration.updateDispatcher(operationType, operation.data, operation.proof);
+    return registration.updateDependency(operationType, operation.data, operation.proof);
   };
 
-  const removeDispatcher = async (
-    operationType: RegistrationMethodId.RemovePassportDispatcher | RegistrationMethodId.RemoveCertificateDispatcher,
+  const removeDependency = async (
+    operationType:
+      | RegistrationMethodId.RemovePassportDispatcher
+      | RegistrationMethodId.RemoveCertificateDispatcher
+      | RegistrationMethodId.RemovePassportVerifier,
     dispatcherType: string,
   ) => {
-    const operation = merkleTree.removeDispatcherOperation(
+    const operation = merkleTree.removeDependencyOperation(
       operationType,
       dispatcherType,
       chainName,
@@ -149,7 +173,7 @@ describe("Registration", () => {
       await registration.getAddress(),
     );
 
-    return registration.updateDispatcher(operationType, operation.data, operation.proof);
+    return registration.updateDependency(operationType, operation.data, operation.proof);
   };
 
   before("setup", async () => {
@@ -177,7 +201,9 @@ describe("Registration", () => {
     registration = await Registration.deploy();
     stateKeeper = await StateKeeper.deploy();
 
+    await deployPUniversalVerifiers();
     await deployCRSASHA2Dispatcher();
+    await deployPNOAADispatcher();
     await deployPRSASHA1Dispatcher();
     await deployPECDSASHA1Dispatcher();
 
@@ -211,17 +237,28 @@ describe("Registration", () => {
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registration.getAddress()]);
 
-    await addDispatcher(
+    await addDependency(
+      RegistrationMethodId.AddPassportVerifier,
+      Z_UNIVERSAL_2048,
+      await pUniversal2048Verifier.getAddress(),
+    );
+    await addDependency(
+      RegistrationMethodId.AddPassportVerifier,
+      Z_UNIVERSAL_4096,
+      await pUniversal4096Verifier.getAddress(),
+    );
+    await addDependency(
       RegistrationMethodId.AddCertificateDispatcher,
       C_RSA_4096,
       await cRsaSha2Dispatcher.getAddress(),
     );
-    await addDispatcher(
+    await addDependency(RegistrationMethodId.AddPassportDispatcher, P_NO_AA, await pNoAaDispatcher.getAddress());
+    await addDependency(
       RegistrationMethodId.AddPassportDispatcher,
       P_RSA_SHA1_2688,
       await pRsaSha1Dispatcher.getAddress(),
     );
-    await addDispatcher(
+    await addDependency(
       RegistrationMethodId.AddPassportDispatcher,
       P_ECDSA_SHA1_2704,
       await pEcdsaSha1Dispatcher.getAddress(),
@@ -243,27 +280,27 @@ describe("Registration", () => {
   });
 
   describe("$ownable flow", () => {
-    describe("#addDispatcher, #removeDispatcher", () => {
+    describe("#addDependency, #removeDependency", () => {
       it("should add and remove passport dispatchers", async () => {
         const someType = ethers.randomBytes(32);
 
         expect(await registration.passportDispatchers(someType)).to.equal(ethers.ZeroAddress);
 
-        await addDispatcher(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address);
+        await addDependency(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address);
 
         expect(
-          addDispatcher(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address),
+          addDependency(RegistrationMethodId.AddPassportDispatcher, ethers.hexlify(someType), SIGNER.address),
         ).to.be.revertedWith("Registration: dispatcher already exists");
         expect(await registration.passportDispatchers(someType)).to.equal(SIGNER.address);
 
-        await removeDispatcher(RegistrationMethodId.RemovePassportDispatcher, ethers.hexlify(someType));
+        await removeDependency(RegistrationMethodId.RemovePassportDispatcher, ethers.hexlify(someType));
         expect(await registration.passportDispatchers(someType)).to.equal(ethers.ZeroAddress);
       });
 
       it("should not be called by not owner", async () => {
         const ANOTHER_SIGNER = ethers.Wallet.createRandom();
 
-        let operation = merkleTree.addDispatcherOperation(
+        let operation = merkleTree.addDependencyOperation(
           RegistrationMethodId.AddPassportDispatcher,
           ethers.hexlify(ethers.randomBytes(32)),
           SIGNER.address,
@@ -274,10 +311,10 @@ describe("Registration", () => {
         );
 
         await expect(
-          registration.updateDispatcher(RegistrationMethodId.AddPassportDispatcher, operation.data, operation.proof),
+          registration.updateDependency(RegistrationMethodId.AddPassportDispatcher, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
 
-        operation = merkleTree.removeDispatcherOperation(
+        operation = merkleTree.removeDependencyOperation(
           RegistrationMethodId.RemovePassportDispatcher,
           ethers.hexlify(ethers.randomBytes(32)),
           chainName,
@@ -287,7 +324,7 @@ describe("Registration", () => {
         );
 
         await expect(
-          registration.updateDispatcher(RegistrationMethodId.RemovePassportDispatcher, operation.data, operation.proof),
+          registration.updateDependency(RegistrationMethodId.RemovePassportDispatcher, operation.data, operation.proof),
         ).to.be.rejectedWith("TSSSigner: invalid signature");
       });
     });
@@ -303,7 +340,7 @@ describe("Registration", () => {
 
       const proof = merkleTree.getProof(hash, true);
 
-      await expect(registration.updateDispatcher(RegistrationMethodId.None, ethers.ZeroHash, proof)).to.be.rejectedWith(
+      await expect(registration.updateDependency(RegistrationMethodId.None, ethers.ZeroHash, proof)).to.be.rejectedWith(
         "Registration: invalid methodId",
       );
     });
@@ -386,6 +423,7 @@ describe("Registration", () => {
 
       const passport: Registration.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
+        zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
       };
@@ -402,6 +440,7 @@ describe("Registration", () => {
     const revoke = async (identityOverride?: string, signatureOverride?: string) => {
       const passport: Registration.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
+        zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature2,
         publicKey: ECDSAPassportPubKey,
       };
@@ -421,6 +460,7 @@ describe("Registration", () => {
 
       const passport: Registration.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
+        zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportNewIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
       };

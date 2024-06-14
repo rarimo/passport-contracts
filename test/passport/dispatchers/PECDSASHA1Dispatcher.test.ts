@@ -6,8 +6,6 @@ import { PECDSASHA1Dispatcher } from "@ethers-v6";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import {
-  ECDSAPassportIdentityProof,
-  ECDSAPassportIdentityPublicSignals,
   ECDSAPassportIdentitySignature1,
   ECDSAPassportPubKey,
   identityKey,
@@ -20,7 +18,6 @@ describe("PECDSASHA1Dispatcher", () => {
   let dispatcher: PECDSASHA1Dispatcher;
 
   before("setup", async () => {
-    const PECDSASHA1Verifier = await ethers.getContractFactory("PRSAECDSAVerifier");
     const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
     const PECDSASHA1Dispatcher = await ethers.getContractFactory("PECDSASHA1Dispatcher", {
       libraries: {
@@ -30,14 +27,10 @@ describe("PECDSASHA1Dispatcher", () => {
 
     dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    const ecdsaSha1Verifier = await PECDSASHA1Verifier.deploy();
     const ecdsaSha1Authenticator = await PECDSASHA1Authenticator.deploy();
     dispatcher = await PECDSASHA1Dispatcher.deploy();
 
-    await dispatcher.__PECDSASHA1Dispatcher_init(
-      await ecdsaSha1Authenticator.getAddress(),
-      await ecdsaSha1Verifier.getAddress(),
-    );
+    await dispatcher.__PECDSASHA1Dispatcher_init(await ecdsaSha1Authenticator.getAddress());
 
     await reverter.snapshot();
   });
@@ -46,12 +39,9 @@ describe("PECDSASHA1Dispatcher", () => {
 
   describe("#init", () => {
     it("should not init twice", async () => {
-      expect(
-        dispatcher.__PECDSASHA1Dispatcher_init(
-          ethers.hexlify(ethers.randomBytes(20)),
-          ethers.hexlify(ethers.randomBytes(20)),
-        ),
-      ).to.be.revertedWith("Initializable: contract is already initialized");
+      expect(dispatcher.__PECDSASHA1Dispatcher_init(ethers.hexlify(ethers.randomBytes(20)))).to.be.revertedWith(
+        "Initializable: contract is already initialized",
+      );
     });
   });
 
@@ -59,12 +49,6 @@ describe("PECDSASHA1Dispatcher", () => {
     it("should authenticate", async () => {
       expect(await dispatcher.authenticate(identityKeyChallenge, ECDSAPassportIdentitySignature1, ECDSAPassportPubKey))
         .to.be.true;
-    });
-  });
-
-  describe("#zkProof", () => {
-    it("should verify the zk proof", async () => {
-      expect(await dispatcher.verifyZKProof(ECDSAPassportIdentityPublicSignals, ECDSAPassportIdentityProof)).to.be.true;
     });
   });
 

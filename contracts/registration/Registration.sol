@@ -222,7 +222,7 @@ contract Registration is Initializable, TSSUpgradeable {
      * - `dispatcherType` of bytes32 for RemoveDispatcher
      * @param proof_ the Rarimo TSS signature with MTP
      */
-    function updateDependencies(
+    function updateDependency(
         MethodId methodId_,
         bytes calldata data_,
         bytes calldata proof_
