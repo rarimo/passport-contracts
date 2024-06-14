@@ -108,6 +108,8 @@ describe("Registration", () => {
     const PNOAADispatcher = await ethers.getContractFactory("PNOAADispatcher");
 
     pNoAaDispatcher = await PNOAADispatcher.deploy();
+
+    await pNoAaDispatcher.__PNOAADispatcher_init();
   };
 
   const deployPRSASHA1Dispatcher = async () => {
