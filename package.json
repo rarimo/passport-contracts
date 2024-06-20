@@ -31,6 +31,7 @@
     "deploy-localhost": "npx hardhat migrate --network localhost",
     "deploy-sepolia": "npx hardhat migrate --network sepolia --verify",
     "deploy-rarimo-testnet": "npx hardhat migrate --network rarimo-testnet --verify",
+    "deploy-rarimo-mainnet": "npx hardhat migrate --network rarimo-mainnet --verify",
     "deploy-q-testnet": "npx hardhat migrate --network q-testnet --verify",
     "deploy-chapel": "npx hardhat migrate --network chapel --verify",
     "deploy-mumbai": "npx hardhat migrate --network mumbai --verify",
