@@ -153,7 +153,7 @@ contract Registration is Initializable, TSSUpgradeable {
             zkPoints_
         );
 
-        stateKeeper.addBond(bytes32(passportKey_), bytes32(identityKey_), dgCommit_);
+        stateKeeper.addBond(bytes32(passportKey_), bytes32(0), bytes32(identityKey_), dgCommit_);
     }
 
     /**
@@ -163,6 +163,7 @@ contract Registration is Initializable, TSSUpgradeable {
      */
     function revoke(uint256 identityKey_, Passport memory passport_) external {
         require(identityKey_ > 0, "Registration: identity can not be zero");
+        require(passport_.dataType != P_NO_AA, "Registration: can't revoke without AA");
 
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
 

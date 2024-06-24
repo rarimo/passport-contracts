@@ -15,6 +15,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
     bytes32 public constant REVOKED = keccak256("REVOKED");
+    bytes32 public constant USED = keccak256("USED");
 
     enum MethodId {
         None,
@@ -122,6 +123,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
      */
     function addBond(
         bytes32 passportKey_,
+        bytes32 passportHash_,
         bytes32 identityKey_,
         uint256 dgCommit_
     ) external onlyRegistration {
@@ -136,6 +138,17 @@ contract StateKeeper is Initializable, TSSUpgradeable {
             _identityInfo.activePassport == bytes32(0),
             "StateKeeper: identity already registered"
         );
+
+        if (passportKey_ != bytes32(0) && passportHash_ != bytes32(0)) {
+            PassportInfo storage _passportHashInfo = _passportInfos[passportHash_];
+
+            require(
+                _passportHashInfo.activeIdentity == bytes32(0),
+                "StateKeeper: passport hash already registered"
+            );
+
+            _passportHashInfo.activeIdentity = USED;
+        }
 
         _passportInfo.activeIdentity = identityKey_;
 
