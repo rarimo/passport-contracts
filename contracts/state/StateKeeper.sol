@@ -127,6 +127,10 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         bytes32 identityKey_,
         uint256 dgCommit_
     ) external onlyRegistration {
+        if (passportKey_ == bytes32(0)) {
+            (passportHash_, passportKey_) = (passportKey_, passportHash_);
+        }
+
         PassportInfo storage _passportInfo = _passportInfos[passportKey_];
         IdentityInfo storage _identityInfo = _identityInfos[identityKey_];
 
