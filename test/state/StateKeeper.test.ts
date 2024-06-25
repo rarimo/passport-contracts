@@ -85,7 +85,9 @@ describe("StateKeeper", () => {
     it("should not be called by non-registrations", async () => {
       await expect(stateKeeper.addCertificate(ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
       await expect(stateKeeper.removeCertificate(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
-      await expect(stateKeeper.addBond(ZeroHash, ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
+      await expect(stateKeeper.addBond(ZeroHash, ZeroHash, ZeroHash, 0)).to.be.rejectedWith(
+        "StateKeeper: not a registration",
+      );
       await expect(stateKeeper.revokeBond(ZeroHash, ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
       await expect(stateKeeper.reissueBondIdentity(ZeroHash, ZeroHash, 0)).to.be.rejectedWith(
         "StateKeeper: not a registration",
