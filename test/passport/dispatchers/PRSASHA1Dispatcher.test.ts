@@ -29,6 +29,7 @@ describe("PRSASHA1Dispatcher", () => {
     const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
     dispatcher = await PRSASHA1Dispatcher.deploy();
 
+    await rsaSha1Authenticator.__PRSASHA1Authenticator_init(65537);
     await dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
 
     await reverter.snapshot();

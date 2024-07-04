@@ -8,7 +8,7 @@ library Bytes2Poseidon {
      * @notice Apply poseidon2 to [32, 32] bytes long integers mod 2 ** 248
      */
     function hash512(bytes memory byteArray_) internal pure returns (uint256) {
-        assert(byteArray_.length == 64);
+        assert(byteArray_.length >= 64);
 
         uint256[2] memory decomposed_;
 
@@ -27,7 +27,7 @@ library Bytes2Poseidon {
      * @notice Apply poseidon5 to [25, 25, 25, 25, 28] bytes long integers
      */
     function hash1024(bytes memory byteArray_) internal pure returns (uint256) {
-        assert(byteArray_.length == 128);
+        assert(byteArray_.length >= 128);
 
         uint256[5] memory decomposed_;
 
@@ -66,6 +66,8 @@ library Bytes2Poseidon {
      * The algorithm is such to accommodate for long arithmetic in circuits.
      */
     function hashPacked(bytes memory byteArray_) internal pure returns (uint256) {
+        assert(byteArray_.length >= 120);
+
         uint256[5] memory decomposed_;
 
         assembly {

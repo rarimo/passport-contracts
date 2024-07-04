@@ -123,6 +123,7 @@ describe("Registration", () => {
     const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
     pRsaSha1Dispatcher = await PRSASHA1Dispatcher.deploy();
 
+    await rsaSha1Authenticator.__PRSASHA1Authenticator_init(65537);
     await pRsaSha1Dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
   };
 

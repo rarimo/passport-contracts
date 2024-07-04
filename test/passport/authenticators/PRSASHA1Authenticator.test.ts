@@ -14,6 +14,8 @@ describe("PRSASHA1Authenticator", () => {
 
     auth = await PRSASHA1Authenticator.deploy();
 
+    await auth.__PRSASHA1Authenticator_init(65537);
+
     await reverter.snapshot();
   });
 
