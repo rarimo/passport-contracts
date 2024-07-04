@@ -13,7 +13,6 @@ import {
   PECDSASHA1Authenticator__factory,
   PUniversal2048Verifier2__factory,
   PUniversal4096Verifier2__factory,
-  PInternalVerifier2,
   PInternalVerifier2__factory,
 } from "@ethers-v6";
 
