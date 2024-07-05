@@ -11,8 +11,12 @@ contract PNOAADispatcher is IPassportDispatcher, Initializable {
     /**
      * @notice Authenticate the passport without AA. Just return `true`
      */
-    function authenticate(bytes memory, bytes memory, bytes memory) external pure returns (bool) {
-        return true;
+    function authenticate(
+        bytes memory,
+        bytes memory passportSignature_,
+        bytes memory passportPublicKey_
+    ) external pure returns (bool) {
+        return passportSignature_.length == 0 && passportPublicKey_.length == 0;
     }
 
     /**

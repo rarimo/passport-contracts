@@ -287,6 +287,10 @@ contract Registration2 is Initializable, TSSUpgradeable {
      * @dev passports AA is sufficiently randomized to use signatures as nonce.
      */
     function _useSignature(bytes memory passportSignature_) internal {
+        if (passportSignature_.length == 0) {
+            return;
+        }
+
         bytes32 sigHash_ = keccak256(passportSignature_);
 
         stateKeeper.useSignature(sigHash_);
