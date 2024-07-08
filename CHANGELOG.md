@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.1.0]
+
+* Changed `StateKeeper` interface to always accept passport public keys together with passport hashes. Previously if a passport didn't have AA, a passport public key would be treated as a passport hash. Now these are separate variables where a passport public key may be zero.
+    * Preserved backward-compatibility in terms of which "identity bond" identifiers to use:
+        - **Passport public key** if it is provided.
+        - **Passport hash** in every other case.
+    * Now a passport can't be registered with both the public key and the hash.
+* Added the second registration contract `Registration2` which works with the updated circuits. Updated circuits utilize five public inputs and always output a passport hash.
+    * The `Passport` struct has changed, hence chenging `register()`, `revoke()`, and `reissueIdentity()` methods signatures.
+* Updated `PRSASHA1Authenticator` contract to accept an RSA exponent as an initialization parameter to support the wider range of passports.
+* New constants have been added:
+    1. **Passport dispatchers**
+
+    ```solidity
+    P_RSA_SHA1_2688_3 = keccak256("P_RSA_SHA1_2688_3");
+    ```
+
+    2. **Passport verifiers**
+
+    ```solidity
+    Z_INTERNAL = keccak256("Z_INTERNAL");
+    ```
+* Updated migration scripts.
+* Fixed and added some tests.
+
 ## [Unreleased 2.0]
 
 * Added `StateKeeper` contract that acts as a singleton state instance that registrations interact with.

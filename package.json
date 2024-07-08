@@ -13,7 +13,8 @@
     "solidity",
     "ethereum",
     "smart-contracts",
-    "zero-knowledge"
+    "zero-knowledge",
+    "passports"
   ],
   "files": [
     "**/*.sol",

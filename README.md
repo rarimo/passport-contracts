@@ -52,13 +52,6 @@ Afterwards, you will be able to use the application by calling the `Registration
 > [!NOTE]
 > This is experimental, state of the art software. Behold and use at your own risk.
 
-### Limitations
-
-Currently only a few AA verification methods are supported:
-
-- `RSA + SHA1` with 2688 encapsulated content bits
-- `ECDSA + SHA1` with 2704 encapsulated content bits
-
 ## License
 
 The smart contracts are released under the MIT License.
