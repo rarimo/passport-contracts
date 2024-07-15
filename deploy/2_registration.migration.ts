@@ -18,10 +18,11 @@ import {
 
 import { getConfig } from "./config/config";
 
-const deployCRSASHA2Dispatcher = async (deployer: Deployer, keyLength: string, keyPrefix: string) => {
-  const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${keyLength}` });
+const deployCRSASHA2Dispatcher = async (deployer: Deployer, exponent: string, keyLength: string, keyPrefix: string) => {
+  const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
   const dispatcher = await deployer.deploy(CRSASHA2Dispatcher__factory, { name: `CRSASHA2Dispatcher ${keyLength}` });
 
+  await signer.__CRSASHA2Signer_init(exponent);
   await dispatcher.__CRSASHA2Dispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
 };
 
@@ -70,8 +71,8 @@ export = async (deployer: Deployer) => {
 
   await deployPVerifiers(deployer);
 
-  await deployCRSASHA2Dispatcher(deployer, "512", "0x0282020100");
-  await deployCRSASHA2Dispatcher(deployer, "256", "0x0282010100");
+  await deployCRSASHA2Dispatcher(deployer, "65537", "512", "0x0282020100");
+  await deployCRSASHA2Dispatcher(deployer, "65537", "256", "0x0282010100");
 
   await deployPRSASHA12688Dispatcher(deployer, "65537");
   await deployPRSASHA12688Dispatcher(deployer, "3");
