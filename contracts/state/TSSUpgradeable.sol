@@ -15,14 +15,14 @@ abstract contract TSSUpgradeable is UUPSSignableUpgradeable, TSSSigner {
         return _getImplementation();
     }
 
-    function _authorizeUpgrade(address) internal pure virtual override {
+    function _authorizeUpgrade(address) internal virtual override {
         revert("Upgradeable: This upgrade method is off");
     }
 
     function _authorizeUpgrade(
         address newImplementation_,
         bytes calldata proof_
-    ) internal override {
+    ) internal virtual override {
         require(newImplementation_ != address(0), "Upgradeable: Zero address");
 
         uint256 nonce_ = _getAndIncrementNonce(MAGIC_ID);
