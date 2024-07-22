@@ -26,27 +26,30 @@ abstract contract TSSSigner {
      * @param newSignerPubKey_ the new signer public key
      * @param signature_ the Rarimo TSS signature
      */
-    function changeSigner(bytes memory newSignerPubKey_, bytes memory signature_) external {
+    function changeSigner(
+        bytes memory newSignerPubKey_,
+        bytes memory signature_
+    ) external virtual {
         _checkSignature(keccak256(newSignerPubKey_), signature_);
 
         signer = _convertPubKeyToAddress(newSignerPubKey_);
     }
 
-    function getNonce(uint8 methodId_) external view returns (uint256) {
+    function getNonce(uint8 methodId_) external view virtual returns (uint256) {
         return _nonces[methodId_];
     }
 
-    function _getAndIncrementNonce(uint8 methodId_) internal returns (uint256) {
+    function _getAndIncrementNonce(uint8 methodId_) internal virtual returns (uint256) {
         return _nonces[methodId_]++;
     }
 
-    function _useNonce(uint8 methodId_, uint256 nonce_) internal {
+    function _useNonce(uint8 methodId_, uint256 nonce_) internal virtual {
         require(!_usedNonces[methodId_][nonce_], "TSSSigner: nonce used");
 
         _usedNonces[methodId_][nonce_] = true;
     }
 
-    function _checkSignature(bytes32 signHash_, bytes memory signature_) internal view {
+    function _checkSignature(bytes32 signHash_, bytes memory signature_) internal view virtual {
         address signer_ = signHash_.recover(signature_);
 
         require(signer == signer_, "TSSSigner: invalid signature");
@@ -57,7 +60,10 @@ abstract contract TSSSigner {
      * represented as a leaf. Rarimo TSS signs the Merkle root, which is reconstructed and verified
      * in that function.
      */
-    function _checkMerkleSignature(bytes32 merkleLeaf_, bytes memory proof_) internal view {
+    function _checkMerkleSignature(
+        bytes32 merkleLeaf_,
+        bytes memory proof_
+    ) internal view virtual {
         (bytes32[] memory merklePath_, bytes memory signature_) = abi.decode(
             proof_,
             (bytes32[], bytes)

@@ -90,7 +90,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     function addCertificate(
         bytes32 certificateKey_,
         uint256 expirationTimestamp_
-    ) external onlyRegistration {
+    ) external virtual onlyRegistration {
         require(expirationTimestamp_ > block.timestamp, "StateKeeper: certificate is expired");
 
         _certificateInfos[certificateKey_].expirationTimestamp = uint64(expirationTimestamp_);
@@ -103,7 +103,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Removes passport's certificate
      */
-    function removeCertificate(bytes32 certificateKey_) external onlyRegistration {
+    function removeCertificate(bytes32 certificateKey_) external virtual onlyRegistration {
         CertificateInfo storage _info = _certificateInfos[certificateKey_];
 
         require(
@@ -126,7 +126,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         bytes32 passportHash_,
         bytes32 identityKey_,
         uint256 dgCommit_
-    ) external onlyRegistration {
+    ) external virtual onlyRegistration {
         if (passportKey_ == bytes32(0)) {
             (passportHash_, passportKey_) = (passportKey_, passportHash_);
         }
@@ -172,7 +172,10 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Revoked identity bond
      */
-    function revokeBond(bytes32 passportKey_, bytes32 identityKey_) external onlyRegistration {
+    function revokeBond(
+        bytes32 passportKey_,
+        bytes32 identityKey_
+    ) external virtual onlyRegistration {
         PassportInfo storage _passportInfo = _passportInfos[passportKey_];
         IdentityInfo storage _identityInfo = _identityInfos[identityKey_];
 
@@ -203,7 +206,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         bytes32 passportKey_,
         bytes32 identityKey_,
         uint256 dgCommit_
-    ) external onlyRegistration {
+    ) external virtual onlyRegistration {
         PassportInfo storage _passportInfo = _passportInfos[passportKey_];
         IdentityInfo storage _identityInfo = _identityInfos[identityKey_];
 
@@ -232,7 +235,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Stores used signatures throughout the registrations
      */
-    function useSignature(bytes32 sigHash_) external onlyRegistration {
+    function useSignature(bytes32 sigHash_) external virtual onlyRegistration {
         require(!usedSignatures[sigHash_], "StateKeeper: signature used");
 
         usedSignatures[sigHash_] = true;
@@ -248,7 +251,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         bytes32 newRoot_,
         uint256 timestamp,
         bytes memory proof_
-    ) external {
+    ) external virtual {
         bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
 
         _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
@@ -267,7 +270,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         MethodId methodId_,
         bytes calldata data_,
         bytes calldata proof_
-    ) external {
+    ) external virtual {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
         bytes32 leaf_ = keccak256(
             abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
@@ -307,7 +310,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
      */
     function getCertificateInfo(
         bytes32 certificateKey_
-    ) external view returns (CertificateInfo memory) {
+    ) external view virtual returns (CertificateInfo memory) {
         return _certificateInfos[certificateKey_];
     }
 
@@ -322,6 +325,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     )
         external
         view
+        virtual
         returns (PassportInfo memory passportInfo_, IdentityInfo memory identityInfo_)
     {
         passportInfo_ = _passportInfos[passportKey_];
@@ -337,6 +341,7 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     function getRegistrations()
         external
         view
+        virtual
         returns (string[] memory keys_, address[] memory values_)
     {
         keys_ = _registrationKeys.values();
@@ -350,14 +355,14 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Get the registration address by its key
      */
-    function getRegistrationByKey(string memory key_) external view returns (address) {
+    function getRegistrationByKey(string memory key_) external view virtual returns (address) {
         return _registrations[key_];
     }
 
     /**
      * @notice Checks whether the passed address is a registration
      */
-    function isRegistration(address registration_) external view returns (bool) {
+    function isRegistration(address registration_) external view virtual returns (bool) {
         return _registrationExists[registration_];
     }
 

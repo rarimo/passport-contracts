@@ -11,7 +11,7 @@ abstract contract TSSUpgradeable is UUPSSignableUpgradeable, TSSSigner {
     /**
      * @notice Etherscan compatibility
      */
-    function implementation() external view returns (address) {
+    function implementation() external view virtual returns (address) {
         return _getImplementation();
     }
 

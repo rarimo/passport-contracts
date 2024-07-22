@@ -54,14 +54,17 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     /**
      * @notice Adds the new element to the tree.
      */
-    function add(bytes32 keyOfElement_, bytes32 element_) external onlyStateKeeper withRootUpdate {
+    function add(
+        bytes32 keyOfElement_,
+        bytes32 element_
+    ) external virtual onlyStateKeeper withRootUpdate {
         _bytes32Tree.add(keyOfElement_, element_);
     }
 
     /**
      * @notice Removes the element from the tree.
      */
-    function remove(bytes32 keyOfElement_) external onlyStateKeeper withRootUpdate {
+    function remove(bytes32 keyOfElement_) external virtual onlyStateKeeper withRootUpdate {
         _bytes32Tree.remove(keyOfElement_);
     }
 
@@ -71,35 +74,37 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     function update(
         bytes32 keyOfElement_,
         bytes32 newElement_
-    ) external onlyStateKeeper withRootUpdate {
+    ) external virtual onlyStateKeeper withRootUpdate {
         _bytes32Tree.update(keyOfElement_, newElement_);
     }
 
     /**
      * @notice Gets Merkle (inclusion/exclusion) proof of the element.
      */
-    function getProof(bytes32 key_) external view returns (SparseMerkleTree.Proof memory) {
+    function getProof(bytes32 key_) external view virtual returns (SparseMerkleTree.Proof memory) {
         return _bytes32Tree.getProof(key_);
     }
 
     /**
      * @notice Gets the SMT root
      */
-    function getRoot() external view returns (bytes32) {
+    function getRoot() external view virtual returns (bytes32) {
         return _bytes32Tree.getRoot();
     }
 
     /**
      * @notice Gets the node info by its key.
      */
-    function getNodeByKey(bytes32 key_) external view returns (SparseMerkleTree.Node memory) {
+    function getNodeByKey(
+        bytes32 key_
+    ) external view virtual returns (SparseMerkleTree.Node memory) {
         return _bytes32Tree.getNodeByKey(key_);
     }
 
     /**
      * @notice Check if the SMT root is valid. Zero root in always invalid and latest root is always a valid one.
      */
-    function isRootValid(bytes32 root_) external view returns (bool) {
+    function isRootValid(bytes32 root_) external view virtual returns (bool) {
         if (root_ == bytes32(0)) {
             return false;
         }
@@ -110,7 +115,7 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     /**
      * @notice Check if the SMT root is a latest one
      */
-    function isRootLatest(bytes32 root_) public view returns (bool) {
+    function isRootLatest(bytes32 root_) public view virtual returns (bool) {
         return _bytes32Tree.getRoot() == root_;
     }
 

@@ -81,7 +81,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         Certificate memory certificate_,
         ICAOMember memory icaoMember_,
         bytes32[] memory icaoMerkleProof_
-    ) external {
+    ) external virtual {
         ICertificateDispatcher dispatcher_ = _getCertificateDispatcher(certificate_.dataType);
 
         bytes32 icaoMerkleRoot_ = icaoMerkleProof_.processProof(keccak256(icaoMember_.publicKey));
@@ -115,7 +115,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
      * @notice Revokes an expired X509 certificate
      * @param certificateKey_ the "fancy hashed" (see X509 util) hash of a public key of a certificate
      */
-    function revokeCertificate(bytes32 certificateKey_) external {
+    function revokeCertificate(bytes32 certificateKey_) external virtual {
         stateKeeper.removeCertificate(certificateKey_);
     }
 
@@ -133,7 +133,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         uint256 dgCommit_,
         Passport memory passport_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) external {
+    ) external virtual {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
@@ -167,7 +167,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
      * @param identityKey_ the hash of the public key of an identity
      * @param passport_ the passport info
      */
-    function revoke(uint256 identityKey_, Passport memory passport_) external {
+    function revoke(uint256 identityKey_, Passport memory passport_) external virtual {
         require(identityKey_ > 0, "Registration: identity can not be zero");
         require(passport_.dataType != P_NO_AA, "Registration: can't revoke without AA");
 
@@ -196,7 +196,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         uint256 dgCommit_,
         Passport memory passport_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) external {
+    ) external virtual {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
@@ -233,7 +233,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         MethodId methodId_,
         bytes calldata data_,
         bytes calldata proof_
-    ) external {
+    ) external virtual {
         uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
         bytes32 leaf_ = keccak256(
             abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
