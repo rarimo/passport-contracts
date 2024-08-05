@@ -3,8 +3,6 @@ pragma solidity 0.8.16;
 
 import {RSA} from "./RSA.sol";
 
-error MaskTooLengthy();
-
 library RSAPSS {
     uint256 constant HASH_LEN = 32;
     uint256 constant SALT_LEN = 32;
@@ -102,9 +100,7 @@ library RSAPSS {
     ) private pure returns (bytes memory res_) {
         bytes memory cnt_ = new bytes(4);
 
-        if (maskLen_ > (2 ** 32) * HASH_LEN) {
-            revert MaskTooLengthy();
-        }
+        require(maskLen_ <= (2 ** 32) * HASH_LEN, "RSAPSS: mask too lengthy");
 
         for (uint256 i = 0; i < (maskLen_ + HASH_LEN - 1) / HASH_LEN; ++i) {
             cnt_[0] = bytes1(uint8((i >> 24) & 255));
