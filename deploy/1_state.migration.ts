@@ -5,7 +5,7 @@ import { PoseidonSMT, StateKeeperMock, StateKeeperMock__factory } from "@ethers-
 
 import { getConfig } from "./config/config";
 
-const SMTInit = async (smt: PoseidonSMT, stateKeeper: StateKeeperMock, config: any) => {
+const smtInit = async (smt: PoseidonSMT, stateKeeper: StateKeeperMock, config: any) => {
   await smt.__PoseidonSMT_init(config.tssSigner, config.chainName, await stateKeeper.getAddress(), config.treeSize);
 };
 
@@ -19,8 +19,8 @@ export = async (deployer: Deployer) => {
 
   const stateKeeper = await deployProxy(deployer, StateKeeperMock__factory, "StateKeeper");
 
-  await SMTInit(registrationSmt, stateKeeper, config);
-  await SMTInit(certificatesSmt, stateKeeper, config);
+  await smtInit(registrationSmt, stateKeeper, config);
+  await smtInit(certificatesSmt, stateKeeper, config);
 
   await stateKeeper.__StateKeeper_init(
     config.tssSigner,

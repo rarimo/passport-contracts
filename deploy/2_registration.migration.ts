@@ -20,7 +20,7 @@ import { BaseContract } from "ethers";
 import { getConfig } from "./config/config";
 import { deployProxy } from "./helpers/helper";
 
-const deployDispatcher = async (
+const deployCDispatcher = async (
   deployer: Deployer,
   signer: BaseContract,
   keyLength: string,
@@ -35,7 +35,7 @@ const deployCRSASHA2Dispatcher = async (deployer: Deployer, exponent: string, ke
   const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
   await signer.__CRSASHA2Signer_init(exponent);
 
-  await deployDispatcher(deployer, signer, keyLength, keyPrefix, "CRSASHA2Dispatcher");
+  await deployCDispatcher(deployer, signer, keyLength, keyPrefix, "CRSASHA2Dispatcher");
 };
 
 const deployCRSAPSSSHA2Dispatcher = async (
@@ -49,7 +49,7 @@ const deployCRSAPSSSHA2Dispatcher = async (
   });
   await signer.__CRSAPSSSHA2Signer_init(exponent);
 
-  await deployDispatcher(deployer, signer, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher");
+  await deployCDispatcher(deployer, signer, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher");
 };
 
 const deployPNOAADispatcher = async (deployer: Deployer) => {
