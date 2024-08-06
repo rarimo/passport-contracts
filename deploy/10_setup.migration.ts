@@ -28,17 +28,15 @@ import { getConfig } from "./config/config";
 
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
-
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
-
   const registration = await deployer.deployed(Registration2Mock__factory, "Registration Proxy");
-
-  const cRsa4096Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 65537 512");
-  const cRsa2048Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 65537 256");
-
+  console.log("1");
+  const cRsa4096Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 512");
+  console.log(1.5);
+  const cRsa2048Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 256");
+  console.log("2");
   const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 65537");
   const pRsaSha126883Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 3");
-
   const pNoAaDispatcher = await deployer.deployed(PNOAADispatcher__factory);
   const pEcdsaSha12704Dispatcher = await deployer.deployed(PECDSASHA1Dispatcher__factory);
 

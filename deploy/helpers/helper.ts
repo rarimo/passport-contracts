@@ -34,14 +34,14 @@ export async function deploySMTProxy(deployer: Deployer, name: string) {
 
 export async function deployProxy<T, A = T, I = any>(
   deployer: Deployer,
-  contract: Instance<A, I> | (T extends Truffle.Contract<I> ? T : never),
+  factory: Instance<A, I> | (T extends Truffle.Contract<I> ? T : never),
   name: string,
 ) {
-  const implementation = (await deployer.deploy(contract, { name: name })) as BaseContract;
+  const implementation = (await deployer.deploy(factory, { name: name })) as BaseContract;
 
   await deployer.deploy(ERC1967Proxy__factory, [await implementation.getAddress(), "0x"], {
     name: `${name} Proxy`,
   });
 
-  return await deployer.deployed(contract, `${name} Proxy`);
+  return await deployer.deployed(factory, `${name} Proxy`);
 }
