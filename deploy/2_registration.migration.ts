@@ -1,6 +1,7 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 
 import {
+  CRSAPSSSHA2Signer__factory,
   CRSASHA2Dispatcher__factory,
   CRSASHA2Signer__factory,
   PECDSASHA1Authenticator__factory,
@@ -15,15 +16,40 @@ import {
   StateKeeperMock__factory,
 } from "@ethers-v6";
 
+import { BaseContract } from "ethers";
 import { getConfig } from "./config/config";
 import { deployProxy } from "./helpers/helper";
 
+const deployDispatcher = async (
+  deployer: Deployer,
+  signer: BaseContract,
+  keyLength: string,
+  keyPrefix: string,
+  name: string,
+) => {
+  const dispatcher = await deployer.deploy(CRSASHA2Dispatcher__factory, { name: `${name} ${keyLength}` });
+  await dispatcher.__CRSASHA2Dispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
+};
+
 const deployCRSASHA2Dispatcher = async (deployer: Deployer, exponent: string, keyLength: string, keyPrefix: string) => {
   const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
-  const dispatcher = await deployer.deploy(CRSASHA2Dispatcher__factory, { name: `CRSASHA2Dispatcher ${keyLength}` });
-
   await signer.__CRSASHA2Signer_init(exponent);
-  await dispatcher.__CRSASHA2Dispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
+
+  await deployDispatcher(deployer, signer, keyLength, keyPrefix, "CRSASHA2Dispatcher");
+};
+
+const deployCRSAPSSSHA2Dispatcher = async (
+  deployer: Deployer,
+  exponent: string,
+  keyLength: string,
+  keyPrefix: string,
+) => {
+  const signer = await deployer.deploy(CRSAPSSSHA2Signer__factory, {
+    name: `CRSAPSSSHA2Signer ${exponent} ${keyLength}`,
+  });
+  await signer.__CRSAPSSSHA2Signer_init(exponent);
+
+  await deployDispatcher(deployer, signer, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher");
 };
 
 const deployPNOAADispatcher = async (deployer: Deployer) => {
@@ -68,6 +94,7 @@ export = async (deployer: Deployer) => {
 
   await deployCRSASHA2Dispatcher(deployer, "65537", "512", "0x0282020100");
   await deployCRSASHA2Dispatcher(deployer, "65537", "256", "0x0282010100");
+  await deployCRSAPSSSHA2Dispatcher(deployer, "65537", "512", "0x0282020100");
 
   await deployPRSASHA12688Dispatcher(deployer, "65537");
   await deployPRSASHA12688Dispatcher(deployer, "3");
