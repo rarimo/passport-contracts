@@ -1,6 +1,6 @@
 import { ERC1967Proxy__factory, PoseidonSMT, PoseidonSMT__factory } from "@/generated-types/ethers";
 import { Deployer } from "@solarity/hardhat-migrate";
-import { Instance } from "@solarity/hardhat-migrate/dist/src/types/adapter";
+import { EthersContract } from "@solarity/hardhat-migrate/dist/src/types/adapter";
 import { BaseContract } from "ethers";
 
 const { poseidonContract } = require("circomlibjs");
@@ -32,9 +32,9 @@ export async function deploySMTProxy(deployer: Deployer, name: string) {
   return (await deployProxy(deployer, PoseidonSMT__factory, name)) as PoseidonSMT;
 }
 
-export async function deployProxy<T, A = T, I = any>(
+export async function deployProxy<T, I = BaseContract>(
   deployer: Deployer,
-  factory: Instance<A, I> | (T extends Truffle.Contract<I> ? T : never),
+  factory: EthersContract<T, I>,
   name: string,
 ) {
   const implementation = (await deployer.deploy(factory, { name: name })) as BaseContract;
