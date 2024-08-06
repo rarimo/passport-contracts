@@ -1,27 +1,27 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
 import {
-  StateKeeperMock__factory,
-  Registration2Mock__factory,
   CRSASHA2Dispatcher__factory,
+  PECDSASHA1Dispatcher__factory,
+  PInternalVerifier2__factory,
   PNOAADispatcher__factory,
   PRSASHA1Dispatcher__factory,
-  PECDSASHA1Dispatcher__factory,
   PUniversal2048Verifier2__factory,
   PUniversal4096Verifier2__factory,
-  PInternalVerifier2__factory,
+  Registration2Mock__factory,
+  StateKeeperMock__factory,
 } from "@ethers-v6";
 
 import {
-  Z_UNIVERSAL_2048,
-  Z_UNIVERSAL_4096,
-  Z_INTERNAL,
-  C_RSA_4096,
   C_RSA_2048,
-  P_NO_AA,
+  C_RSA_4096,
   P_ECDSA_SHA1_2704,
+  P_NO_AA,
   P_RSA_SHA1_2688,
   P_RSA_SHA1_2688_3,
+  Z_INTERNAL,
+  Z_UNIVERSAL_2048,
+  Z_UNIVERSAL_4096,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";

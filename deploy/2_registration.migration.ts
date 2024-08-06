@@ -1,22 +1,22 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 
 import {
-  StateKeeperMock__factory,
-  ERC1967Proxy__factory,
-  Registration2Mock__factory,
   CRSASHA2Dispatcher__factory,
   CRSASHA2Signer__factory,
-  PNOAADispatcher__factory,
-  PRSASHA1Dispatcher__factory,
-  PECDSASHA1Dispatcher__factory,
-  PRSASHA1Authenticator__factory,
   PECDSASHA1Authenticator__factory,
+  PECDSASHA1Dispatcher__factory,
+  PInternalVerifier2__factory,
+  PNOAADispatcher__factory,
+  PRSASHA1Authenticator__factory,
+  PRSASHA1Dispatcher__factory,
   PUniversal2048Verifier2__factory,
   PUniversal4096Verifier2__factory,
-  PInternalVerifier2__factory,
+  Registration2Mock__factory,
+  StateKeeperMock__factory,
 } from "@ethers-v6";
 
 import { getConfig } from "./config/config";
+import { deployProxy } from "./helpers/helper";
 
 const deployCRSASHA2Dispatcher = async (deployer: Deployer, exponent: string, keyLength: string, keyPrefix: string) => {
   const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
@@ -61,12 +61,7 @@ export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
 
-  let registration = await deployer.deploy(Registration2Mock__factory);
-  await deployer.deploy(ERC1967Proxy__factory, [await registration.getAddress(), "0x"], {
-    name: "Registration Proxy",
-  });
-  registration = await deployer.deployed(Registration2Mock__factory, "Registration Proxy");
-
+  const registration = await deployProxy(deployer, Registration2Mock__factory, "Registration");
   await registration.__Registration_init(config.tssSigner, config.chainName, await stateKeeper.getAddress());
 
   await deployPVerifiers(deployer);

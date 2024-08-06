@@ -1,10 +1,10 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
 import {
-  StateKeeper__factory,
-  StateKeeperMock__factory,
   Registration2__factory,
   Registration2Mock__factory,
+  StateKeeper__factory,
+  StateKeeperMock__factory,
 } from "@ethers-v6";
 
 export = async (deployer: Deployer) => {
