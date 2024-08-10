@@ -31,6 +31,15 @@ const deployCDispatcher = async (
   await dispatcher.__CRSASHA2Dispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
 };
 
+const deployRSAPSSSigner = async (deployer: Deployer, exponent: string, keyLength: string, isSha2: boolean) => {
+  const signer = await deployer.deploy(CRSAPSSSHA2Signer__factory, {
+    name: `CRSAPSSSHA2Signer ${isSha2 ? "SHA2" : "SHA512"} ${exponent} ${keyLength}`,
+  });
+  await signer.__CRSAPSSSHA2Signer_init(exponent, isSha2);
+
+  return signer;
+};
+
 const deployCRSASHA2Dispatcher = async (deployer: Deployer, exponent: string, keyLength: string, keyPrefix: string) => {
   const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
   await signer.__CRSASHA2Signer_init(exponent);
@@ -44,12 +53,11 @@ const deployCRSAPSSSHA2Dispatcher = async (
   keyLength: string,
   keyPrefix: string,
 ) => {
-  const signer = await deployer.deploy(CRSAPSSSHA2Signer__factory, {
-    name: `CRSAPSSSHA2Signer ${exponent} ${keyLength}`,
-  });
-  await signer.__CRSAPSSSHA2Signer_init(exponent);
+  const signerSha2 = await deployRSAPSSSigner(deployer, exponent, keyLength, true);
+  const signerSha512 = await deployRSAPSSSigner(deployer, exponent, keyLength, false);
 
-  await deployCDispatcher(deployer, signer, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher");
+  await deployCDispatcher(deployer, signerSha2, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher SHA2");
+  await deployCDispatcher(deployer, signerSha512, keyLength, keyPrefix, "CRSAPSSSHA2Dispatcher SHA512");
 };
 
 const deployPNOAADispatcher = async (deployer: Deployer) => {

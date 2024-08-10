@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-// 参考: https://csrc.nist.gov/csrc/media/publications/fips/180/2/archive/2002-08-01/documents/fips180-2.pdf
+// https://csrc.nist.gov/csrc/media/publications/fips/180/2/archive/2002-08-01/documents/fips180-2.pdf
 
 library SHA512 {
     // @notice: The message, M, shall be padded before hash computation begins.
@@ -109,7 +109,6 @@ library SHA512 {
         return ROTR(x, 19) ^ ROTR(x, 61) ^ SHR(x, 6);
     }
 
-    // 工作变量
     struct FuncVar {
         uint64 a;
         uint64 b;
@@ -125,7 +124,6 @@ library SHA512 {
     // @param data input data bytes
     // @return 512 bits hash result
     function sha512(bytes memory data) internal pure returns (bytes memory) {
-        // 中间哈希
         uint64[8] memory H = [
             0x6a09e667f3bcc908,
             0xbb67ae8584caa73b,
@@ -140,10 +138,9 @@ library SHA512 {
         uint64 T1;
         uint64 T2;
 
-        uint64[80] memory W; // 消息列表
-        FuncVar memory fvar; // 工作变量
+        uint64[80] memory W;
+        FuncVar memory fvar;
 
-        // 常数表
         uint64[80] memory K = [
             0x428a2f98d728ae22,
             0x7137449123ef65cd,
@@ -227,10 +224,8 @@ library SHA512 {
             0x6c44198c4a475817
         ];
 
-        // 补位，使其位长为 1024 bits 的整数倍，即 128 个 bytes
         bytes memory blocks = preprocess(data);
 
-        // 处理每个 block
         for (uint256 j = 0; j < blocks.length / 128; j++) {
             uint64[16] memory M = cutBlock(blocks, j);
 
@@ -243,9 +238,7 @@ library SHA512 {
             fvar.g = H[6];
             fvar.h = H[7];
 
-            // 迭代 80 轮
             for (uint256 i = 0; i < 80; i++) {
-                // 计算消息列表
                 if (i < 16) {
                     W[i] = M[i];
                 } else {
