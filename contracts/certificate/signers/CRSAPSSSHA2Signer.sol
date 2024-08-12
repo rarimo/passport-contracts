@@ -4,7 +4,6 @@ pragma solidity 0.8.16;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {RSAPSS} from "../../utils/RSAPSS.sol";
-import {RSAPSSSHA512} from "../../utils/RSAPSSSHA512.sol";
 
 contract CRSAPSSSHA2Signer is Initializable {
     uint256 public exponent; // RSAPSS exponent
@@ -24,18 +23,12 @@ contract CRSAPSSSHA2Signer is Initializable {
         bytes memory icaoMemberKey_
     ) external view returns (bool) {
         return
-            isSha2
-                ? RSAPSS.verify(
-                    x509SignedAttributes_,
-                    icaoMemberSignature_,
-                    abi.encodePacked(exponent),
-                    icaoMemberKey_
-                )
-                : RSAPSSSHA512.verify(
-                    x509SignedAttributes_,
-                    icaoMemberSignature_,
-                    abi.encodePacked(exponent),
-                    icaoMemberKey_
-                );
+            RSAPSS.verify(
+                x509SignedAttributes_,
+                icaoMemberSignature_,
+                abi.encodePacked(exponent),
+                icaoMemberKey_,
+                isSha2
+            );
     }
 }
