@@ -14,3 +14,4 @@ bytes32 constant P_ECDSA_SHA1_2704 = keccak256("P_ECDSA_SHA1_2704");
 bytes32 constant Z_UNIVERSAL_4096 = keccak256("Z_UNIVERSAL_4096");
 bytes32 constant Z_UNIVERSAL_2048 = keccak256("Z_UNIVERSAL_2048");
 bytes32 constant Z_INTERNAL = keccak256("Z_INTERNAL");
+bytes32 constant Z_INTERNAL_OPT = keccak256("Z_INTERNAL_OPT");

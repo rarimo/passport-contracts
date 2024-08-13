@@ -13,3 +13,4 @@ export const P_ECDSA_SHA1_2704 = ethers.solidityPackedKeccak256(["string"], ["P_
 export const Z_UNIVERSAL_4096 = ethers.solidityPackedKeccak256(["string"], ["Z_UNIVERSAL_4096"]);
 export const Z_UNIVERSAL_2048 = ethers.solidityPackedKeccak256(["string"], ["Z_UNIVERSAL_2048"]);
 export const Z_INTERNAL = ethers.solidityPackedKeccak256(["string"], ["Z_INTERNAL"]);
+export const Z_INTERNAL_OPT = ethers.solidityPackedKeccak256(["string"], ["Z_INTERNAL_OPT"]);

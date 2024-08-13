@@ -122,7 +122,7 @@ const config: HardhatUserConfig = {
         network: "rarimo-mainnet",
         chainId: 201411,
         urls: {
-          apiURL: "https://evmscan.rarimo.com/api",
+          apiURL: "https://api.evmscan.rarimo.com/api",
           browserURL: "https://evmscan.rarimo.com",
         },
       },
