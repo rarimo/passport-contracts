@@ -20,7 +20,7 @@ import {
   RegistrationMock,
   PUniversal2048Verifier,
   PUniversal4096Verifier,
-  CRSASHA2Dispatcher,
+  CRSADispatcher,
   PNOAADispatcher,
   PRSASHA1Dispatcher,
   PECDSASHA1Dispatcher,
@@ -71,7 +71,7 @@ describe("Registration", () => {
   let pNoAaDispatcher: PNOAADispatcher;
   let pRsaSha1Dispatcher: PRSASHA1Dispatcher;
   let pEcdsaSha1Dispatcher: PECDSASHA1Dispatcher;
-  let cRsaSha2Dispatcher: CRSASHA2Dispatcher;
+  let cRsaDispatcher: CRSADispatcher;
 
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
@@ -86,23 +86,19 @@ describe("Registration", () => {
     pUniversal4096Verifier = await PUniversal4096Verifier.deploy();
   };
 
-  const deployCRSASHA2Dispatcher = async () => {
+  const deployCRSADispatcher = async () => {
     const CRSASHA2Signer = await ethers.getContractFactory("CRSASHA2Signer");
-    const CRSASHA2Dispatcher = await ethers.getContractFactory("CRSASHA2Dispatcher", {
+    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
-    cRsaSha2Dispatcher = await CRSASHA2Dispatcher.deploy();
+    cRsaDispatcher = await CRSADispatcher.deploy();
 
     await rsaSha2Signer.__CRSASHA2Signer_init(65537);
-    await cRsaSha2Dispatcher.__CRSASHA2Dispatcher_init(
-      await rsaSha2Signer.getAddress(),
-      512,
-      x509CertificateKeyCheckPrefix,
-    );
+    await cRsaDispatcher.__CRSADispatcher_init(await rsaSha2Signer.getAddress(), 512, x509CertificateKeyCheckPrefix);
   };
 
   const deployPNOAADispatcher = async () => {
@@ -206,7 +202,7 @@ describe("Registration", () => {
     stateKeeper = await StateKeeper.deploy();
 
     await deployPUniversalVerifiers();
-    await deployCRSASHA2Dispatcher();
+    await deployCRSADispatcher();
     await deployPNOAADispatcher();
     await deployPRSASHA1Dispatcher();
     await deployPECDSASHA1Dispatcher();
@@ -251,11 +247,7 @@ describe("Registration", () => {
       Z_UNIVERSAL_4096,
       await pUniversal4096Verifier.getAddress(),
     );
-    await addDependency(
-      RegistrationMethodId.AddCertificateDispatcher,
-      C_RSA_4096,
-      await cRsaSha2Dispatcher.getAddress(),
-    );
+    await addDependency(RegistrationMethodId.AddCertificateDispatcher, C_RSA_4096, await cRsaDispatcher.getAddress());
     await addDependency(RegistrationMethodId.AddPassportDispatcher, P_NO_AA, await pNoAaDispatcher.getAddress());
     await addDependency(
       RegistrationMethodId.AddPassportDispatcher,

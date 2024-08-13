@@ -1,5 +1,5 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
-import { deployPoseidons, deployProxy, deploySMTProxy } from "./helpers/helper";
+import { deployPoseidons, deployProxy, deploySMTProxy } from "./helpers";
 
 import { PoseidonSMT, StateKeeperMock, StateKeeperMock__factory } from "@ethers-v6";
 
