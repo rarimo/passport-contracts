@@ -1,7 +1,7 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
 import {
-  CRSASHA2Dispatcher__factory,
+  CRSADispatcher__factory,
   PECDSASHA1Dispatcher__factory,
   PInternalVerifier2__factory,
   PNOAADispatcher__factory,
@@ -31,18 +31,12 @@ import { getConfig } from "./config/config";
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
-  const registration = await deployer.deployed(Registration2Mock__factory, "Registration Proxy");
+  const registration = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
-  const cRsa4096Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 512");
-  const cRsa2048Dispatcher = await deployer.deployed(CRSASHA2Dispatcher__factory, "CRSASHA2Dispatcher 256");
-  const cRsaPss4096Sha2Dispatcher = await deployer.deployed(
-    CRSASHA2Dispatcher__factory,
-    "CRSAPSSSHA2Dispatcher SHA2 512",
-  );
-  const cRsaPss4096Sha512Dispatcher = await deployer.deployed(
-    CRSASHA2Dispatcher__factory,
-    "CRSAPSSSHA2Dispatcher SHA512 512",
-  );
+  const cRsa4096Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher 512");
+  const cRsa2048Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher 256");
+  const cRsaPss4096Sha2Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA2 512");
+  const cRsaPss4096Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 512");
   const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 65537");
   const pRsaSha126883Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 3");
   const pNoAaDispatcher = await deployer.deployed(PNOAADispatcher__factory);

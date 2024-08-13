@@ -6,14 +6,13 @@ import {PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {ICertificateDispatcher} from "../../interfaces/dispatchers/ICertificateDispatcher.sol";
-
-import {CRSASHA2Signer} from "../signers/CRSASHA2Signer.sol";
+import {ICertificateRSASigner} from "../../interfaces/signers/ICertificateRSASigner.sol";
 
 import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 import {RSA} from "../../utils/RSA.sol";
 import {X509} from "../../utils/X509.sol";
 
-contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
+contract CRSADispatcher is ICertificateDispatcher, Initializable {
     using Bytes2Poseidon for bytes;
     using X509 for bytes;
     using RSA for bytes;
@@ -23,7 +22,7 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
 
     address public signer;
 
-    function __CRSASHA2Dispatcher_init(
+    function __CRSADispatcher_init(
         address signer_,
         uint256 keyByteLength_,
         bytes calldata keyCheckPrefix_
@@ -42,7 +41,7 @@ contract CRSASHA2Dispatcher is ICertificateDispatcher, Initializable {
         bytes memory icaoMemberKey_
     ) external view override returns (bool) {
         return
-            CRSASHA2Signer(signer).verifyICAOSignature(
+            ICertificateRSASigner(signer).verifyICAOSignature(
                 x509SignedAttributes_,
                 icaoMemberSignature_,
                 icaoMemberKey_

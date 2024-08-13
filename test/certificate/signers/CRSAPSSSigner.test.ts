@@ -2,22 +2,22 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 
-import { CRSAPSSSHA2Signer } from "@ethers-v6";
+import { CRSAPSSSigner } from "@ethers-v6";
 
 describe("CRSAPSSSHA2Signer", () => {
   const reverter = new Reverter();
 
-  let signerSha2: CRSAPSSSHA2Signer;
-  let signerSha512: CRSAPSSSHA2Signer;
+  let signerSha2: CRSAPSSSigner;
+  let signerSha512: CRSAPSSSigner;
 
   before("setup", async () => {
-    const CRSAPSSSHA2Signer = await ethers.getContractFactory("CRSAPSSSHA2Signer");
+    const CRSAPSSSigner = await ethers.getContractFactory("CRSAPSSSigner");
 
-    signerSha2 = await CRSAPSSSHA2Signer.deploy();
-    signerSha512 = await CRSAPSSSHA2Signer.deploy();
+    signerSha2 = await CRSAPSSSigner.deploy();
+    signerSha512 = await CRSAPSSSigner.deploy();
 
-    await signerSha2.__CRSAPSSSHA2Signer_init(65537, true);
-    await signerSha512.__CRSAPSSSHA2Signer_init(65537, false);
+    await signerSha2.__CRSAPSSSigner_init(65537, true);
+    await signerSha512.__CRSAPSSSigner_init(65537, false);
 
     await reverter.snapshot();
   });

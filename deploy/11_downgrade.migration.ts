@@ -9,7 +9,7 @@ import {
 
 export = async (deployer: Deployer) => {
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
-  const registration = await deployer.deployed(Registration2Mock__factory, "Registration Proxy");
+  const registration = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
   let stateKeeperImpl = await deployer.deploy(StateKeeper__factory);
   let registrationImpl = await deployer.deploy(Registration2__factory);
