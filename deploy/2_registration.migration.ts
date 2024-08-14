@@ -23,9 +23,13 @@ export = async (deployer: Deployer) => {
 
   await deployPVerifiers(deployer);
 
-  await deployCRSADispatcher(deployer, "65537", "512", "0x0282020100");
-  await deployCRSADispatcher(deployer, "65537", "256", "0x0282010100");
-  await deployCRSAPSSDispatcher(deployer, "65537", "512", "0x0282020100");
+  await deployCRSADispatcher(deployer, "SHA1", "65537", "512", "0x0282020100");
+  await deployCRSADispatcher(deployer, "SHA1", "65537", "256", "0x0282010100");
+  await deployCRSADispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
+  await deployCRSADispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
+
+  await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
+  await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
 
   await deployPRSASHA12688Dispatcher(deployer, "65537");
   await deployPRSASHA12688Dispatcher(deployer, "3");

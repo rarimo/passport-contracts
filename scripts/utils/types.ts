@@ -1,7 +1,10 @@
 import { ethers } from "hardhat";
 
-export const C_RSA_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_4096"]);
-export const C_RSA_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_2048"]);
+export const C_RSA_SHA1_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_SHA1_4096"]);
+export const C_RSA_SHA1_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_SHA1_2048"]);
+export const C_RSA_SHA2_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_4096"]);
+export const C_RSA_SHA2_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RSA_2048"]);
+
 export const C_RSAPSS_SHA2_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA2_4096"]);
 export const C_RSAPSS_SHA512_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA512_4096"]);
 

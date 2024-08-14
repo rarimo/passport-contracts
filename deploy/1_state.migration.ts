@@ -1,13 +1,9 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 import { deployPoseidons, deployProxy, deploySMTProxy } from "./helpers";
 
-import { PoseidonSMT, StateKeeperMock, StateKeeperMock__factory } from "@ethers-v6";
+import { StateKeeperMock__factory } from "@ethers-v6";
 
 import { getConfig } from "./config/config";
-
-const smtInit = async (smt: PoseidonSMT, stateKeeper: StateKeeperMock, config: any) => {
-  await smt.__PoseidonSMT_init(config.tssSigner, config.chainName, await stateKeeper.getAddress(), config.treeSize);
-};
 
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
@@ -19,8 +15,19 @@ export = async (deployer: Deployer) => {
 
   const stateKeeper = await deployProxy(deployer, StateKeeperMock__factory, "StateKeeper");
 
-  await smtInit(registrationSmt, stateKeeper, config);
-  await smtInit(certificatesSmt, stateKeeper, config);
+  await registrationSmt.__PoseidonSMT_init(
+    config.tssSigner,
+    config.chainName,
+    await stateKeeper.getAddress(),
+    config.treeSize,
+  );
+
+  await certificatesSmt.__PoseidonSMT_init(
+    config.tssSigner,
+    config.chainName,
+    await stateKeeper.getAddress(),
+    config.treeSize,
+  );
 
   await stateKeeper.__StateKeeper_init(
     config.tssSigner,
