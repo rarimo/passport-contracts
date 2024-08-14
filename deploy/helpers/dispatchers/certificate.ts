@@ -2,7 +2,7 @@ import { Deployer } from "@solarity/hardhat-migrate";
 
 import { BaseContract } from "ethers";
 
-import { CRSAPSSSigner__factory, CRSADispatcher__factory, CRSASHA2Signer__factory } from "@ethers-v6";
+import { CRSAPSSSigner__factory, CRSADispatcher__factory, CRSASigner__factory } from "@ethers-v6";
 
 export const deployCRSADispatcher = async (
   deployer: Deployer,
@@ -10,11 +10,11 @@ export const deployCRSADispatcher = async (
   keyLength: string,
   keyPrefix: string,
 ) => {
-  const signer = await deployer.deploy(CRSASHA2Signer__factory, { name: `CRSASHA2Signer ${exponent} ${keyLength}` });
+  const signerSha1 = await deployRSASigner(deployer, exponent, keyLength, true);
+  const signerSha2 = await deployRSASigner(deployer, exponent, keyLength, false);
 
-  await signer.__CRSASHA2Signer_init(exponent);
-
-  await deployCDispatcher(deployer, signer, keyLength, keyPrefix, "CRSADispatcher");
+  await deployCDispatcher(deployer, signerSha1, keyLength, keyPrefix, "CRSADispatcher SHA1");
+  await deployCDispatcher(deployer, signerSha2, keyLength, keyPrefix, "CRSADispatcher SHA2");
 };
 
 export const deployCRSAPSSDispatcher = async (
@@ -40,6 +40,16 @@ const deployCDispatcher = async (
   const dispatcher = await deployer.deploy(CRSADispatcher__factory, { name: `${name} ${keyLength}` });
 
   await dispatcher.__CRSADispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
+};
+
+const deployRSASigner = async (deployer: Deployer, exponent: string, keyLength: string, isSha1: boolean) => {
+  const signer = await deployer.deploy(CRSASigner__factory, {
+    name: `CRSASigner ${isSha1 ? "SHA1" : "SHA2"} ${exponent} ${keyLength}`,
+  });
+
+  await signer.__CRSASigner_init(exponent, isSha1);
+
+  return signer;
 };
 
 const deployRSAPSSSigner = async (deployer: Deployer, exponent: string, keyLength: string, isSha2: boolean) => {

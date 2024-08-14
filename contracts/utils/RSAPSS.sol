@@ -11,9 +11,6 @@ library RSAPSS {
         function(bytes memory) internal pure returns (bytes memory) hash;
     }
 
-    uint256 constant MS_BITS = 4095 & 7;
-    uint256 constant MS_BYTES = 512;
-
     /**
      * @notice RSAPSS verification algorithm
      */
@@ -38,47 +35,49 @@ library RSAPSS {
         bytes memory signature_,
         bool isSha2_
     ) private pure returns (bool) {
-        HashStruct memory hashStruct = getHashStruct(isSha2_);
-        uint256 hashLength = hashStruct.hashLength;
-        uint256 saltLength = hashStruct.saltLength;
+        HashStruct memory hashStruct_ = getHashStruct(isSha2_);
+        uint256 hashLength_ = hashStruct_.hashLength;
+        uint256 saltLength_ = hashStruct_.saltLength;
+        uint256 sigBytes_ = signature_.length;
+        uint256 sigBits_ = (sigBytes_ * 8 - 1) & 7;
 
         if (message_.length > 2 ** 61 - 1) {
             return false;
         }
 
-        bytes memory messageHash_ = hashStruct.hash(message_);
+        bytes memory messageHash_ = hashStruct_.hash(message_);
 
-        if (MS_BYTES < hashLength + saltLength + 2) {
+        if (sigBytes_ < hashLength_ + saltLength_ + 2) {
             return false;
         }
 
-        if (signature_[MS_BYTES - 1] != hex"BC") {
+        if (signature_[sigBytes_ - 1] != hex"BC") {
             return false;
         }
 
-        bytes memory db_ = new bytes(MS_BYTES - hashLength - 1);
-        bytes memory h_ = new bytes(hashLength);
+        bytes memory db_ = new bytes(sigBytes_ - hashLength_ - 1);
+        bytes memory h_ = new bytes(hashLength_);
 
         for (uint256 i = 0; i < db_.length; ++i) {
             db_[i] = signature_[i];
         }
 
-        for (uint256 i = 0; i < hashLength; ++i) {
+        for (uint256 i = 0; i < hashLength_; ++i) {
             h_[i] = signature_[i + db_.length];
         }
 
-        if (uint8(db_[0] & bytes1(uint8(((0xFF << (MS_BITS)))))) == 1) {
+        if (uint8(db_[0] & bytes1(uint8(((0xFF << (sigBits_)))))) == 1) {
             return false;
         }
 
-        bytes memory dbMask_ = mgf(h_, db_.length, hashStruct);
+        bytes memory dbMask_ = mgf(h_, db_.length, hashStruct_);
 
         for (uint256 i = 0; i < db_.length; ++i) {
             db_[i] ^= dbMask_[i];
         }
 
-        if (MS_BITS > 0) {
-            db_[0] &= bytes1(uint8(0xFF >> (8 - MS_BITS)));
+        if (sigBits_ > 0) {
+            db_[0] &= bytes1(uint8(0xFF >> (8 - sigBits_)));
         }
 
         uint256 zeroBytes_;
@@ -93,13 +92,13 @@ library RSAPSS {
             return false;
         }
 
-        bytes memory salt_ = new bytes(saltLength);
+        bytes memory salt_ = new bytes(saltLength_);
 
         for (uint256 i = 0; i < salt_.length; ++i) {
             salt_[i] = db_[db_.length - salt_.length + i];
         }
 
-        bytes memory hh_ = hashStruct.hash(
+        bytes memory hh_ = hashStruct_.hash(
             abi.encodePacked(hex"0000000000000000", messageHash_, salt_)
         );
 
@@ -115,13 +114,13 @@ library RSAPSS {
         uint256 maskLen_,
         HashStruct memory hashStruct_
     ) private pure returns (bytes memory res_) {
-        uint256 hashLength = hashStruct_.hashLength;
+        uint256 hashLength_ = hashStruct_.hashLength;
 
         bytes memory cnt_ = new bytes(4);
 
-        require(maskLen_ <= (2 ** 32) * hashLength, "RSAPSS: mask too lengthy");
+        require(maskLen_ <= (2 ** 32) * hashLength_, "RSAPSS: mask too lengthy");
 
-        for (uint256 i = 0; i < (maskLen_ + hashLength - 1) / hashLength; ++i) {
+        for (uint256 i = 0; i < (maskLen_ + hashLength_ - 1) / hashLength_; ++i) {
             cnt_[0] = bytes1(uint8((i >> 24) & 255));
             cnt_[1] = bytes1(uint8((i >> 16) & 255));
             cnt_[2] = bytes1(uint8((i >> 8) & 255));

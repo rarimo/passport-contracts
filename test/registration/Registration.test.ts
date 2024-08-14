@@ -87,7 +87,7 @@ describe("Registration", () => {
   };
 
   const deployCRSADispatcher = async () => {
-    const CRSASHA2Signer = await ethers.getContractFactory("CRSASHA2Signer");
+    const CRSASHA2Signer = await ethers.getContractFactory("CRSASigner");
     const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
@@ -97,7 +97,7 @@ describe("Registration", () => {
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
     cRsaDispatcher = await CRSADispatcher.deploy();
 
-    await rsaSha2Signer.__CRSASHA2Signer_init(65537);
+    await rsaSha2Signer.__CRSASigner_init(65537, false);
     await cRsaDispatcher.__CRSADispatcher_init(await rsaSha2Signer.getAddress(), 512, x509CertificateKeyCheckPrefix);
   };
 

@@ -13,8 +13,10 @@ import {
 } from "@ethers-v6";
 
 import {
-  C_RSA_2048,
-  C_RSA_4096,
+  C_RSA_SHA1_2048,
+  C_RSA_SHA2_2048,
+  C_RSA_SHA1_4096,
+  C_RSA_SHA2_4096,
   C_RSAPSS_SHA2_4096,
   C_RSAPSS_SHA512_4096,
   P_ECDSA_SHA1_2704,
@@ -33,8 +35,11 @@ export = async (deployer: Deployer) => {
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
   const registration = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
-  const cRsa4096Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher 512");
-  const cRsa2048Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher 256");
+  const cRsa4096Sha1Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher SHA1 512");
+  const cRsa4096Sha2Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher SHA2 512");
+  const cRsa2048Sha1Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher SHA1 256");
+  const cRsa2048Sha2Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSADispatcher SHA2 256");
+
   const cRsaPss4096Sha2Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA2 512");
   const cRsaPss4096Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 512");
   const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 65537");
@@ -46,8 +51,11 @@ export = async (deployer: Deployer) => {
   const pUniversal4096Verifier = await deployer.deployed(PUniversal4096Verifier2__factory);
   const pInternalVerifier = await deployer.deployed(PInternalVerifier2__factory);
 
-  await registration.mockAddCertificateDispatcher(C_RSA_4096, await cRsa4096Dispatcher.getAddress());
-  await registration.mockAddCertificateDispatcher(C_RSA_2048, await cRsa2048Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_SHA1_4096, await cRsa4096Sha1Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_SHA2_4096, await cRsa4096Sha2Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_SHA1_2048, await cRsa2048Sha1Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSA_SHA2_2048, await cRsa2048Sha2Dispatcher.getAddress());
+
   await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA2_4096, await cRsaPss4096Sha2Dispatcher.getAddress());
   await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA512_4096, await cRsaPss4096Sha512Dispatcher.getAddress());
 
