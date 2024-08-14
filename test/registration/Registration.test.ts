@@ -8,7 +8,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_4096,
-  C_RSA_4096,
+  C_RSA_SHA2_4096,
   P_ECDSA_SHA1_2704,
   P_RSA_SHA1_2688,
   P_NO_AA,
@@ -247,7 +247,11 @@ describe("Registration", () => {
       Z_UNIVERSAL_4096,
       await pUniversal4096Verifier.getAddress(),
     );
-    await addDependency(RegistrationMethodId.AddCertificateDispatcher, C_RSA_4096, await cRsaDispatcher.getAddress());
+    await addDependency(
+      RegistrationMethodId.AddCertificateDispatcher,
+      C_RSA_SHA2_4096,
+      await cRsaDispatcher.getAddress(),
+    );
     await addDependency(RegistrationMethodId.AddPassportDispatcher, P_NO_AA, await pNoAaDispatcher.getAddress());
     await addDependency(
       RegistrationMethodId.AddPassportDispatcher,
@@ -355,7 +359,7 @@ describe("Registration", () => {
         const root = merkleTree.getRoot();
 
         const certificate: Registration.CertificateStruct = {
-          dataType: C_RSA_4096,
+          dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
@@ -384,7 +388,7 @@ describe("Registration", () => {
         const root = merkleTree.getRoot();
 
         const certificate: Registration.CertificateStruct = {
-          dataType: C_RSA_4096,
+          dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
