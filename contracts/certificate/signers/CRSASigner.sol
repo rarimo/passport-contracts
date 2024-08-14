@@ -52,16 +52,3 @@ contract CRSASigner is ICertificateRSASigner, Initializable {
         return bytes32(x509SAHash) == decryptedX509SAHash_;
     }
 }
-// 0x
-// 0001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-// ffffffffffffffffffffffff003031300d060960864801650304020105000420
-// af261f351b8983c862db893d655910b2b065471447806d26504b29da7cdcc168
