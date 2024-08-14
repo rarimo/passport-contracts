@@ -3,9 +3,10 @@ import { Deployer } from "@solarity/hardhat-migrate";
 import {
   CRSADispatcher__factory,
   PECDSASHA1Dispatcher__factory,
-  PInternalVerifier2__factory,
   PNOAADispatcher__factory,
   PRSASHA1Dispatcher__factory,
+  PInternalVerifier2__factory,
+  PInternalOptVerifier2__factory,
   PUniversal2048Verifier2__factory,
   PUniversal4096Verifier2__factory,
   Registration2Mock__factory,
@@ -24,6 +25,7 @@ import {
   P_RSA_SHA1_2688,
   P_RSA_SHA1_2688_3,
   Z_INTERNAL,
+  Z_INTERNAL_OPT,
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_4096,
 } from "@/scripts/utils/types";
@@ -53,6 +55,7 @@ export = async (deployer: Deployer) => {
   const pUniversal2048Verifier = await deployer.deployed(PUniversal2048Verifier2__factory);
   const pUniversal4096Verifier = await deployer.deployed(PUniversal4096Verifier2__factory);
   const pInternalVerifier = await deployer.deployed(PInternalVerifier2__factory);
+  const pInternalOptVerifier = await deployer.deployed(PInternalOptVerifier2__factory);
 
   await registration.mockAddCertificateDispatcher(C_RSA_SHA1_4096, await cRsa4096Sha1Dispatcher.getAddress());
   await registration.mockAddCertificateDispatcher(C_RSA_SHA1_2048, await cRsa2048Sha1Dispatcher.getAddress());
@@ -72,6 +75,7 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048, await pUniversal2048Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_4096, await pUniversal4096Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_INTERNAL, await pInternalVerifier.getAddress());
+  await registration.mockAddPassportVerifier(Z_INTERNAL_OPT, await pInternalOptVerifier.getAddress());
 
   await stateKeeper.mockAddRegistrations([config.registrationName], [await registration.getAddress()]);
 };
