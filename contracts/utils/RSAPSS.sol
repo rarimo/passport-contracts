@@ -27,15 +27,16 @@ library RSAPSS {
 
         bytes memory decipher_ = RSA.decrypt(s_, e_, n_);
 
-        return pss(message_, decipher_, isSha2_);
+        return _pss(message_, decipher_, isSha2_);
     }
 
-    function pss(
+    function _pss(
         bytes memory message_,
         bytes memory signature_,
         bool isSha2_
     ) private pure returns (bool) {
-        HashStruct memory hashStruct_ = getHashStruct(isSha2_);
+        HashStruct memory hashStruct_ = _getHashStruct(isSha2_);
+
         uint256 hashLength_ = hashStruct_.hashLength;
         uint256 saltLength_ = hashStruct_.saltLength;
         uint256 sigBytes_ = signature_.length;
@@ -70,7 +71,7 @@ library RSAPSS {
             return false;
         }
 
-        bytes memory dbMask_ = mgf(h_, db_.length, hashStruct_);
+        bytes memory dbMask_ = _mgf(h_, db_.length, hashStruct_);
 
         for (uint256 i = 0; i < db_.length; ++i) {
             db_[i] ^= dbMask_[i];
@@ -109,7 +110,7 @@ library RSAPSS {
         return true;
     }
 
-    function mgf(
+    function _mgf(
         bytes memory message_,
         uint256 maskLen_,
         HashStruct memory hashStruct_
@@ -136,16 +137,16 @@ library RSAPSS {
         }
     }
 
-    function getHashStruct(bool isSha2_) private pure returns (HashStruct memory) {
+    function _getHashStruct(bool isSha2_) private pure returns (HashStruct memory) {
         return
             HashStruct({
                 hashLength: isSha2_ ? 32 : 64,
                 saltLength: isSha2_ ? 32 : 64,
-                hash: isSha2_ ? sha2 : SHA512.sha512
+                hash: isSha2_ ? _sha2 : SHA512.sha512
             });
     }
 
-    function sha2(bytes memory data) private pure returns (bytes memory) {
+    function _sha2(bytes memory data) private pure returns (bytes memory) {
         return abi.encodePacked(sha256(data));
     }
 }
