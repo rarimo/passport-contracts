@@ -3,6 +3,7 @@ import { Deployer } from "@solarity/hardhat-migrate";
 import {
   PInternalVerifier2__factory,
   PInternalOptVerifier2__factory,
+  PMNEOptVerifier2__factory,
   PUniversal2048Verifier2__factory,
   PUniversal4096Verifier2__factory,
 } from "@ethers-v6";
@@ -13,4 +14,6 @@ export const deployPVerifiers = async (deployer: Deployer) => {
 
   await deployer.deploy(PInternalVerifier2__factory);
   await deployer.deploy(PInternalOptVerifier2__factory);
+
+  await deployer.deploy(PMNEOptVerifier2__factory);
 };

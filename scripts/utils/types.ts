@@ -17,3 +17,4 @@ export const Z_UNIVERSAL_4096 = ethers.solidityPackedKeccak256(["string"], ["Z_U
 export const Z_UNIVERSAL_2048 = ethers.solidityPackedKeccak256(["string"], ["Z_UNIVERSAL_2048"]);
 export const Z_INTERNAL = ethers.solidityPackedKeccak256(["string"], ["Z_INTERNAL"]);
 export const Z_INTERNAL_OPT = ethers.solidityPackedKeccak256(["string"], ["Z_INTERNAL_OPT"]);
+export const Z_MNE_OPT = ethers.solidityPackedKeccak256(["string"], ["Z_MNE_OPT"]);
