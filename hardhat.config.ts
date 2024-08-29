@@ -22,6 +22,9 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialDate: "2004-01-01",
+      allowUnlimitedContractSize: true,
+      gas: "auto",
+      blockGasLimit: 3_000_000_000, // whatever you want here
     },
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -87,13 +90,27 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: "0.8.16",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.16",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-    },
+      {
+        version: "0.8.17",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+        },
+      },
+    ],
   },
   etherscan: {
     apiKey: {
