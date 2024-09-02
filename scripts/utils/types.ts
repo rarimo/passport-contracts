@@ -7,6 +7,7 @@ export const C_RSA_SHA2_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RS
 
 export const C_RSAPSS_SHA2_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA2_2048"]);
 export const C_RSAPSS_SHA2_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA2_4096"]);
+export const C_RSAPSS_SHA512_2048 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA512_2048"]);
 export const C_RSAPSS_SHA512_4096 = ethers.solidityPackedKeccak256(["string"], ["C_RSAPSS_SHA512_4096"]);
 
 export const P_NO_AA = ethers.solidityPackedKeccak256(["string"], ["P_NO_AA"]);
