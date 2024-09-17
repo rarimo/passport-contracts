@@ -16,6 +16,7 @@ import {
   PMNEOptVerifier2__factory,
   Registration2Mock__factory,
   StateKeeperMock__factory,
+  PMNEOpt2Verifier2__factory,
 } from "@ethers-v6";
 
 import {
@@ -40,6 +41,7 @@ import {
   Z_INTERNAL,
   Z_INTERNAL_OPT,
   Z_MNE_OPT,
+  Z_MNE_OPT_2,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -77,6 +79,7 @@ export = async (deployer: Deployer) => {
   const pInternalVerifier = await deployer.deployed(PInternalVerifier2__factory);
   const pInternalOptVerifier = await deployer.deployed(PInternalOptVerifier2__factory);
   const pMneOptVerifier = await deployer.deployed(PMNEOptVerifier2__factory);
+  const pMneOpt2Verifier = await deployer.deployed(PMNEOpt2Verifier2__factory);
 
   await registration.mockAddCertificateDispatcher(C_RSA_SHA1_4096, await cRsa4096Sha1Dispatcher.getAddress());
   await registration.mockAddCertificateDispatcher(C_RSA_SHA1_2048, await cRsa2048Sha1Dispatcher.getAddress());
@@ -115,6 +118,7 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(Z_INTERNAL, await pInternalVerifier.getAddress());
   await registration.mockAddPassportVerifier(Z_INTERNAL_OPT, await pInternalOptVerifier.getAddress());
   await registration.mockAddPassportVerifier(Z_MNE_OPT, await pMneOptVerifier.getAddress());
+  await registration.mockAddPassportVerifier(Z_MNE_OPT_2, await pMneOpt2Verifier.getAddress());
 
   await stateKeeper.mockAddRegistrations([config.registrationName], [await registration.getAddress()]);
 };

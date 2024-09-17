@@ -10,6 +10,7 @@ import {
   PInternalVerifier2__factory,
   PInternalOptVerifier2__factory,
   PMNEOptVerifier2__factory,
+  PMNEOpt2Verifier2__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -25,4 +26,5 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(PInternalOptVerifier2__factory);
 
   await deployer.deploy(PMNEOptVerifier2__factory);
+  await deployer.deploy(PMNEOpt2Verifier2__factory);
 };

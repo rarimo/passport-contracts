@@ -33,3 +33,4 @@ bytes32 constant Z_UNIVERSAL_PSS_2048_S64_E17 = keccak256("Z_UNIVERSAL_PSS_2048_
 bytes32 constant Z_INTERNAL = keccak256("Z_INTERNAL");
 bytes32 constant Z_INTERNAL_OPT = keccak256("Z_INTERNAL_OPT");
 bytes32 constant Z_MNE_OPT = keccak256("Z_MNE_OPT");
+bytes32 constant Z_MNE_OPT_2 = keccak256("Z_MNE_OPT_2");
