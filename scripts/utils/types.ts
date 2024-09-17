@@ -32,3 +32,4 @@ export const Z_UNIVERSAL_PSS_2048_S64_E17 = keccak256(["string"], ["Z_UNIVERSAL_
 export const Z_INTERNAL = keccak256(["string"], ["Z_INTERNAL"]);
 export const Z_INTERNAL_OPT = keccak256(["string"], ["Z_INTERNAL_OPT"]);
 export const Z_MNE_OPT = keccak256(["string"], ["Z_MNE_OPT"]);
+export const Z_MNE_OPT_2 = keccak256(["string"], ["Z_MNE_OPT_2"]);
