@@ -2,19 +2,19 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 
-import { PRSASHA1Authenticator } from "@ethers-v6";
+import { PRSASHAAuthenticator } from "@ethers-v6";
 
-describe("PRSASHA1Authenticator", () => {
+describe("PRSASHAAuthenticator", () => {
   const reverter = new Reverter();
 
-  let auth: PRSASHA1Authenticator;
+  let auth: PRSASHAAuthenticator;
 
   before("setup", async () => {
-    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
+    const PRSASHAAuthenticator = await ethers.getContractFactory("PRSASHAAuthenticator");
 
-    auth = await PRSASHA1Authenticator.deploy();
+    auth = await PRSASHAAuthenticator.deploy();
 
-    await auth.__PRSASHA1Authenticator_init(65537);
+    await auth.__PRSASHAAuthenticator_init(65537, true);
 
     await reverter.snapshot();
   });

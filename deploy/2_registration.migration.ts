@@ -6,7 +6,7 @@ import {
   deployCRSADispatcher,
   deployCRSAPSSDispatcher,
   deployPNOAADispatcher,
-  deployPRSASHA12688Dispatcher,
+  deployPRSASHA2688Dispatcher,
   deployPECDSASHA12704Dispatcher,
 } from "./helpers";
 
@@ -33,8 +33,11 @@ export = async (deployer: Deployer) => {
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "256", "0x0282010100");
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
 
-  await deployPRSASHA12688Dispatcher(deployer, "65537");
-  await deployPRSASHA12688Dispatcher(deployer, "3");
+  await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA1");
+  await deployPRSASHA2688Dispatcher(deployer, "3", "SHA1");
+
+  await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA2");
+  await deployPRSASHA2688Dispatcher(deployer, "3", "SHA2");
 
   await deployPNOAADispatcher(deployer);
   await deployPECDSASHA12704Dispatcher(deployer);

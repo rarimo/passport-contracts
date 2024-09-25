@@ -6,16 +6,18 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {RSA} from "../../utils/RSA.sol";
 import {SHA1} from "../../utils/SHA1.sol";
 
-contract PRSASHA1Authenticator is Initializable {
+contract PRSASHAAuthenticator is Initializable {
     using RSA for bytes;
     using SHA1 for bytes;
 
-    uint256 public constant HASH_LEN = 20; // SHA1 hash length
-
     uint256 public exponent; // RSA exponent
+    bool public isSha1;
+    uint256 private hashLen;
 
-    function __PRSASHA1Authenticator_init(uint256 exponent_) external initializer {
+    function __PRSASHAAuthenticator_init(uint256 exponent_, bool isSha1_) external initializer {
         exponent = exponent_;
+        isSha1 = isSha1_;
+        hashLen = isSha1 ? 20 : 32;
     }
 
     /**
@@ -23,7 +25,7 @@ contract PRSASHA1Authenticator is Initializable {
      *
      * 1. Decrypt the signature
      * 2. Remove the 1 byte (hash function indicator) suffix
-     * 3. The last 20 bytes of the decrypted signature is the SHA1 hash of random + challenge
+     * 3. The last 20 bytes of the decrypted signature is the SHA1 hash of random + challenge or the last 32 bytes in case SHA2 hash
      */
     function authenticate(
         bytes memory challenge_,
@@ -42,17 +44,21 @@ contract PRSASHA1Authenticator is Initializable {
             mstore(decipher_, sub(mload(decipher_), 1))
         }
 
-        bytes memory prepared_ = new bytes(decipher_.length - HASH_LEN - 1);
-        bytes memory digest_ = new bytes(HASH_LEN);
+        bytes memory prepared_ = new bytes(decipher_.length - hashLen - 1);
+        bytes memory digest_ = new bytes(hashLen);
 
         for (uint256 i = 0; i < prepared_.length; ++i) {
             prepared_[i] = decipher_[i + 1];
         }
 
         for (uint256 i = 0; i < digest_.length; ++i) {
-            digest_[i] = decipher_[decipher_.length - HASH_LEN + i];
+            digest_[i] = decipher_[decipher_.length - hashLen + i];
         }
 
-        return bytes20(digest_) == abi.encodePacked(prepared_, challenge_).sha1();
+        return bytes32(digest_) == _hash(abi.encodePacked(prepared_, challenge_));
+    }
+
+    function _hash(bytes memory data_) private view returns (bytes32) {
+        return isSha1 ? data_.sha1() : sha256(data_);
     }
 }

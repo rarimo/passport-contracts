@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-import { PRSASHA1Dispatcher } from "@ethers-v6";
+import { PRSASHADispatcher } from "@ethers-v6";
 
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import {
@@ -11,26 +11,26 @@ import {
   RSAPassportPubKey,
 } from "@/test/helpers/constants";
 
-describe("PRSASHA1Dispatcher", () => {
+describe("PRSASHADispatcher", () => {
   const reverter = new Reverter();
 
-  let dispatcher: PRSASHA1Dispatcher;
+  let dispatcher: PRSASHADispatcher;
 
   before("setup", async () => {
-    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
-    const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
+    const PRSASHAAuthenticator = await ethers.getContractFactory("PRSASHAAuthenticator");
+    const PRSASHADispatcher = await ethers.getContractFactory("PRSASHADispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
     });
 
-    dispatcher = await PRSASHA1Dispatcher.deploy();
+    dispatcher = await PRSASHADispatcher.deploy();
 
-    const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
-    dispatcher = await PRSASHA1Dispatcher.deploy();
+    const rsaShaAuthenticator = await PRSASHAAuthenticator.deploy();
+    dispatcher = await PRSASHADispatcher.deploy();
 
-    await rsaSha1Authenticator.__PRSASHA1Authenticator_init(65537);
-    await dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
+    await rsaShaAuthenticator.__PRSASHAAuthenticator_init(65537, true);
+    await dispatcher.__PRSASHADispatcher_init(await rsaShaAuthenticator.getAddress());
 
     await reverter.snapshot();
   });
@@ -39,7 +39,7 @@ describe("PRSASHA1Dispatcher", () => {
 
   describe("#init", () => {
     it("should not init twice", async () => {
-      expect(dispatcher.__PRSASHA1Dispatcher_init(ethers.hexlify(ethers.randomBytes(20)))).to.be.revertedWith(
+      expect(dispatcher.__PRSASHADispatcher_init(ethers.hexlify(ethers.randomBytes(20)))).to.be.revertedWith(
         "Initializable: contract is already initialized",
       );
     });
