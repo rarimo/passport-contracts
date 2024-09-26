@@ -4,7 +4,7 @@ import {
   CRSADispatcher__factory,
   PECDSASHA1Dispatcher__factory,
   PNOAADispatcher__factory,
-  PRSASHA1Dispatcher__factory,
+  PRSASHADispatcher__factory,
   PUniversal2048Verifier2__factory,
   PUniversal2048V2Verifier2__factory,
   PUniversal4096Verifier2__factory,
@@ -32,6 +32,8 @@ import {
   P_NO_AA,
   P_RSA_SHA1_2688,
   P_RSA_SHA1_2688_3,
+  P_RSA_SHA2_2688,
+  P_RSA_SHA2_2688_3,
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_2048_V2,
   Z_UNIVERSAL_4096,
@@ -61,8 +63,11 @@ export = async (deployer: Deployer) => {
   const cRsaPss2048Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 256");
   const cRsaPss4096Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 512");
 
-  const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 65537");
-  const pRsaSha126883Dispatcher = await deployer.deployed(PRSASHA1Dispatcher__factory, "PRSASHA1Dispatcher 3");
+  const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 65537 SHA1");
+  const pRsaSha126883Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 3 SHA1");
+
+  const pRsaSha22688Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 65537 SHA2");
+  const pRsaSha226883Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 3 SHA2");
 
   const pEcdsaSha12704Dispatcher = await deployer.deployed(PECDSASHA1Dispatcher__factory);
 
@@ -93,6 +98,9 @@ export = async (deployer: Deployer) => {
 
   await registration.mockAddPassportDispatcher(P_RSA_SHA1_2688, await pRsaSha12688Dispatcher.getAddress());
   await registration.mockAddPassportDispatcher(P_RSA_SHA1_2688_3, await pRsaSha126883Dispatcher.getAddress());
+
+  await registration.mockAddPassportDispatcher(P_RSA_SHA2_2688, await pRsaSha22688Dispatcher.getAddress());
+  await registration.mockAddPassportDispatcher(P_RSA_SHA2_2688_3, await pRsaSha226883Dispatcher.getAddress());
 
   await registration.mockAddPassportDispatcher(P_ECDSA_SHA1_2704, await pEcdsaSha12704Dispatcher.getAddress());
 

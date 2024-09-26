@@ -4,15 +4,15 @@ pragma solidity 0.8.16;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IPassportDispatcher} from "../../interfaces/dispatchers/IPassportDispatcher.sol";
-import {PRSASHA1Authenticator} from "../authenticators/PRSASHA1Authenticator.sol";
+import {PRSASHAAuthenticator} from "../authenticators/PRSASHAAuthenticator.sol";
 import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 
-contract PRSASHA1Dispatcher is IPassportDispatcher, Initializable {
+contract PRSASHADispatcher is IPassportDispatcher, Initializable {
     using Bytes2Poseidon for bytes;
 
     address public authenticator;
 
-    function __PRSASHA1Dispatcher_init(address authenticator_) external initializer {
+    function __PRSASHADispatcher_init(address authenticator_) external initializer {
         authenticator = authenticator_;
     }
 
@@ -25,7 +25,7 @@ contract PRSASHA1Dispatcher is IPassportDispatcher, Initializable {
         bytes memory passportPublicKey_
     ) external view returns (bool) {
         return
-            PRSASHA1Authenticator(authenticator).authenticate(
+            PRSASHAAuthenticator(authenticator).authenticate(
                 challenge_,
                 passportSignature_,
                 passportPublicKey_

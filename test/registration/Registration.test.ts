@@ -22,7 +22,7 @@ import {
   PUniversal4096Verifier,
   CRSADispatcher,
   PNOAADispatcher,
-  PRSASHA1Dispatcher,
+  PRSASHADispatcher,
   PECDSASHA1Dispatcher,
   PoseidonSMTMock,
 } from "@ethers-v6";
@@ -69,7 +69,7 @@ describe("Registration", () => {
   let pUniversal4096Verifier: PUniversal4096Verifier;
 
   let pNoAaDispatcher: PNOAADispatcher;
-  let pRsaSha1Dispatcher: PRSASHA1Dispatcher;
+  let pRsaSha1Dispatcher: PRSASHADispatcher;
   let pEcdsaSha1Dispatcher: PECDSASHA1Dispatcher;
   let cRsaDispatcher: CRSADispatcher;
 
@@ -110,8 +110,8 @@ describe("Registration", () => {
   };
 
   const deployPRSASHA1Dispatcher = async () => {
-    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHA1Authenticator");
-    const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHA1Dispatcher", {
+    const PRSASHA1Authenticator = await ethers.getContractFactory("PRSASHAAuthenticator");
+    const PRSASHA1Dispatcher = await ethers.getContractFactory("PRSASHADispatcher", {
       libraries: {
         PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
       },
@@ -120,8 +120,8 @@ describe("Registration", () => {
     const rsaSha1Authenticator = await PRSASHA1Authenticator.deploy();
     pRsaSha1Dispatcher = await PRSASHA1Dispatcher.deploy();
 
-    await rsaSha1Authenticator.__PRSASHA1Authenticator_init(65537);
-    await pRsaSha1Dispatcher.__PRSASHA1Dispatcher_init(await rsaSha1Authenticator.getAddress());
+    await rsaSha1Authenticator.__PRSASHAAuthenticator_init(65537, true);
+    await pRsaSha1Dispatcher.__PRSASHADispatcher_init(await rsaSha1Authenticator.getAddress());
   };
 
   const deployPECDSASHA1Dispatcher = async () => {
