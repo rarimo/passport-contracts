@@ -1,21 +1,23 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
 import {
+  Registration2Mock__factory,
+  StateKeeperMock__factory,
   CRSADispatcher__factory,
   PECDSASHA1Dispatcher__factory,
   PNOAADispatcher__factory,
   PRSASHADispatcher__factory,
   PUniversal2048Verifier2__factory,
   PUniversal2048V2Verifier2__factory,
+  PUniversal2048V3Verifier2__factory,
   PUniversal4096Verifier2__factory,
   PUniversalPSS2048S32E2Verifier2__factory,
   PUniversalPSS2048S32E17Verifier2__factory,
   PUniversalPSS2048S64E17Verifier2__factory,
+  PUKRECDSABrainpool256Verifier2__factory,
   PInternalVerifier2__factory,
   PInternalOptVerifier2__factory,
   PMNEOptVerifier2__factory,
-  Registration2Mock__factory,
-  StateKeeperMock__factory,
   PMNEOpt2Verifier2__factory,
 } from "@ethers-v6";
 
@@ -36,10 +38,12 @@ import {
   P_RSA_SHA2_2688_3,
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_2048_V2,
+  Z_UNIVERSAL_2048_V3,
   Z_UNIVERSAL_4096,
   Z_UNIVERSAL_PSS_2048_S32_E2,
   Z_UNIVERSAL_PSS_2048_S32_E17,
   Z_UNIVERSAL_PSS_2048_S64_E17,
+  Z_UKR_ECDSA_BRAINPOOL_256,
   Z_INTERNAL,
   Z_INTERNAL_OPT,
   Z_MNE_OPT,
@@ -75,14 +79,18 @@ export = async (deployer: Deployer) => {
 
   const pUniversal2048Verifier = await deployer.deployed(PUniversal2048Verifier2__factory);
   const pUniversal2048V2Verifier = await deployer.deployed(PUniversal2048V2Verifier2__factory);
+  const pUniversal2048V3Verifier = await deployer.deployed(PUniversal2048V3Verifier2__factory);
   const pUniversal4096Verifier = await deployer.deployed(PUniversal4096Verifier2__factory);
 
   const pUniversalPSS2048S32E2Verifier = await deployer.deployed(PUniversalPSS2048S32E2Verifier2__factory);
   const pUniversalPSS2048S32E17Verifier = await deployer.deployed(PUniversalPSS2048S32E17Verifier2__factory);
   const pUniversalPSS2048S64E17Verifier = await deployer.deployed(PUniversalPSS2048S64E17Verifier2__factory);
 
+  const pUkrECDSABrainpool256Verifier = await deployer.deployed(PUKRECDSABrainpool256Verifier2__factory);
+
   const pInternalVerifier = await deployer.deployed(PInternalVerifier2__factory);
   const pInternalOptVerifier = await deployer.deployed(PInternalOptVerifier2__factory);
+
   const pMneOptVerifier = await deployer.deployed(PMNEOptVerifier2__factory);
   const pMneOpt2Verifier = await deployer.deployed(PMNEOpt2Verifier2__factory);
 
@@ -108,6 +116,7 @@ export = async (deployer: Deployer) => {
 
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048, await pUniversal2048Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048_V2, await pUniversal2048V2Verifier.getAddress());
+  await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048_V3, await pUniversal2048V3Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_4096, await pUniversal4096Verifier.getAddress());
 
   await registration.mockAddPassportVerifier(
@@ -123,8 +132,14 @@ export = async (deployer: Deployer) => {
     await pUniversalPSS2048S64E17Verifier.getAddress(),
   );
 
+  await registration.mockAddPassportVerifier(
+    Z_UKR_ECDSA_BRAINPOOL_256,
+    await pUkrECDSABrainpool256Verifier.getAddress(),
+  );
+
   await registration.mockAddPassportVerifier(Z_INTERNAL, await pInternalVerifier.getAddress());
   await registration.mockAddPassportVerifier(Z_INTERNAL_OPT, await pInternalOptVerifier.getAddress());
+
   await registration.mockAddPassportVerifier(Z_MNE_OPT, await pMneOptVerifier.getAddress());
   await registration.mockAddPassportVerifier(Z_MNE_OPT_2, await pMneOpt2Verifier.getAddress());
 

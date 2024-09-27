@@ -26,12 +26,16 @@ export const P_ECDSA_SHA1_2704 = keccak256(["string"], ["P_ECDSA_SHA1_2704"]);
 export const Z_UNIVERSAL_4096 = keccak256(["string"], ["Z_UNIVERSAL_4096"]);
 export const Z_UNIVERSAL_2048 = keccak256(["string"], ["Z_UNIVERSAL_2048"]);
 export const Z_UNIVERSAL_2048_V2 = keccak256(["string"], ["Z_UNIVERSAL_2048_V2"]);
+export const Z_UNIVERSAL_2048_V3 = keccak256(["string"], ["Z_UNIVERSAL_2048_V3"]);
 
 export const Z_UNIVERSAL_PSS_2048_S32_E2 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S32_E2"]);
 export const Z_UNIVERSAL_PSS_2048_S32_E17 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S32_E17"]);
 export const Z_UNIVERSAL_PSS_2048_S64_E17 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S64_E17"]);
 
+export const Z_UKR_ECDSA_BRAINPOOL_256 = keccak256(["string"], ["Z_UKR_ECDSA_BRAINPOOL_256"]);
+
 export const Z_INTERNAL = keccak256(["string"], ["Z_INTERNAL"]);
 export const Z_INTERNAL_OPT = keccak256(["string"], ["Z_INTERNAL_OPT"]);
+
 export const Z_MNE_OPT = keccak256(["string"], ["Z_MNE_OPT"]);
 export const Z_MNE_OPT_2 = keccak256(["string"], ["Z_MNE_OPT_2"]);
