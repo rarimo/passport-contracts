@@ -50,13 +50,13 @@ contract PUniversal2048V3Verifier2 {
     uint256 constant gammay2 =
         8495653923123431417604973247489272438418190587263600148770280649306958101930;
     uint256 constant deltax1 =
-        9972707892756301992628027167100508635235743168894163807910432640003585670629;
+        21818559822095531460277741956009236371690941928804783562934258002820233242209;
     uint256 constant deltax2 =
-        9749496022321274900984616736448293748140758292374440315949719817944605689753;
+        4205244828637642913379637926365471090424230129569287067880549976328521826437;
     uint256 constant deltay1 =
-        7772157013299609022678719283393952295722213676852534163551823291113120946228;
+        7270374609396363334923017213699704738455304908952034008346196376087632726341;
     uint256 constant deltay2 =
-        26272521512268138931993210565971109758901587741324471023734102574650437587;
+        2026075313606086515381406605768777826453548736078627762702012235718770915919;
 
     uint256 constant IC0x =
         3464583722225543371880851919955508593389116045816737133541148879661253237975;
@@ -83,6 +83,11 @@ contract PUniversal2048V3Verifier2 {
     uint256 constant IC4y =
         15444056503358316610565611012661912704454712484500203458593334820917539080308;
 
+    uint256 constant IC5x =
+        385717035648767674946342312840112992282559354693396557430191176802463765476;
+    uint256 constant IC5y =
+        5078610744451341480156901316544353839730031367348173770134657662497683445816;
+
     // Memory data
     uint16 constant pVk = 0;
     uint16 constant pPairing = 128;
@@ -93,7 +98,7 @@ contract PUniversal2048V3Verifier2 {
         uint[2] calldata _pA,
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
-        uint[4] calldata _pubSignals
+        uint[5] calldata _pubSignals
     ) public view returns (bool) {
         assembly {
             function checkField(v) {
@@ -145,6 +150,8 @@ contract PUniversal2048V3Verifier2 {
                 g1_mulAccC(_pVk, IC3x, IC3y, calldataload(add(pubSignals, 64)))
 
                 g1_mulAccC(_pVk, IC4x, IC4y, calldataload(add(pubSignals, 96)))
+
+                g1_mulAccC(_pVk, IC5x, IC5y, calldataload(add(pubSignals, 128)))
 
                 // -A
                 mstore(_pPairing, calldataload(pA))
@@ -205,6 +212,8 @@ contract PUniversal2048V3Verifier2 {
             checkField(calldataload(add(_pubSignals, 96)))
 
             checkField(calldataload(add(_pubSignals, 128)))
+
+            checkField(calldataload(add(_pubSignals, 160)))
 
             // Validate all evaluations
             let isValid := checkPairing(_pA, _pB, _pC, _pubSignals, pMem)

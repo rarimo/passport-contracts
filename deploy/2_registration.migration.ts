@@ -1,46 +1,60 @@
+import { ethers } from "hardhat";
+
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 
 import {
-  deployProxy,
-  deployPVerifiers,
-  deployCRSADispatcher,
-  deployCRSAPSSDispatcher,
-  deployPNOAADispatcher,
-  deployPRSASHA2688Dispatcher,
-  deployPECDSASHA12704Dispatcher,
-} from "./helpers";
+  PUKRECDSABrainpool256Verifier2__factory,
+  PUniversal2048V3Verifier2__factory,
+  Registration2Mock__factory,
+} from "@ethers-v6";
 
-import { Registration2Mock__factory, StateKeeperMock__factory } from "@ethers-v6";
+import {
+  C_RSA_SHA1_2048,
+  C_RSA_SHA2_2048,
+  C_RSA_SHA1_4096,
+  C_RSA_SHA2_4096,
+  C_RSAPSS_SHA2_2048,
+  C_RSAPSS_SHA2_4096,
+  C_RSAPSS_SHA512_2048,
+  C_RSAPSS_SHA512_4096,
+  P_ECDSA_SHA1_2704,
+  P_NO_AA,
+  P_RSA_SHA1_2688,
+  P_RSA_SHA1_2688_3,
+  P_RSA_SHA2_2688,
+  P_RSA_SHA2_2688_3,
+  Z_UNIVERSAL_2048,
+  Z_UNIVERSAL_2048_V2,
+  Z_UNIVERSAL_2048_V3,
+  Z_UNIVERSAL_4096,
+  Z_UNIVERSAL_PSS_2048_S32_E2,
+  Z_UNIVERSAL_PSS_2048_S32_E17,
+  Z_UNIVERSAL_PSS_2048_S64_E17,
+  Z_UKR_ECDSA_BRAINPOOL_256,
+  Z_INTERNAL,
+  Z_INTERNAL_OPT,
+  Z_MNE_OPT,
+  Z_MNE_OPT_2,
+} from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
 
 export = async (deployer: Deployer) => {
-  const config = (await getConfig())!;
-  const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
+  const registration = await deployer.deployed(
+    Registration2Mock__factory,
+    "0x1b0F076c8800c457CE734BA85aC8569284DD640A",
+  );
 
-  const registration = await deployProxy(deployer, Registration2Mock__factory, "Registration2");
-  await registration.__Registration_init(config.tssSigner, config.chainName, await stateKeeper.getAddress());
+  const v1 = await deployer.deploy(PUniversal2048V3Verifier2__factory);
+  const v2 = await deployer.deploy(PUKRECDSABrainpool256Verifier2__factory);
 
-  await deployPVerifiers(deployer);
+  const coder = ethers.AbiCoder.defaultAbiCoder();
 
-  await deployCRSADispatcher(deployer, "SHA1", "65537", "512", "0x0282020100");
-  await deployCRSADispatcher(deployer, "SHA1", "65537", "256", "0x0282010100");
-  await deployCRSADispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
-  await deployCRSADispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
+  let data = coder.encode(["bytes32", "address"], [Z_UNIVERSAL_2048_V3, await v1.getAddress()]);
 
-  await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
-  await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
-  await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "256", "0x0282010100");
-  await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
+  await registration.updateDependency(5, data, "0x");
 
-  await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA1");
-  await deployPRSASHA2688Dispatcher(deployer, "3", "SHA1");
+  data = coder.encode(["bytes32", "address"], [Z_UKR_ECDSA_BRAINPOOL_256, await v2.getAddress()]);
 
-  await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA2");
-  await deployPRSASHA2688Dispatcher(deployer, "3", "SHA2");
-
-  await deployPNOAADispatcher(deployer);
-  await deployPECDSASHA12704Dispatcher(deployer);
-
-  Reporter.reportContracts(["Registration2", `${await registration.getAddress()}`]);
+  await registration.updateDependency(5, data, "0x");
 };
