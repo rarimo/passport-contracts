@@ -64,7 +64,7 @@ library MemoryBigInt {
             mstore(rPointer_, field_)
 
             let success_ := staticcall(
-                450,
+                gas(),
                 0x4,
                 add(data_, 0x20),
                 dataSize_,
