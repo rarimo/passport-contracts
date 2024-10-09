@@ -126,7 +126,7 @@ library MemoryUint {
         }
     }
 
-    function modadd(
+    function add(
         SharedMemory memory mem_,
         Uint512 memory a_,
         Uint512 memory b_
