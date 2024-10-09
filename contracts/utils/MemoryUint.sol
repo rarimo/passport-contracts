@@ -97,6 +97,21 @@ library MemoryUint {
         return mem_.callStack.elementSize;
     }
 
+    function _valueType(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory value_
+    ) private view returns (_StackType) {
+        if (value_.value.length == mem_.stack.elementSize) {
+            return _StackType._UINT;
+        }
+
+        if (value_.value.length == mem_.overflowStack.elementSize) {
+            return _StackType._OVERFLOW_UINT;
+        }
+
+        return _StackType._CALL;
+    }
+
     function _newUint(
         SharedMemory memory mem_,
         uint256 value_
@@ -190,12 +205,12 @@ library MemoryUint {
     ) internal view returns (int256) {
         uint256 memSize_ = _memSize(mem_, _StackType._UINT);
 
-        uint256 aPointer_;
-        uint256 bPointer_;
+        uint256 aPtr_;
+        uint256 bPtr_;
 
         assembly {
-            aPointer_ := add(mload(a_), 0x20)
-            bPointer_ := add(mload(b_), 0x20)
+            aPtr_ := add(mload(a_), 0x20)
+            bPtr_ := add(mload(b_), 0x20)
         }
 
         for (uint i = 0; i < memSize_; i += 32) {
@@ -203,8 +218,8 @@ library MemoryUint {
             uint256 bWord_;
 
             assembly {
-                aWord_ := mload(add(aPointer_, i))
-                bWord_ := mload(add(bPointer_, i))
+                aWord_ := mload(add(aPtr_, i))
+                bWord_ := mload(add(bPtr_, i))
             }
 
             if (aWord_ > bWord_) {
@@ -299,57 +314,49 @@ library MemoryUint {
         MemoryStack.StackValue memory e_,
         MemoryStack.StackValue memory m_
     ) private view returns (MemoryStack.StackValue memory r_) {
-        r_ = _new(mem_, _StackType._OVERFLOW_UINT);
-        uint256 overflowMemSize_ = _memSize(mem_, _StackType._OVERFLOW_UINT);
-
+        r_ = _new(mem_, _valueType(mem_, m_));
         MemoryStack.StackValue memory call_ = _new(mem_, _StackType._CALL);
 
         assembly {
-            mstore(mload(call_), mload(mload(a_)))
-            mstore(add(mload(call_), 0x20), mload(mload(e_)))
-            mstore(add(mload(call_), 0x40), mload(mload(m_)))
+            let aSize_ := mload(mload(a_))
+            let eSize_ := mload(mload(e_))
+            let mSize_ := mload(mload(m_))
+
+            mstore(mload(call_), aSize_)
+            mstore(add(mload(call_), 0x20), eSize_)
+            mstore(add(mload(call_), 0x40), mSize_)
 
             let offset_ := 0x60
 
-            {
-                let aSize_ := mload(mload(a_))
-
-                if iszero(
-                    staticcall(
-                        gas(),
-                        0x4,
-                        add(mload(a_), 0x20),
-                        aSize_,
-                        add(mload(call_), offset_),
-                        aSize_
-                    )
-                ) {
-                    revert(0, 0)
-                }
-
-                offset_ := add(offset_, aSize_)
+            if iszero(
+                staticcall(
+                    gas(),
+                    0x4,
+                    add(mload(a_), 0x20),
+                    aSize_,
+                    add(mload(call_), offset_),
+                    aSize_
+                )
+            ) {
+                revert(0, 0)
             }
 
-            {
-                let eSize_ := mload(mload(e_))
+            offset_ := add(offset_, aSize_)
 
-                if iszero(
-                    staticcall(
-                        gas(),
-                        0x4,
-                        add(mload(e_), 0x20),
-                        eSize_,
-                        add(mload(call_), offset_),
-                        eSize_
-                    )
-                ) {
-                    revert(0, 0)
-                }
-
-                offset_ := add(offset_, eSize_)
+            if iszero(
+                staticcall(
+                    gas(),
+                    0x4,
+                    add(mload(e_), 0x20),
+                    eSize_,
+                    add(mload(call_), offset_),
+                    eSize_
+                )
+            ) {
+                revert(0, 0)
             }
 
-            let mSize_ := mload(mload(m_))
+            offset_ := add(offset_, eSize_)
 
             if iszero(
                 staticcall(
@@ -366,7 +373,7 @@ library MemoryUint {
 
             offset_ := add(offset_, mSize_)
 
-            mstore(mload(r_), overflowMemSize_)
+            mstore(mload(r_), mSize_)
 
             if iszero(
                 staticcall(gas(), 0x5, mload(call_), offset_, add(mload(r_), 0x20), mSize_)
