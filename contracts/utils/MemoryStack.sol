@@ -72,6 +72,7 @@ library MemoryStack {
     }
 
     function pop(Stack memory stack, StackValue memory value_) internal pure {
+        /// FIXME: still can point to another value
         (uint256 index_, uint256 pointer_) = _checkValue(stack, value_);
 
         if (index_ + 1 < stack.stackSize) {
@@ -119,13 +120,6 @@ library MemoryStack {
 
             mstore(0x40, add(data_, dataSize_))
         }
-    }
-
-    function toPointer(
-        Stack memory stack,
-        StackValue memory value_
-    ) internal pure returns (uint256 pointer_) {
-        (, pointer_) = _checkValue(stack, value_);
     }
 
     function _checkValue(

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "../../utils/MemoryStack.sol";
-import "../../utils/MemoryBigInt.sol";
+import {MemoryStack} from "../../utils/MemoryStack.sol";
+import {MemoryUint} from "../../utils/MemoryUint.sol";
 import "hardhat/console.sol";
 
 contract StackMock {
     using MemoryStack for MemoryStack.Stack;
-    using MemoryBigInt for *;
+    using MemoryUint for *;
 
     ////        let t: bigint;
     ////        let u: bigint;
@@ -48,11 +48,12 @@ contract StackMock {
     ////        let z1 = modmul(u, u, p);
     ////        z1 = modmul(z1, u, p);
     ////
-    function mock() external view returns (MemoryBigInt.BigInt memory) {
-        MemoryBigInt.Heap memory heap_ = MemoryBigInt.initHeap(64);
+    function mock() external view returns (MemoryUint.Uint512 memory) {
+        MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
 
-        MemoryBigInt.BigInt memory a_ = heap_.initBigInt(hex"1337");
+        MemoryUint.Uint512 memory a_ = mem_.newUint512(hex"10");
+        MemoryUint.Uint512 memory b_ = mem_.newUint512(hex"20");
 
-        return a_;
+        return MemoryUint.modadd(mem_, a_, b_);
     }
 }
