@@ -51,9 +51,10 @@ contract StackMock {
     function mock() external view returns (MemoryUint.Uint512 memory) {
         MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
 
-        MemoryUint.Uint512 memory a_ = mem_.newUint512(hex"10");
-        MemoryUint.Uint512 memory b_ = mem_.newUint512(hex"20");
+        MemoryUint.Uint512 memory a_ = mem_.newUint512(hex"05");
+        MemoryUint.Uint512 memory b_ = mem_.newUint512(hex"07");
+        MemoryUint.Uint512 memory m_ = mem_.newUint512(hex"0A");
 
-        return MemoryUint.add(mem_, a_, b_);
+        return MemoryUint.modsub(mem_, a_, b_, m_);
     }
 }

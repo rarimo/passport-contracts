@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "./MemoryStack.sol";
 import {MemoryStack} from "./MemoryStack.sol";
 
 library MemoryUint {
@@ -8,7 +9,7 @@ library MemoryUint {
 
     struct SharedMemory {
         MemoryStack.Stack stack;
-        MemoryStack.Stack overflowStack;
+        MemoryStack.Stack extStack;
         MemoryStack.Stack callStack;
     }
 
@@ -18,7 +19,7 @@ library MemoryUint {
 
     function newUint512SharedMemory() internal view returns (SharedMemory memory mem_) {
         mem_.stack = MemoryStack.init(64);
-        mem_.overflowStack = MemoryStack.init(160);
+        mem_.extStack = MemoryStack.init(160);
         mem_.callStack = MemoryStack.init(1024);
 
         return mem_;
@@ -41,7 +42,7 @@ library MemoryUint {
 
     enum _StackType {
         _UINT,
-        _OVERFLOW_UINT,
+        _EXT_UINT,
         _CALL
     }
 
@@ -57,8 +58,8 @@ library MemoryUint {
             return mem_.stack.push0();
         }
 
-        if (stackType_ == _StackType._OVERFLOW_UINT) {
-            return mem_.overflowStack.push0();
+        if (stackType_ == _StackType._EXT_UINT) {
+            return mem_.extStack.push0();
         }
 
         return mem_.callStack.push0();
@@ -74,8 +75,8 @@ library MemoryUint {
             return;
         }
 
-        if (stackType_ == _StackType._OVERFLOW_UINT) {
-            mem_.overflowStack.pop(value_);
+        if (stackType_ == _StackType._EXT_UINT) {
+            mem_.extStack.pop(value_);
             return;
         }
 
@@ -90,8 +91,8 @@ library MemoryUint {
             return mem_.stack.elementSize;
         }
 
-        if (stackType_ == _StackType._OVERFLOW_UINT) {
-            return mem_.overflowStack.elementSize;
+        if (stackType_ == _StackType._EXT_UINT) {
+            return mem_.extStack.elementSize;
         }
 
         return mem_.callStack.elementSize;
@@ -105,8 +106,8 @@ library MemoryUint {
             return _StackType._UINT;
         }
 
-        if (value_.value.length == mem_.overflowStack.elementSize) {
-            return _StackType._OVERFLOW_UINT;
+        if (value_.value.length == mem_.extStack.elementSize) {
+            return _StackType._EXT_UINT;
         }
 
         return _StackType._CALL;
@@ -116,13 +117,13 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 value_
     ) private view returns (MemoryStack.StackValue memory r_) {
-        uint256 overflowMemSize_ = _memSize(mem_, _StackType._OVERFLOW_UINT);
+        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
 
-        r_ = _new(mem_, _StackType._OVERFLOW_UINT);
+        r_ = _new(mem_, _StackType._UINT);
 
         assembly {
-            mstore(mload(r_), overflowMemSize_)
-            mstore(add(mload(r_), overflowMemSize_), value_)
+            mstore(mload(r_), memSize_)
+            mstore(add(mload(r_), memSize_), value_)
         }
     }
 
@@ -133,11 +134,46 @@ library MemoryUint {
     ) internal view returns (Uint512 memory r_) {
         _checkMemory(mem_, 64);
 
-        MemoryStack.StackValue memory sum_ = _add(mem_, a_.data, b_.data);
+        return Uint512(_add(mem_, a_.data, b_.data));
+    }
 
-        r_ = Uint512(_cut(mem_, sum_));
+    function sub(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory b_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
 
-        _destruct(mem_, sum_, _StackType._OVERFLOW_UINT);
+        return Uint512(_sub(mem_, a_.data, b_.data));
+    }
+
+    function _extend(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory value_
+    ) private view returns (MemoryStack.StackValue memory valueExt_) {
+        valueExt_ = _new(mem_, _StackType._EXT_UINT);
+
+        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
+        uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
+
+        assembly {
+            mstore(mload(valueExt_), extMemSize_)
+
+            let offset_ := sub(extMemSize_, memSize_)
+
+            if iszero(
+                staticcall(
+                    gas(),
+                    0x4,
+                    add(mload(value_), 0x20),
+                    memSize_,
+                    add(add(mload(valueExt_), 0x20), offset_),
+                    memSize_
+                )
+            ) {
+                revert(0, 0)
+            }
+        }
     }
 
     function modadd(
@@ -148,11 +184,42 @@ library MemoryUint {
     ) internal view returns (Uint512 memory r_) {
         _checkMemory(mem_, 64);
 
-        MemoryStack.StackValue memory sum_ = _add(mem_, a_.data, b_.data);
+        MemoryStack.StackValue memory aExt_ = _extend(mem_, a_.data);
+        MemoryStack.StackValue memory bExt_ = _extend(mem_, b_.data);
+
+        MemoryStack.StackValue memory sum_ = _add(mem_, aExt_, bExt_);
 
         r_ = Uint512(_mod(mem_, sum_, m_.data));
 
-        _destruct(mem_, sum_, _StackType._OVERFLOW_UINT);
+        _destruct(mem_, aExt_, _StackType._EXT_UINT);
+        _destruct(mem_, bExt_, _StackType._EXT_UINT);
+        _destruct(mem_, sum_, _StackType._EXT_UINT);
+    }
+
+    function modsub(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory b_,
+        Uint512 memory m_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
+
+        int cmp_ = _cmp(mem_, a_.data, b_.data);
+
+        MemoryStack.StackValue memory diff_ = cmp_ >= 0
+            ? _sub(mem_, a_.data, b_.data)
+            : _sub(mem_, b_.data, a_.data);
+        MemoryStack.StackValue memory modDiff_ = _mod(mem_, diff_, m_.data);
+
+        _destruct(mem_, diff_, _StackType._UINT);
+
+        if (cmp_ >= 0) {
+            return Uint512(modDiff_);
+        }
+
+        r_ = Uint512(_sub(mem_, m_.data, modDiff_));
+
+        _destruct(mem_, modDiff_, _StackType._UINT);
     }
 
     function mod(
@@ -185,7 +252,7 @@ library MemoryUint {
 
         r_ = _modexp(mem_, a_, one_, m_);
 
-        _destruct(mem_, one_, _StackType._OVERFLOW_UINT);
+        _destruct(mem_, one_, _StackType._UINT);
     }
 
     function cmp(
@@ -198,12 +265,13 @@ library MemoryUint {
         return _cmp(mem_, a_.data, b_.data);
     }
 
+    /// @dev a_ and b_ are of the same size
     function _cmp(
         SharedMemory memory mem_,
         MemoryStack.StackValue memory a_,
         MemoryStack.StackValue memory b_
     ) internal view returns (int256) {
-        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
+        uint256 memSize_ = _memSize(mem_, _valueType(mem_, a_));
 
         uint256 aPtr_;
         uint256 bPtr_;
@@ -234,51 +302,22 @@ library MemoryUint {
         return 0;
     }
 
-    function _cut(
-        SharedMemory memory mem_,
-        MemoryStack.StackValue memory a_
-    ) private view returns (MemoryStack.StackValue memory r_) {
-        r_ = _new(mem_, _StackType._UINT);
-
-        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
-        uint256 overflowMemSize_ = _memSize(mem_, _StackType._OVERFLOW_UINT);
-
-        assembly {
-            mstore(mload(r_), memSize_)
-
-            let offset_ := add(sub(overflowMemSize_, memSize_), 0x20)
-
-            if iszero(
-                staticcall(
-                    gas(),
-                    0x4,
-                    add(mload(a_), offset_),
-                    memSize_,
-                    add(mload(r_), 0x20),
-                    memSize_
-                )
-            ) {
-                revert(0, 0)
-            }
-        }
-    }
-
+    /// @dev a_, b_ and r_ are of the same size
     function _add(
         SharedMemory memory mem_,
         MemoryStack.StackValue memory a_,
         MemoryStack.StackValue memory b_
     ) private view returns (MemoryStack.StackValue memory r_) {
-        r_ = _new(mem_, _StackType._OVERFLOW_UINT);
-
-        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
-        uint256 overflowMemSize_ = _memSize(mem_, _StackType._OVERFLOW_UINT);
+        r_ = _new(mem_, _valueType(mem_, a_));
 
         assembly {
-            mstore(mload(r_), overflowMemSize_)
+            let memSize_ := mload(mload(a_))
+
+            mstore(mload(r_), memSize_)
 
             let aPtr_ := add(mload(a_), memSize_)
             let bPtr_ := add(mload(b_), memSize_)
-            let rPtr_ := add(mload(r_), overflowMemSize_)
+            let rPtr_ := add(mload(r_), memSize_)
 
             let carry_ := 0
 
@@ -289,7 +328,6 @@ library MemoryUint {
             } {
                 let aWord_ := mload(aPtr_)
                 let bWord_ := mload(bPtr_)
-
                 let rWord_ := add(add(aWord_, bWord_), carry_)
 
                 carry_ := and(
@@ -303,11 +341,51 @@ library MemoryUint {
                 bPtr_ := sub(bPtr_, 0x20)
                 rPtr_ := sub(rPtr_, 0x20)
             }
-
-            mstore(rPtr_, carry_)
         }
     }
 
+    /// @dev a_, b_ and r_ are of the same size, a >= b
+    function _sub(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory a_,
+        MemoryStack.StackValue memory b_
+    ) private view returns (MemoryStack.StackValue memory r_) {
+        r_ = _new(mem_, _valueType(mem_, a_));
+
+        assembly {
+            let memSize_ := mload(mload(a_))
+
+            mstore(mload(r_), memSize_)
+
+            let aPtr_ := add(mload(a_), memSize_)
+            let bPtr_ := add(mload(b_), memSize_)
+            let rPtr_ := add(mload(r_), memSize_)
+
+            let carry_ := 0
+
+            for {
+                let i := memSize_
+            } eq(iszero(i), 0) {
+                i := sub(i, 0x20)
+            } {
+                let aWord_ := mload(aPtr_)
+                let bWord_ := mload(bPtr_)
+
+                mstore(rPtr_, sub(sub(aWord_, bWord_), carry_))
+
+                carry_ := or(
+                    lt(aWord_, add(bWord_, carry_)),
+                    and(eq(bWord_, sub(0, 1)), eq(carry_, 1))
+                )
+
+                aPtr_ := sub(aPtr_, 0x20)
+                bPtr_ := sub(bPtr_, 0x20)
+                rPtr_ := sub(rPtr_, 0x20)
+            }
+        }
+    }
+
+    /// @dev a_, e_, m_ can be of different sizes
     function _modexp(
         SharedMemory memory mem_,
         MemoryStack.StackValue memory a_,
