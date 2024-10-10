@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./MemoryStack.sol";
 import {MemoryStack} from "./MemoryStack.sol";
+import "hardhat/console.sol";
 
 library MemoryUint {
     using MemoryStack for *;
@@ -127,6 +127,27 @@ library MemoryUint {
         }
     }
 
+    function _newMaxUint(
+        SharedMemory memory mem_
+    ) private view returns (MemoryStack.StackValue memory r_) {
+        uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
+
+        r_ = _new(mem_, _StackType._EXT_UINT);
+
+        /// TODO: check
+        assembly {
+            mstore(mload(r_), extMemSize_)
+
+            for {
+                let i := 0
+            } lt(i, extMemSize_) {
+                i := add(i, 0x20)
+            } {
+                mstore(add(mload(r_), add(i, 0x20)), sub(0, 1))
+            }
+        }
+    }
+
     function add(
         SharedMemory memory mem_,
         Uint512 memory a_,
@@ -168,6 +189,35 @@ library MemoryUint {
                     add(mload(value_), 0x20),
                     memSize_,
                     add(add(mload(valueExt_), 0x20), offset_),
+                    memSize_
+                )
+            ) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    function _cut(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory a_
+    ) private view returns (MemoryStack.StackValue memory r_) {
+        r_ = _new(mem_, _StackType._UINT);
+
+        uint256 memSize_ = _memSize(mem_, _StackType._UINT);
+        uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
+
+        assembly {
+            mstore(mload(r_), memSize_)
+
+            let offset_ := add(sub(extMemSize_, memSize_), 0x20)
+
+            if iszero(
+                staticcall(
+                    gas(),
+                    0x4,
+                    add(mload(a_), offset_),
+                    memSize_,
+                    add(mload(r_), 0x20),
                     memSize_
                 )
             ) {
@@ -230,6 +280,99 @@ library MemoryUint {
         _checkMemory(mem_, 64);
 
         return Uint512(_mod(mem_, a_.data, m_.data));
+    }
+
+    function mul(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory b_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
+
+        MemoryStack.StackValue memory rExt_ = _mul(mem_, a_.data, b_.data);
+
+        r_ = Uint512(_cut(mem_, rExt_));
+
+        _destruct(mem_, rExt_, _StackType._EXT_UINT);
+    }
+
+    function modmul(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory b_,
+        Uint512 memory m_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
+
+        MemoryStack.StackValue memory rExt_ = _mul(mem_, a_.data, b_.data);
+
+        r_ = Uint512(_mod(mem_, rExt_, m_.data));
+
+        _destruct(mem_, rExt_, _StackType._EXT_UINT);
+    }
+
+    /// @dev a_, b_ are of the same size, r_ is extended
+    function _mul(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory a_,
+        MemoryStack.StackValue memory b_
+    ) private view returns (MemoryStack.StackValue memory r_) {
+        MemoryStack.StackValue memory aExt_ = _extend(mem_, a_);
+        MemoryStack.StackValue memory bExt_ = _extend(mem_, b_);
+
+        MemoryStack.StackValue memory sumExt_ = _add(mem_, aExt_, bExt_);
+
+        MemoryStack.StackValue memory two_ = _newUint(mem_, 2);
+        MemoryStack.StackValue memory maxModExt_ = _newMaxUint(mem_);
+
+        MemoryStack.StackValue memory sqSumExt_ = _modexp(mem_, sumExt_, two_, maxModExt_);
+
+        _destruct(mem_, sumExt_, _StackType._EXT_UINT);
+
+        int256 cmp_ = _cmp(mem_, a_, b_);
+
+        MemoryStack.StackValue memory diffExt_ = cmp_ >= 0
+            ? _sub(mem_, aExt_, bExt_)
+            : _sub(mem_, bExt_, aExt_);
+
+        MemoryStack.StackValue memory sqDiffExt_ = _modexp(mem_, diffExt_, two_, maxModExt_);
+
+        _destruct(mem_, aExt_, _StackType._EXT_UINT);
+        _destruct(mem_, bExt_, _StackType._EXT_UINT);
+        _destruct(mem_, two_, _StackType._UINT);
+        _destruct(mem_, maxModExt_, _StackType._EXT_UINT);
+        _destruct(mem_, diffExt_, _StackType._EXT_UINT);
+
+        r_ = _sub(mem_, sqSumExt_, sqDiffExt_);
+
+        _destruct(mem_, sqSumExt_, _StackType._EXT_UINT);
+        _destruct(mem_, sqDiffExt_, _StackType._EXT_UINT);
+
+        uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
+
+        assembly {
+            mstore(mload(r_), extMemSize_)
+
+            let rPtr_ := add(mload(r_), extMemSize_)
+
+            for {
+                let i := 0x20
+            } lt(i, extMemSize_) {
+                i := add(i, 0x20)
+            } {
+                let rPtrNext_ := sub(rPtr_, 0x20)
+                let rWord_ := mload(rPtr_)
+                let rWordNext_ := mload(rPtrNext_)
+
+                /// TODO: check
+                /// @dev (rWord_ >> 2) | ((rWordNext_ & 3) << 253)
+                mstore(rPtr_, or(shr(rWord_, 2), shl(and(rWordNext_, 3), 253)))
+
+                rPtr_ := rPtrNext_
+            }
+
+            mstore(rPtr_, shr(mload(rPtr_), 2))
+        }
     }
 
     function modexp(
