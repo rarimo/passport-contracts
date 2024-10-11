@@ -55,6 +55,6 @@ contract StackMock {
         MemoryUint.Uint512 memory b_ = mem_.newUint512(hex"07");
         MemoryUint.Uint512 memory m_ = mem_.newUint512(hex"0A");
 
-        return MemoryUint.modmul(mem_, a_, b_, m_);
+        return MemoryUint.moddiv(mem_, a_, b_, m_);
     }
 }

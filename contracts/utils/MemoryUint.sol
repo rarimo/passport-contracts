@@ -311,6 +311,51 @@ library MemoryUint {
         _destruct(mem_, rExt_, _StackType._EXT_UINT);
     }
 
+    function _modinv(
+        SharedMemory memory mem_,
+        MemoryStack.StackValue memory a_,
+        MemoryStack.StackValue memory m_
+    ) internal view returns (MemoryStack.StackValue memory r_) {
+        MemoryStack.StackValue memory two_ = _newUint(mem_, 2);
+
+        require(_cmp(mem_, m_, two_) >= 0, "MBI: invalid modulus");
+
+        MemoryStack.StackValue memory exponent_ = _sub(mem_, m_, two_);
+
+        _destruct(mem_, two_, _StackType._UINT);
+
+        r_ = _modexp(mem_, a_, exponent_, m_);
+
+        _destruct(mem_, exponent_, _StackType._UINT);
+    }
+
+    function moddiv(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory b_,
+        Uint512 memory m_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
+
+        MemoryStack.StackValue memory bInv_ = _modinv(mem_, b_.data, m_.data);
+        MemoryStack.StackValue memory rExt_ = _mul(mem_, a_.data, bInv_);
+
+        r_ = Uint512(_mod(mem_, rExt_, m_.data));
+
+        _destruct(mem_, rExt_, _StackType._EXT_UINT);
+        _destruct(mem_, bInv_, _StackType._UINT);
+    }
+
+    function modinv(
+        SharedMemory memory mem_,
+        Uint512 memory a_,
+        Uint512 memory m_
+    ) internal view returns (Uint512 memory r_) {
+        _checkMemory(mem_, 64);
+
+        return Uint512(_modinv(mem_, a_.data, m_.data));
+    }
+
     /// @dev a_, b_ are of the same size, r_ is extended
     function _mul(
         SharedMemory memory mem_,
