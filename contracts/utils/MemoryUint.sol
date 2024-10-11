@@ -29,7 +29,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         bytes memory data_
     ) internal view returns (Uint512 memory u512_) {
-        require(data_.length <= 64, "MBI: data is too large");
+        require(data_.length <= 64, "MU: data is too large");
         _checkMemory(mem_, 64);
 
         /// TODO: Can we pass here mem as a pointer?
@@ -47,7 +47,7 @@ library MemoryUint {
     }
 
     function _checkMemory(SharedMemory memory mem_, uint256 bytesCount_) private view {
-        require(mem_.stack.elementSize == bytesCount_, "MBI: invalid memory");
+        require(mem_.stack.elementSize == bytesCount_, "MU: invalid memory");
     }
 
     function _new(
@@ -318,7 +318,7 @@ library MemoryUint {
     ) internal view returns (MemoryStack.StackValue memory r_) {
         MemoryStack.StackValue memory two_ = _newUint(mem_, 2);
 
-        require(_cmp(mem_, m_, two_) >= 0, "MBI: invalid modulus");
+        require(_cmp(mem_, m_, two_) >= 0, "MU: invalid modulus");
 
         MemoryStack.StackValue memory exponent_ = _sub(mem_, m_, two_);
 

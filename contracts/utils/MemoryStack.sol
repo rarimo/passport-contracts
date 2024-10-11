@@ -42,7 +42,7 @@ library MemoryStack {
             assembly {
                 pointer_ := mload(0x40)
 
-                /// @dev 32 bytes for metadata, 32 bytes for length, and 32 bytes for data
+                /// @dev 32 bytes for metadata, 32 bytes for length, and `elementSize_` bytes for data
                 mstore(0x40, add(pointer_, add(elementSize_, 0x40)))
 
                 pointer_ := add(pointer_, 0x20)
