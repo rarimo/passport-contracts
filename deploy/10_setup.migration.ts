@@ -7,14 +7,16 @@ import {
   PECDSASHA1Dispatcher__factory,
   PNOAADispatcher__factory,
   PRSASHADispatcher__factory,
+  PPerPassport_1_256_3_5_576_248_NAVerifier2__factory,
+  PPerPassport_1_256_3_6_576_248_1_2432_5_296Verifier2__factory,
+  PPerPassport_21_256_3_7_336_264_21_3072_6_2008Verifier2__factory,
+  PPerPassport_2_256_3_6_336_264_21_2448_6_2008Verifier2__factory,
   PUniversal2048Verifier2__factory,
   PUniversal2048V2Verifier2__factory,
-  PUniversal2048V3Verifier2__factory,
   PUniversal4096Verifier2__factory,
   PUniversalPSS2048S32E2Verifier2__factory,
   PUniversalPSS2048S32E17Verifier2__factory,
   PUniversalPSS2048S64E17Verifier2__factory,
-  PUKRECDSABrainpool256Verifier2__factory,
   PInternalVerifier2__factory,
   PInternalOptVerifier2__factory,
   PMNEOptVerifier2__factory,
@@ -36,14 +38,16 @@ import {
   P_RSA_SHA1_2688_3,
   P_RSA_SHA2_2688,
   P_RSA_SHA2_2688_3,
+  Z_PER_PASSPORT_1_256_3_5_576_248_NA,
+  Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296,
+  Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008,
+  Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008,
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_2048_V2,
-  Z_UNIVERSAL_2048_V3,
   Z_UNIVERSAL_4096,
   Z_UNIVERSAL_PSS_2048_S32_E2,
   Z_UNIVERSAL_PSS_2048_S32_E17,
   Z_UNIVERSAL_PSS_2048_S64_E17,
-  Z_UKR_ECDSA_BRAINPOOL_256,
   Z_INTERNAL,
   Z_INTERNAL_OPT,
   Z_MNE_OPT,
@@ -77,16 +81,26 @@ export = async (deployer: Deployer) => {
 
   const pNoAaDispatcher = await deployer.deployed(PNOAADispatcher__factory);
 
+  const pPerPassport_1_256_3_5_576_248_NAVerifier = await deployer.deployed(
+    PPerPassport_1_256_3_5_576_248_NAVerifier2__factory,
+  );
+  const pPerPassport_1_256_3_6_576_248_1_2432_5_296Verifier = await deployer.deployed(
+    PPerPassport_1_256_3_6_576_248_1_2432_5_296Verifier2__factory,
+  );
+  const pPerPassport_2_256_3_6_336_264_21_2448_6_2008Verifier = await deployer.deployed(
+    PPerPassport_2_256_3_6_336_264_21_2448_6_2008Verifier2__factory,
+  );
+  const pPerPassport_21_256_3_7_336_264_21_3072_6_2008Verifier = await deployer.deployed(
+    PPerPassport_21_256_3_7_336_264_21_3072_6_2008Verifier2__factory,
+  );
+
   const pUniversal2048Verifier = await deployer.deployed(PUniversal2048Verifier2__factory);
   const pUniversal2048V2Verifier = await deployer.deployed(PUniversal2048V2Verifier2__factory);
-  const pUniversal2048V3Verifier = await deployer.deployed(PUniversal2048V3Verifier2__factory);
   const pUniversal4096Verifier = await deployer.deployed(PUniversal4096Verifier2__factory);
 
   const pUniversalPSS2048S32E2Verifier = await deployer.deployed(PUniversalPSS2048S32E2Verifier2__factory);
   const pUniversalPSS2048S32E17Verifier = await deployer.deployed(PUniversalPSS2048S32E17Verifier2__factory);
   const pUniversalPSS2048S64E17Verifier = await deployer.deployed(PUniversalPSS2048S64E17Verifier2__factory);
-
-  const pUkrECDSABrainpool256Verifier = await deployer.deployed(PUKRECDSABrainpool256Verifier2__factory);
 
   const pInternalVerifier = await deployer.deployed(PInternalVerifier2__factory);
   const pInternalOptVerifier = await deployer.deployed(PInternalOptVerifier2__factory);
@@ -114,9 +128,25 @@ export = async (deployer: Deployer) => {
 
   await registration.mockAddPassportDispatcher(P_NO_AA, await pNoAaDispatcher.getAddress());
 
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_1_256_3_5_576_248_NA,
+    await pPerPassport_1_256_3_5_576_248_NAVerifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296,
+    await pPerPassport_1_256_3_6_576_248_1_2432_5_296Verifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008,
+    await pPerPassport_2_256_3_6_336_264_21_2448_6_2008Verifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008,
+    await pPerPassport_21_256_3_7_336_264_21_3072_6_2008Verifier.getAddress(),
+  );
+
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048, await pUniversal2048Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048_V2, await pUniversal2048V2Verifier.getAddress());
-  await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048_V3, await pUniversal2048V3Verifier.getAddress());
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_4096, await pUniversal4096Verifier.getAddress());
 
   await registration.mockAddPassportVerifier(
@@ -130,11 +160,6 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(
     Z_UNIVERSAL_PSS_2048_S64_E17,
     await pUniversalPSS2048S64E17Verifier.getAddress(),
-  );
-
-  await registration.mockAddPassportVerifier(
-    Z_UKR_ECDSA_BRAINPOOL_256,
-    await pUkrECDSABrainpool256Verifier.getAddress(),
   );
 
   await registration.mockAddPassportVerifier(Z_INTERNAL, await pInternalVerifier.getAddress());

@@ -22,16 +22,26 @@ bytes32 constant P_ECDSA_SHA1_2704 = keccak256("P_ECDSA_SHA1_2704");
 
 // -------------------------- VERIFIER --------------------------
 
+bytes32 constant Z_PER_PASSPORT_1_256_3_5_576_248_NA = keccak256(
+    "Z_PER_PASSPORT_1_256_3_5_576_248_NA"
+);
+bytes32 constant Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296 = keccak256(
+    "Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296"
+);
+bytes32 constant Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008 = keccak256(
+    "Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008"
+);
+bytes32 constant Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008 = keccak256(
+    "Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008"
+);
+
 bytes32 constant Z_UNIVERSAL_4096 = keccak256("Z_UNIVERSAL_4096");
 bytes32 constant Z_UNIVERSAL_2048 = keccak256("Z_UNIVERSAL_2048");
 bytes32 constant Z_UNIVERSAL_2048_V2 = keccak256("Z_UNIVERSAL_2048_V2");
-bytes32 constant Z_UNIVERSAL_2048_V3 = keccak256("Z_UNIVERSAL_2048_V3");
 
 bytes32 constant Z_UNIVERSAL_PSS_2048_S32_E2 = keccak256("Z_UNIVERSAL_PSS_2048_S32_E2");
 bytes32 constant Z_UNIVERSAL_PSS_2048_S32_E17 = keccak256("Z_UNIVERSAL_PSS_2048_S32_E17");
 bytes32 constant Z_UNIVERSAL_PSS_2048_S64_E17 = keccak256("Z_UNIVERSAL_PSS_2048_S64_E17");
-
-bytes32 constant Z_UKR_ECDSA_BRAINPOOL_256 = keccak256("Z_UKR_ECDSA_BRAINPOOL_256");
 
 bytes32 constant Z_INTERNAL = keccak256("Z_INTERNAL");
 bytes32 constant Z_INTERNAL_OPT = keccak256("Z_INTERNAL_OPT");
