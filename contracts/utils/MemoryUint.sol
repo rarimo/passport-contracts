@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import {MemoryStack} from "./MemoryStack.sol";
-import "hardhat/console.sol";
 
 library MemoryUint {
     using MemoryStack for *;
@@ -393,30 +392,26 @@ library MemoryUint {
         _destruct(mem_, sqSumExt_, _StackType._EXT_UINT);
         _destruct(mem_, sqDiffExt_, _StackType._EXT_UINT);
 
-        uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
-
         assembly {
-            mstore(mload(r_), extMemSize_)
-
-            let rPtr_ := add(mload(r_), extMemSize_)
+            let rSize_ := mload(mload(r_))
+            let rPtr_ := add(mload(r_), rSize_)
 
             for {
                 let i := 0x20
-            } lt(i, extMemSize_) {
+            } lt(i, rSize_) {
                 i := add(i, 0x20)
             } {
                 let rPtrNext_ := sub(rPtr_, 0x20)
                 let rWord_ := mload(rPtr_)
                 let rWordNext_ := mload(rPtrNext_)
 
-                /// TODO: check
-                /// @dev (rWord_ >> 2) | ((rWordNext_ & 3) << 253)
-                mstore(rPtr_, or(shr(rWord_, 2), shl(and(rWordNext_, 3), 253)))
+                /// @dev (rWord_ >> 2) | ((rWordNext_ & 3) << 254)
+                mstore(rPtr_, or(shr(2, rWord_), shl(254, and(3, rWordNext_))))
 
                 rPtr_ := rPtrNext_
             }
 
-            mstore(rPtr_, shr(mload(rPtr_), 2))
+            mstore(rPtr_, shr(2, mload(rPtr_)))
         }
     }
 

@@ -21,7 +21,10 @@ describe.only("Stack", () => {
 
   describe("stack", () => {
     it("stack", async () => {
-      console.log(await stack.mock());
+      const y = BigInt("0x3d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304");
+      const p = BigInt("0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377");
+
+      console.log(await stack.modmul("0x" + y.toString(16), "0x" + y.toString(16), "0x" + p.toString(16)));
     });
   });
 });

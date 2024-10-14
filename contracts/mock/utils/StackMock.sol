@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import {MemoryStack} from "../../utils/MemoryStack.sol";
 import {MemoryUint} from "../../utils/MemoryUint.sol";
-import "hardhat/console.sol";
 
 contract StackMock {
     using MemoryStack for MemoryStack.Stack;
@@ -56,5 +55,19 @@ contract StackMock {
         MemoryUint.Uint512 memory m_ = mem_.newUint512(hex"0A");
 
         return MemoryUint.moddiv(mem_, a_, b_, m_);
+    }
+
+    function modmul(
+        bytes memory a_,
+        bytes memory b_,
+        bytes memory m_
+    ) external view returns (MemoryUint.Uint512 memory) {
+        MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
+
+        MemoryUint.Uint512 memory a_ = mem_.newUint512(a_);
+        MemoryUint.Uint512 memory b_ = mem_.newUint512(b_);
+        MemoryUint.Uint512 memory m_ = mem_.newUint512(m_);
+
+        return MemoryUint.modmul(mem_, a_, b_, m_);
     }
 }
