@@ -22,27 +22,25 @@ library MemoryStack {
         return Stack({stack: Vector.newUint(), stackSize: 0, elementSize: elementSize_});
     }
 
-    function push0(Stack memory stack) internal view returns (StackValue memory value_) {
+    function push0(Stack memory stack) internal view returns (uint256 pointer_) {
         return push(stack, "");
     }
 
     function push(
         Stack memory stack,
         bytes memory data_
-    ) internal view returns (StackValue memory value_) {
+    ) internal view returns (uint256 pointer_) {
         /// @dev It's an invariant that can only be violated by direct memory manipulation
         require(stack.stackSize <= stack.stack.length(), "MS: stack overflow");
 
         uint256 elementSize_ = stack.elementSize;
         require(data_.length <= elementSize_, "MS: element size exceeded");
 
-        uint256 pointer_;
-
         if (stack.stackSize == stack.stack.length()) {
             assembly {
                 pointer_ := mload(0x40)
 
-                /// @dev 32 bytes for metadata, 32 bytes for length, and `elementSize_` bytes for data
+            /// @dev 32 bytes for metadata, 32 bytes for length, and `elementSize_` bytes for data
                 mstore(0x40, add(pointer_, add(elementSize_, 0x40)))
 
                 pointer_ := add(pointer_, 0x20)
@@ -64,16 +62,14 @@ library MemoryStack {
             if iszero(success_) {
                 revert(0, 0)
             }
-
-            mstore(value_, pointer_)
         }
 
         ++stack.stackSize;
     }
 
-    function pop(Stack memory stack, StackValue memory value_) internal pure {
+    function pop(Stack memory stack, uint256 pointer_) internal pure {
         /// FIXME: still can point to another value
-        (uint256 index_, uint256 pointer_) = _checkValue(stack, value_);
+        uint256 index_ = _checkValue(stack, pointer_);
 
         if (index_ + 1 < stack.stackSize) {
             uint256 lastIndex_ = stack.stackSize - 1;
@@ -104,16 +100,16 @@ library MemoryStack {
 
     function toData(
         Stack memory stack,
-        StackValue memory value_
+        uint256 pointer_
     ) internal view returns (bytes memory data_) {
-        _checkValue(stack, value_);
+        _checkValue(stack, pointer_);
 
         assembly {
             data_ := mload(0x40)
 
-            let dataSize_ := add(mload(value_), 0x20)
+            let dataSize_ := add(mload(pointer_), 0x20)
 
-            let success_ := staticcall(gas(), 0x4, mload(value_), dataSize_, data_, dataSize_)
+            let success_ := staticcall(gas(), 0x4, pointer_, dataSize_, data_, dataSize_)
             if iszero(success_) {
                 revert(0, 0)
             }
@@ -124,11 +120,10 @@ library MemoryStack {
 
     function _checkValue(
         Stack memory stack,
-        StackValue memory value_
-    ) internal pure returns (uint256 index_, uint256 pointer_) {
+        uint256 pointer_
+    ) private pure returns (uint256 index_) {
         assembly {
-            index_ := mload(sub(mload(value_), 0x20))
-            pointer_ := mload(value_)
+            index_ := mload(sub(pointer_, 0x20))
         }
 
         require(index_ < stack.stackSize, "MS: invalid index");
