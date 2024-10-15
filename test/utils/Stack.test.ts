@@ -25,10 +25,6 @@ describe.only("Stack", () => {
       const p = BigInt("0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377");
 
       console.log(await stack.modmul("0x" + y.toString(16), "0x" + y.toString(16), "0x" + p.toString(16)));
-
-      console.log(await stack.cmp("0x01", "0x01"));
-      console.log(await stack.cmp("0x01", "0x02"));
-      console.log(await stack.cmp("0x02", "0x01"));
     });
   });
 });

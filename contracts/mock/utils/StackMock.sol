@@ -47,36 +47,31 @@ contract StackMock {
     ////        let z1 = modmul(u, u, p);
     ////        z1 = modmul(z1, u, p);
     ////
-    function mock() external view returns (MemoryUint.Uint512 memory) {
+    function mock() external view returns (bytes memory) {
         MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
 
-        MemoryUint.Uint512 memory a_ = mem_.newUint512(hex"05");
-        MemoryUint.Uint512 memory b_ = mem_.newUint512(hex"07");
-        MemoryUint.Uint512 memory m_ = mem_.newUint512(hex"0A");
+        uint256 a_ = mem_.newUint512(hex"05");
+        uint256 b_ = mem_.newUint512(hex"07");
+        uint256 m_ = mem_.newUint512(hex"0A");
 
-        return MemoryUint.moddiv(mem_, a_, b_, m_);
+        uint256 r_ = MemoryUint.moddiv(mem_, a_, b_, m_);
+
+        return MemoryUint.toData(r_);
     }
 
     function modmul(
         bytes memory a_,
         bytes memory b_,
         bytes memory m_
-    ) external view returns (MemoryUint.Uint512 memory) {
+    ) external view returns (bytes memory) {
         MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
 
-        MemoryUint.Uint512 memory a_ = mem_.newUint512(a_);
-        MemoryUint.Uint512 memory b_ = mem_.newUint512(b_);
-        MemoryUint.Uint512 memory m_ = mem_.newUint512(m_);
+        uint256 a_ = mem_.newUint512(a_);
+        uint256 b_ = mem_.newUint512(b_);
+        uint256 m_ = mem_.newUint512(m_);
 
-        return MemoryUint.modmul(mem_, a_, b_, m_);
-    }
+        uint256 r_ = MemoryUint.modmul(mem_, a_, b_, m_);
 
-    function cmp(bytes memory a_, bytes memory b_) external view returns (int256) {
-        MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
-
-        MemoryUint.Uint512 memory a_ = mem_.newUint512(a_);
-        MemoryUint.Uint512 memory b_ = mem_.newUint512(b_);
-
-        return MemoryUint.cmp(mem_, a_, b_);
+        return MemoryUint.toData(r_);
     }
 }
