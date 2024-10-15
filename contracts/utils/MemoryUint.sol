@@ -2,26 +2,41 @@
 pragma solidity ^0.8.4;
 
 import {MemoryStack} from "./MemoryStack.sol";
+struct SharedMemory {
+    MemoryStack.Stack stack;
+    MemoryStack.Stack extStack;
+    MemoryStack.Stack callStack;
+}
+
+struct Uint512 {
+    MemoryStack.StackValue data;
+}
 
 library MemoryUint {
     using MemoryStack for *;
 
-    struct SharedMemory {
-        MemoryStack.Stack stack;
-        MemoryStack.Stack extStack;
-        MemoryStack.Stack callStack;
-    }
-
-    struct Uint512 {
-        MemoryStack.StackValue data;
-    }
-
     function newUint512SharedMemory() internal view returns (SharedMemory memory mem_) {
         mem_.stack = MemoryStack.init(64);
         mem_.extStack = MemoryStack.init(160);
-        mem_.callStack = MemoryStack.init(1024);
+        mem_.callStack = MemoryStack.init(512);
 
         return mem_;
+    }
+
+    function zero(SharedMemory memory mem_) internal view returns (Uint512 memory u512_) {
+        return Uint512(_newUint(mem_, 0));
+    }
+
+    function one(SharedMemory memory mem_) internal view returns (Uint512 memory u512_) {
+        return Uint512(_newUint(mem_, 1));
+    }
+
+    function two(SharedMemory memory mem_) internal view returns (Uint512 memory u512_) {
+        return Uint512(_newUint(mem_, 2));
+    }
+
+    function three(SharedMemory memory mem_) internal view returns (Uint512 memory u512_) {
+        return Uint512(_newUint(mem_, 3));
     }
 
     function newUint512(
@@ -275,7 +290,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         Uint512 memory a_,
         Uint512 memory m_
-    ) private view returns (Uint512 memory r_) {
+    ) internal view returns (Uint512 memory r_) {
         _checkMemory(mem_, 64);
 
         return Uint512(_mod(mem_, a_.data, m_.data));

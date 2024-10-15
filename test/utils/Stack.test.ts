@@ -4,7 +4,7 @@ import { StackMock } from "@ethers-v6";
 
 import { getPoseidon, Reverter } from "@/test/helpers/";
 
-describe.only("Stack", () => {
+describe("Stack", () => {
   const reverter = new Reverter();
 
   let stack: StackMock;
