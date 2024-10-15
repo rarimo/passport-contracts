@@ -113,10 +113,11 @@ contract PECDSASHA2NewAuthenticator {
         );
         _shMem.destruct(temp);
 
-
         console.logBytes(MemoryUint.toData(x1));
         console.logBytes(MemoryUint.toData(y1));
+
         return false;
+
         // uint256 _r = _shMem.newUint512(r);
 
         // temp = _shMem.moddiv(_r, _s, _params.n);
@@ -235,7 +236,7 @@ contract PECDSASHA2NewAuthenticator {
         uint256 lowBits_;
 
         assembly {
-            lowBits_ := mload(add(mload(mload(scalar)), 0x40))
+            lowBits_ := mload(add(scalar, 0x40))
         }
 
         lowBits_ = lowBits_ >> 1;

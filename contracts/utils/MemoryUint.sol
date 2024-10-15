@@ -15,7 +15,7 @@ library MemoryUint {
     function newUint512SharedMemory() internal view returns (SharedMemory memory mem_) {
         mem_.stack = MemoryStack.init(64);
         mem_.extStack = MemoryStack.init(160);
-        mem_.callStack = MemoryStack.init(1024);
+        mem_.callStack = MemoryStack.init(512);
 
         return mem_;
     }
@@ -440,8 +440,8 @@ library MemoryUint {
             } lt(i, aSize_) {
                 i := add(i, 0x20)
             } {
-                let aWord_ := add(aPtr_, i)
-                let bWord_ := add(bPtr_, i)
+                let aWord_ := mload(add(aPtr_, i))
+                let bWord_ := mload(add(bPtr_, i))
 
                 if gt(aWord_, bWord_) {
                     cmp_ := 1
