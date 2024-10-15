@@ -448,36 +448,33 @@ library MemoryUint {
         SharedMemory memory mem_,
         MemoryStack.StackValue memory a_,
         MemoryStack.StackValue memory b_
-    ) private view returns (int256) {
-        uint256 memSize_ = _memSize(mem_, _valueType(mem_, a_));
-
-        uint256 aPtr_;
-        uint256 bPtr_;
-
+    ) private view returns (int256 cmp_) {
         assembly {
-            aPtr_ := add(mload(a_), 0x20)
-            bPtr_ := add(mload(b_), 0x20)
+            let aSize_ := mload(mload(a_))
+            let aPtr_ := add(mload(a_), 0x20)
+            let bPtr_ := add(mload(b_), 0x20)
+
+            for {
+                let i := 0
+            } lt(i, aSize_) {
+                i := add(i, 0x20)
+            } {
+                let aWord_ := mload(add(aPtr_, i))
+                let bWord_ := mload(add(bPtr_, i))
+
+                if gt(aWord_, bWord_) {
+                    cmp_ := 1
+                    break
+                }
+
+                if gt(bWord_, aWord_) {
+                    cmp_ := sub(0, 1)
+                    break
+                }
+            }
         }
 
-        for (uint i = 0; i < memSize_; i += 32) {
-            uint256 aWord_;
-            uint256 bWord_;
-
-            assembly {
-                aWord_ := mload(add(aPtr_, i))
-                bWord_ := mload(add(bPtr_, i))
-            }
-
-            if (aWord_ > bWord_) {
-                return 1;
-            }
-
-            if (bWord_ > aWord_) {
-                return -1;
-            }
-        }
-
-        return 0;
+        return cmp_;
     }
 
     function _extend(
