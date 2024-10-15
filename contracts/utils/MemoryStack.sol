@@ -125,7 +125,7 @@ library MemoryStack {
     function _checkValue(
         Stack memory stack,
         StackValue memory value_
-    ) internal pure returns (uint256 index_, uint256 pointer_) {
+    ) private pure returns (uint256 index_, uint256 pointer_) {
         assembly {
             index_ := mload(sub(mload(value_), 0x20))
             pointer_ := mload(value_)

@@ -448,7 +448,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         MemoryStack.StackValue memory a_,
         MemoryStack.StackValue memory b_
-    ) internal view returns (int256) {
+    ) private view returns (int256) {
         uint256 memSize_ = _memSize(mem_, _valueType(mem_, a_));
 
         uint256 aPtr_;
