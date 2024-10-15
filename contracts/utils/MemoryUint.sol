@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {MemoryStack} from "./MemoryStack.sol";
-import "hardhat/console.sol";
+
 library MemoryUint {
     using MemoryStack for *;
 
