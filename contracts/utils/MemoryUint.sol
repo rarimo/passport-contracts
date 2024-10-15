@@ -325,7 +325,7 @@ library MemoryUint {
                 let rWord_ := mload(rPtr_)
                 let rWordNext_ := mload(rPtrNext_)
 
-                /// @dev (rWord_ >> 2) | (rWordNext_) << 254)
+                /// @dev (rWord_ >> 2) | (rWordNext_ << 254)
                 mstore(rPtr_, or(shr(2, rWord_), shl(254, rWordNext_)))
 
                 rPtr_ := rPtrNext_
