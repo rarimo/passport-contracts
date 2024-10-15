@@ -70,4 +70,13 @@ contract StackMock {
 
         return MemoryUint.modmul(mem_, a_, b_, m_);
     }
+
+    function cmp(bytes memory a_, bytes memory b_) external view returns (int256) {
+        MemoryUint.SharedMemory memory mem_ = MemoryUint.newUint512SharedMemory();
+
+        MemoryUint.Uint512 memory a_ = mem_.newUint512(a_);
+        MemoryUint.Uint512 memory b_ = mem_.newUint512(b_);
+
+        return MemoryUint.cmp(mem_, a_, b_);
+    }
 }
