@@ -36,6 +36,18 @@ export const Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008 = keccak256(
   ["string"],
   ["Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008"],
 );
+export const Z_PER_PASSPORT_1_256_3_6_576_264_1_2448_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_1_256_3_6_576_264_1_2448_3_256"],
+);
+export const Z_PER_PASSPORT_2_256_3_6_336_248_1_2432_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_2_256_3_6_336_248_1_2432_3_256"],
+);
+export const Z_PER_PASSPORT_2_256_3_6_576_248_1_2432_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_2_256_3_6_576_248_1_2432_3_256"],
+);
 
 export const Z_UNIVERSAL_4096 = keccak256(["string"], ["Z_UNIVERSAL_4096"]);
 export const Z_UNIVERSAL_2048 = keccak256(["string"], ["Z_UNIVERSAL_2048"]);
