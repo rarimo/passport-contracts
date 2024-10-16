@@ -100,17 +100,15 @@ contract PECDSASHA2NewAuthenticator {
         }
 
         uint256 message = _shMem.newUint512(abi.encodePacked(uint160(challenge.sha1())));
-
-        uint256 _s = _shMem.newUint512(s);
-
-        uint256 temp = _shMem.moddiv(message, _s, _params.n);
-        (uint256 x1, uint256 y1) = _multiplyScalar(
-            _shMem,
-            _params,
-            _params.gx,
-            _params.gy,
-            temp
+        uint256 temp = _shMem.moddiv(
+            message,
+            _shMem.newUint512(s),
+            _params.n,
+            MemoryUint.Destructor.SECOND
         );
+
+        (uint256 x1, uint256 y1) = _multiplyScalar(_shMem, _params, _params.gx, _params.gy, temp);
+
         _shMem.destruct(temp);
 
         console.logBytes(MemoryUint.toData(x1));
@@ -182,6 +180,7 @@ contract PECDSASHA2NewAuthenticator {
             } else {
                 uint256 two = shMem.two();
                 int256 res = shMem.cmp(scalar, two);
+
                 shMem.destruct(two);
 
                 if (res == 0) {
@@ -190,28 +189,10 @@ contract PECDSASHA2NewAuthenticator {
             }
         }
 
-
-        // uint256 temp = shMem.mod(scalar, two);
-        // if (shMem.cmp(temp, zero) == 0) {
-        //     x1 = shMem.zero();
-        //     y1 = shMem.zero();
-        // }
-
-        // shMem.destruct(temp);
-
-        // scalar = scalar >> 1;
-        // while (scalar > 0) {
-        //(base2X, base2Y, base2Z) = _twiceProj(shMem, params, XYZ(base2X, base2Y, base2Z));
-
-        //uint256 temp = shMem.mod(scalar, two);
-        //if (shMem.cmp(temp, one) == 0) {
-        //(x1, y1, z1) = _addProj(shMem, params, XYZ(base2X, base2Y, base2Z), XYZ(x1, y1, z1));
-        //}
-        //     scalar = scalar >> 1;
-        // }
-
         XYZ memory xyzBase;
         XYZ memory xyz1;
+        XYZ memory temp;
+
         {
             bytes memory x0Bytes;
             bytes memory y0Bytes;
@@ -221,16 +202,8 @@ contract PECDSASHA2NewAuthenticator {
                 y0Bytes := y0
             }
 
-            xyzBase = XYZ(
-                shMem.newUint512(x0Bytes),
-                shMem.newUint512(y0Bytes),
-                shMem.one()
-            );
-            xyz1 = XYZ(
-                shMem.newUint512(x0Bytes),
-                shMem.newUint512(y0Bytes),
-                shMem.one()
-            );
+            xyzBase = XYZ(shMem.newUint512(x0Bytes), shMem.newUint512(y0Bytes), shMem.one());
+            xyz1 = XYZ(shMem.newUint512(x0Bytes), shMem.newUint512(y0Bytes), shMem.one());
         }
 
         uint256 lowBits_;
@@ -241,36 +214,46 @@ contract PECDSASHA2NewAuthenticator {
 
         lowBits_ = lowBits_ >> 1;
 
-        while (lowBits_ > 0) {
-            XYZ memory xyzBaseTemp;
-            xyzBaseTemp = _twiceProj(shMem, params, xyzBase);
+        // while (lowBits_ > 0) {
+        for (uint256 i = 0; i < 10; i++) {
+            temp = _twiceProj(shMem, params, xyzBase);
 
             shMem.destruct(xyzBase.x);
             shMem.destruct(xyzBase.y);
             shMem.destruct(xyzBase.z);
 
-            xyzBase = xyzBaseTemp;
+            xyzBase = temp;
 
             if (lowBits_ & 1 == 1) {
-                XYZ memory xyz1Temp;
-                xyz1Temp = _addProj(shMem, params, xyzBase, xyz1);
+                temp = _addProj(shMem, params, xyzBase, xyz1);
 
                 shMem.destruct(xyz1.x);
                 shMem.destruct(xyz1.y);
                 shMem.destruct(xyz1.z);
 
-                xyz1 = xyz1Temp;
+                xyz1 = temp;
             }
 
             lowBits_ = lowBits_ >> 1;
 
-            console.log(lowBits_);
+            uint256 mem_;
+
+            assembly {
+                mem_ := msize()
+            }
+
+            console.log(mem_);
         }
 
-        // shMem.destruct(zero);
-        // shMem.destruct(one);
+        shMem.destruct(xyzBase.x);
+        shMem.destruct(xyzBase.y);
+        shMem.destruct(xyzBase.z);
 
-        return _toAffinePoint(shMem, params, xyz1);
+        (x1, y1) = _toAffinePoint(shMem, params, xyz1);
+
+        shMem.destruct(xyz1.x);
+        shMem.destruct(xyz1.y);
+        shMem.destruct(xyz1.z);
     }
 
     /**
@@ -289,53 +272,53 @@ contract PECDSASHA2NewAuthenticator {
         }
 
         uint256 two = shMem.two();
-        uint256 three = shMem.three();
 
         tuvw.u = shMem.modmul(xyz0.y, xyz0.z, params.p);
-        tuvw.u = shMem.modmul(tuvw.u, two, params.p);
+        tuvw.u = shMem.modmul(tuvw.u, two, params.p, MemoryUint.Destructor.FIRST);
 
         tuvw.v = shMem.modmul(tuvw.u, xyz0.x, params.p);
-        tuvw.v = shMem.modmul(tuvw.v, xyz0.y, params.p);
-        tuvw.v = shMem.modmul(tuvw.v, two, params.p);
+        tuvw.v = shMem.modmul(tuvw.v, xyz0.y, params.p, MemoryUint.Destructor.FIRST);
+        tuvw.v = shMem.modmul(tuvw.v, two, params.p, MemoryUint.Destructor.FIRST);
 
-        xyz0.x = shMem.modmul(xyz0.x, xyz0.x, params.p);
+        xyz0.x = shMem.modmul(xyz0.x, xyz0.x, params.p, MemoryUint.Destructor.FIRST);
 
-        tuvw.t = shMem.modmul(xyz0.x, three, params.p);
+        tuvw.t = shMem.modmul(xyz0.x, shMem.three(), params.p, MemoryUint.Destructor.BOTH);
 
-        xyz0.z = shMem.modmul(xyz0.z, xyz0.z, params.p);
-        xyz0.z = shMem.modmul(xyz0.z, params.a, params.p);
+        xyz0.z = shMem.modmul(xyz0.z, xyz0.z, params.p, MemoryUint.Destructor.FIRST);
+        xyz0.z = shMem.modmul(xyz0.z, params.a, params.p, MemoryUint.Destructor.FIRST);
 
-        tuvw.t = shMem.modadd(tuvw.t, xyz0.z, params.p);
-
+        tuvw.t = shMem.modadd(tuvw.t, xyz0.z, params.p, MemoryUint.Destructor.FIRST);
         tuvw.w = shMem.modmul(tuvw.t, tuvw.t, params.p);
 
         xyz0.x = shMem.modmul(two, tuvw.v, params.p);
 
-        uint256 temp = shMem.sub(params.p, xyz0.x);
-        tuvw.w = shMem.modadd(tuvw.w, temp, params.p);
+        tuvw.w = shMem.modadd(
+            tuvw.w,
+            shMem.sub(params.p, xyz0.x),
+            params.p,
+            MemoryUint.Destructor.BOTH
+        );
 
-        shMem.destruct(temp);
+        xyz0.x = shMem.modadd(
+            tuvw.v,
+            shMem.sub(params.p, tuvw.w),
+            params.p,
+            MemoryUint.Destructor.SECOND
+        );
+        xyz0.x = shMem.modmul(tuvw.t, xyz0.x, params.p, MemoryUint.Destructor.SECOND);
+        xyz0.y = shMem.modmul(xyz0.y, tuvw.u, params.p, MemoryUint.Destructor.FIRST);
+        xyz0.y = shMem.modmul(xyz0.y, xyz0.y, params.p, MemoryUint.Destructor.FIRST);
+        xyz0.y = shMem.modmul(two, xyz0.y, params.p, MemoryUint.Destructor.BOTH);
 
-        temp = shMem.sub(params.p, tuvw.w);
-        xyz0.x = shMem.modadd(tuvw.v, temp, params.p);
-
-        shMem.destruct(temp);
-
-        xyz0.x = shMem.modmul(tuvw.t, xyz0.x, params.p);
-
-        xyz0.y = shMem.modmul(xyz0.y, tuvw.u, params.p);
-        xyz0.y = shMem.modmul(xyz0.y, xyz0.y, params.p);
-        xyz0.y = shMem.modmul(two, xyz0.y, params.p);
-
-        temp = shMem.sub(params.p, xyz0.y);
-        xyz.y = shMem.modadd(xyz0.x, temp, params.p);
-
-        shMem.destruct(temp);
-
+        xyz.y = shMem.modadd(
+            xyz0.x,
+            shMem.sub(params.p, xyz0.y),
+            params.p,
+            MemoryUint.Destructor.SECOND
+        );
         xyz.x = shMem.modmul(tuvw.u, tuvw.w, params.p);
-
         xyz.z = shMem.modmul(tuvw.u, tuvw.u, params.p);
-        xyz.z = shMem.modmul(xyz.z, tuvw.u, params.p);
+        xyz.z = shMem.modmul(xyz.z, tuvw.u, params.p, MemoryUint.Destructor.FIRST);
 
         shMem.destruct(tuvw.t);
         shMem.destruct(tuvw.u);
@@ -354,34 +337,33 @@ contract PECDSASHA2NewAuthenticator {
         XYZ memory xyz1
     ) internal view returns (XYZ memory xyz) {
         if (_isZeroCurve(shMem, xyz0.x, xyz0.y)) {
-            return XYZ(xyz1.x, xyz1.y, xyz1.z);
+            return XYZ(xyz1.x, xyz1.y, xyz1.z); // FIXME copy
         } else if (_isZeroCurve(shMem, xyz1.x, xyz1.y)) {
-            return XYZ(xyz0.x, xyz0.y, xyz0.z);
+            return XYZ(xyz0.x, xyz0.y, xyz0.z); // FIXME copy
         }
 
-        uint256 t0 = shMem.modmul(xyz0.y, xyz1.z, params.p);
-        uint256 t1 = shMem.modmul(xyz1.y, xyz0.z, params.p);
+        UT memory ut;
 
-        uint256 u0 = shMem.modmul(xyz0.x, xyz1.z, params.p);
-        uint256 u1 = shMem.modmul(xyz1.x, xyz0.z, params.p);
+        ut.t0 = shMem.modmul(xyz0.y, xyz1.z, params.p);
+        ut.t1 = shMem.modmul(xyz1.y, xyz0.z, params.p);
 
-        if (shMem.cmp(u0, u1) == 0) {
-            if (shMem.cmp(t0, t1) == 0) {
+        ut.u0 = shMem.modmul(xyz0.x, xyz1.z, params.p);
+        ut.u1 = shMem.modmul(xyz1.x, xyz0.z, params.p);
+
+        if (shMem.cmp(ut.u0, ut.u1) == 0) {
+            if (shMem.cmp(ut.t0, ut.t1) == 0) {
                 xyz = _twiceProj(shMem, params, xyz0);
             } else {
                 xyz = _zeroProj(shMem);
             }
         } else {
-            uint256 temp = shMem.modmul(xyz0.z, xyz1.z, params.p);
-            xyz = _addProj2(shMem, params, temp, UT(u0, u1, t0, t1));
-
-            shMem.destruct(temp);
+            xyz = _addProj2(shMem, params, shMem.modmul(xyz0.z, xyz1.z, params.p), ut);
         }
 
-        shMem.destruct(t0);
-        shMem.destruct(t1);
-        shMem.destruct(u0);
-        shMem.destruct(u1);
+        shMem.destruct(ut.t0);
+        shMem.destruct(ut.t1);
+        shMem.destruct(ut.u0);
+        shMem.destruct(ut.u1);
     }
 
     /**
@@ -395,43 +377,62 @@ contract PECDSASHA2NewAuthenticator {
     ) internal view returns (XYZ memory xyz) {
         UWT memory uwt;
 
-        uint256 temp = shMem.sub(params.p, ut.t1);
-        uwt.t = shMem.modadd(ut.t0, temp, params.p);
-
-        shMem.destruct(temp);
-
-        temp = shMem.sub(params.p, ut.u1);
-        uwt.u = shMem.modadd(ut.u0, temp, params.p);
-
-        shMem.destruct(temp);
+        uwt.t = shMem.modadd(
+            ut.t0,
+            shMem.sub(params.p, ut.t1),
+            params.p,
+            MemoryUint.Destructor.SECOND
+        );
+        uwt.u = shMem.modadd(
+            ut.u0,
+            shMem.sub(params.p, ut.u1),
+            params.p,
+            MemoryUint.Destructor.SECOND
+        );
 
         uwt.u2 = shMem.modmul(uwt.u, uwt.u, params.p);
-
         uwt.w = shMem.modmul(uwt.t, uwt.t, params.p);
-        uwt.w = shMem.modmul(uwt.w, v, params.p);
-        ut.u1 = shMem.modadd(ut.u1, ut.u0, params.p);
-        ut.u1 = shMem.modmul(ut.u1, uwt.u2, params.p);
+        uwt.w = shMem.modmul(uwt.w, v, params.p, MemoryUint.Destructor.FIRST);
 
-        temp = shMem.sub(params.p, ut.u1);
-        uwt.w = shMem.modadd(uwt.w, temp, params.p);
+        ut.u1 = shMem.modadd(ut.u1, ut.u0, params.p, MemoryUint.Destructor.FIRST);
+        ut.u1 = shMem.modmul(ut.u1, uwt.u2, params.p, MemoryUint.Destructor.FIRST);
 
-        shMem.destruct(temp);
+        uwt.w = shMem.modadd(
+            uwt.w,
+            shMem.sub(params.p, ut.u1),
+            params.p,
+            MemoryUint.Destructor.BOTH
+        );
 
         xyz.x = shMem.modmul(uwt.u, uwt.w, params.p);
 
         uwt.u3 = shMem.modmul(uwt.u2, uwt.u, params.p);
-        ut.u0 = shMem.modmul(ut.u0, uwt.u2, params.p);
 
-        temp = shMem.sub(params.p, uwt.w);
-        ut.u0 = shMem.modadd(ut.u0, temp, params.p);
+        ut.u0 = shMem.modmul(ut.u0, uwt.u2, params.p, MemoryUint.Destructor.FIRST);
+        ut.u0 = shMem.modadd(
+            ut.u0,
+            shMem.sub(params.p, uwt.w),
+            params.p,
+            MemoryUint.Destructor.BOTH
+        );
 
-        uwt.t = shMem.modmul(uwt.t, ut.u0, params.p);
-        ut.t0 = shMem.modmul(ut.t0, uwt.u3, params.p);
+        uwt.t = shMem.modmul(uwt.t, ut.u0, params.p, MemoryUint.Destructor.FIRST);
 
-        temp = shMem.sub(params.p, ut.t0);
-        xyz.y = shMem.modadd(uwt.t, temp, params.p);
+        ut.t0 = shMem.modmul(ut.t0, uwt.u3, params.p, MemoryUint.Destructor.FIRST);
 
-        xyz.z = shMem.modmul(uwt.u3, v, params.p);
+        xyz.y = shMem.modadd(
+            uwt.t,
+            shMem.sub(params.p, ut.t0),
+            params.p,
+            MemoryUint.Destructor.SECOND
+        );
+        xyz.z = shMem.modmul(uwt.u3, v, params.p, MemoryUint.Destructor.SECOND);
+
+        shMem.destruct(uwt.u);
+        shMem.destruct(uwt.u2);
+        shMem.destruct(uwt.u3);
+        shMem.destruct(uwt.w);
+        shMem.destruct(uwt.t);
     }
 
     /**
@@ -517,6 +518,7 @@ contract PECDSASHA2NewAuthenticator {
         uint256 y
     ) internal view returns (bool res) {
         uint256 zero = shMem.zero();
+
         if (
             shMem.cmp(x, zero) == 0 ||
             shMem.cmp(y, zero) == 0 ||
@@ -526,21 +528,25 @@ contract PECDSASHA2NewAuthenticator {
             return false;
         }
 
-        uint256 temp = shMem.modmul(x, x, params.p);
-
-        uint256 RHS = shMem.modmul(temp, x, params.p); // x^3
+        uint256 RHS = shMem.modmul(
+            shMem.modmul(x, x, params.p),
+            x,
+            params.p,
+            MemoryUint.Destructor.FIRST
+        ); // x^3
         uint256 LHS = shMem.modmul(y, y, params.p); // y^2x
 
-        shMem.destruct(temp);
-
         if (shMem.cmp(params.a, zero) != 0) {
-            temp = shMem.modmul(x, params.a, params.p);
-            RHS = shMem.modadd(RHS, temp, params.p); // x^3 + a*x
-
-            shMem.destruct(temp);
+            RHS = shMem.modadd(
+                RHS,
+                shMem.modmul(x, params.a, params.p),
+                params.p,
+                MemoryUint.Destructor.BOTH
+            ); // x^3 + a*x
         }
+
         if (shMem.cmp(params.b, zero) != 0) {
-            RHS = shMem.modadd(RHS, params.b, params.p); // x^3 + a*x + b
+            RHS = shMem.modadd(RHS, params.b, params.p, MemoryUint.Destructor.FIRST); // x^3 + a*x + b
         }
 
         res = shMem.cmp(LHS, RHS) == 0;
@@ -559,9 +565,7 @@ contract PECDSASHA2NewAuthenticator {
         uint256 x0,
         uint256 y0
     ) internal view returns (uint256[3] memory P) {
-        uint256 zero = shMem.zero();
-        uint256 one = shMem.one();
-        P[2] = shMem.modadd(zero, one, params.p);
+        P[2] = shMem.one();
         P[0] = shMem.modmul(x0, P[2], params.p);
         P[1] = shMem.modmul(y0, P[2], params.p);
     }
@@ -576,9 +580,7 @@ contract PECDSASHA2NewAuthenticator {
     /**
      * @dev Return the zero curve in affine coordinates.
      */
-    function _zeroAffine(
-        SharedMemory memory shMem
-    ) internal view returns (uint256 x, uint256 y) {
+    function _zeroAffine(SharedMemory memory shMem) internal view returns (uint256 x, uint256 y) {
         return (shMem.zero(), shMem.zero());
     }
 
@@ -591,9 +593,8 @@ contract PECDSASHA2NewAuthenticator {
         uint256 y0
     ) internal view returns (bool isZero) {
         uint256 zero = shMem.zero();
-        bool res = shMem.cmp(x0, zero) == 0 && shMem.cmp(y0, zero) == 0;
+        isZero = shMem.cmp(x0, zero) == 0 && shMem.cmp(y0, zero) == 0;
 
         shMem.destruct(zero);
-        return res;
     }
 }

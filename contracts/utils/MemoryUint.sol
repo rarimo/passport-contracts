@@ -10,11 +10,17 @@ struct SharedMemory {
 }
 
 library MemoryUint {
+    enum Destructor {
+        FIRST,
+        SECOND,
+        BOTH
+    }
+
     using MemoryStack for *;
 
-    function newUint512SharedMemory() internal view returns (SharedMemory memory mem_) {
+    function newUint512SharedMemory() internal pure returns (SharedMemory memory mem_) {
         mem_.stack = MemoryStack.init(64);
-        mem_.extStack = MemoryStack.init(160);
+        mem_.extStack = MemoryStack.init(128);
         mem_.callStack = MemoryStack.init(512);
 
         return mem_;
@@ -26,19 +32,19 @@ library MemoryUint {
         }
     }
 
-    function zero(SharedMemory memory mem) internal view returns (uint256) {
+    function zero(SharedMemory memory mem) internal pure returns (uint256) {
         return _newUint(mem, 0);
     }
 
-    function one(SharedMemory memory mem) internal view returns (uint256) {
+    function one(SharedMemory memory mem) internal pure returns (uint256) {
         return _newUint(mem, 1);
     }
 
-    function two(SharedMemory memory mem) internal view returns (uint256) {
+    function two(SharedMemory memory mem) internal pure returns (uint256) {
         return _newUint(mem, 2);
     }
 
-    function three(SharedMemory memory mem) internal view returns (uint256) {
+    function three(SharedMemory memory mem) internal pure returns (uint256) {
         return _newUint(mem, 3);
     }
 
@@ -53,7 +59,7 @@ library MemoryUint {
         return _initUint(mem_, data_);
     }
 
-    function destruct(SharedMemory memory mem_, uint256 u512_) internal view {
+    function destruct(SharedMemory memory mem_, uint256 u512_) internal pure {
         _destruct(mem_, u512_, _StackType._UINT);
     }
 
@@ -61,7 +67,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 a_,
         uint256 b_
-    ) internal view returns (uint256 r_) {
+    ) internal pure returns (uint256 r_) {
         _checkMemory(mem_, 64);
 
         return _add(mem_, a_, b_);
@@ -71,7 +77,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 a_,
         uint256 b_
-    ) internal view returns (uint256 r_) {
+    ) internal pure returns (uint256 r_) {
         _checkMemory(mem_, 64);
 
         return _sub(mem_, a_, b_);
@@ -121,6 +127,24 @@ library MemoryUint {
         _destruct(mem_, sum_, _StackType._EXT_UINT);
     }
 
+    function modadd(
+        SharedMemory memory mem_,
+        uint256 a_,
+        uint256 b_,
+        uint256 m_,
+        Destructor d_
+    ) internal view returns (uint256 r_) {
+        r_ = modadd(mem_, a_, b_, m_);
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.FIRST) {
+            _destruct(mem_, a_, _StackType._UINT);
+        }
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.SECOND) {
+            _destruct(mem_, b_, _StackType._UINT);
+        }
+    }
+
     function modsub(
         SharedMemory memory mem_,
         uint256 a_,
@@ -129,7 +153,7 @@ library MemoryUint {
     ) internal view returns (uint256 r_) {
         _checkMemory(mem_, 64);
 
-        int cmp_ = _cmp(mem_, a_, b_);
+        int cmp_ = _cmp(a_, b_);
 
         uint256 diff_ = cmp_ >= 0 ? _sub(mem_, a_, b_) : _sub(mem_, b_, a_);
         uint256 modDiff_ = _mod(mem_, diff_, m_);
@@ -143,6 +167,24 @@ library MemoryUint {
         r_ = _sub(mem_, m_, modDiff_);
 
         _destruct(mem_, modDiff_, _StackType._UINT);
+    }
+
+    function modsub(
+        SharedMemory memory mem_,
+        uint256 a_,
+        uint256 b_,
+        uint256 m_,
+        Destructor d_
+    ) internal view returns (uint256 r_) {
+        r_ = modsub(mem_, a_, b_, m_);
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.FIRST) {
+            _destruct(mem_, a_, _StackType._UINT);
+        }
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.SECOND) {
+            _destruct(mem_, b_, _StackType._UINT);
+        }
     }
 
     function modmul(
@@ -160,6 +202,24 @@ library MemoryUint {
         _destruct(mem_, rExt_, _StackType._EXT_UINT);
     }
 
+    function modmul(
+        SharedMemory memory mem_,
+        uint256 a_,
+        uint256 b_,
+        uint256 m_,
+        Destructor d_
+    ) internal view returns (uint256 r_) {
+        r_ = modmul(mem_, a_, b_, m_);
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.FIRST) {
+            _destruct(mem_, a_, _StackType._UINT);
+        }
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.SECOND) {
+            _destruct(mem_, b_, _StackType._UINT);
+        }
+    }
+
     function modexp(
         SharedMemory memory mem_,
         uint256 a_,
@@ -169,6 +229,24 @@ library MemoryUint {
         _checkMemory(mem_, 64);
 
         return _modexp(mem_, a_, e_, m_);
+    }
+
+    function modexp(
+        SharedMemory memory mem_,
+        uint256 a_,
+        uint256 e_,
+        uint256 m_,
+        Destructor d_
+    ) internal view returns (uint256 r_) {
+        r_ = modexp(mem_, a_, e_, m_);
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.FIRST) {
+            _destruct(mem_, a_, _StackType._UINT);
+        }
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.SECOND) {
+            _destruct(mem_, e_, _StackType._UINT);
+        }
     }
 
     function modinv(
@@ -198,10 +276,28 @@ library MemoryUint {
         _destruct(mem_, bInv_, _StackType._UINT);
     }
 
-    function cmp(SharedMemory memory mem_, uint256 a_, uint256 b_) internal view returns (int) {
+    function moddiv(
+        SharedMemory memory mem_,
+        uint256 a_,
+        uint256 b_,
+        uint256 m_,
+        Destructor d_
+    ) internal view returns (uint256 r_) {
+        r_ = moddiv(mem_, a_, b_, m_);
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.FIRST) {
+            _destruct(mem_, a_, _StackType._UINT);
+        }
+
+        if (d_ == Destructor.BOTH || d_ == Destructor.SECOND) {
+            _destruct(mem_, b_, _StackType._UINT);
+        }
+    }
+
+    function cmp(SharedMemory memory mem_, uint256 a_, uint256 b_) internal pure returns (int) {
         _checkMemory(mem_, 64);
 
-        return _cmp(mem_, a_, b_);
+        return _cmp(a_, b_);
     }
 
     /// @dev a_, b_ and r_ are of the same size
@@ -209,7 +305,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 a_,
         uint256 b_
-    ) private view returns (uint256 r_) {
+    ) private pure returns (uint256 r_) {
         r_ = _new(mem_, _valueType(mem_, a_));
 
         assembly {
@@ -251,7 +347,7 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 a_,
         uint256 b_
-    ) private view returns (uint256 r_) {
+    ) private pure returns (uint256 r_) {
         r_ = _new(mem_, _valueType(mem_, a_));
 
         assembly {
@@ -292,57 +388,87 @@ library MemoryUint {
         SharedMemory memory mem_,
         uint256 a_,
         uint256 b_
-    ) private view returns (uint256 r_) {
-        uint256 aExt_ = _extend(mem_, a_);
-        uint256 bExt_ = _extend(mem_, b_);
-
-        uint256 sumExt_ = _add(mem_, aExt_, bExt_);
-
-        uint256 two_ = _newUint(mem_, 2);
-        uint256 maxModExt_ = _newMaxUint(mem_);
-
-        uint256 sqSumExt_ = _modexp(mem_, sumExt_, two_, maxModExt_);
-
-        _destruct(mem_, sumExt_, _StackType._EXT_UINT);
-
-        int256 cmp_ = _cmp(mem_, a_, b_);
-
-        uint256 diffExt_ = cmp_ >= 0 ? _sub(mem_, aExt_, bExt_) : _sub(mem_, bExt_, aExt_);
-
-        uint256 sqDiffExt_ = _modexp(mem_, diffExt_, two_, maxModExt_);
-
-        _destruct(mem_, aExt_, _StackType._EXT_UINT);
-        _destruct(mem_, bExt_, _StackType._EXT_UINT);
-        _destruct(mem_, two_, _StackType._UINT);
-        _destruct(mem_, maxModExt_, _StackType._EXT_UINT);
-        _destruct(mem_, diffExt_, _StackType._EXT_UINT);
-
-        r_ = _sub(mem_, sqSumExt_, sqDiffExt_);
-
-        _destruct(mem_, sqSumExt_, _StackType._EXT_UINT);
-        _destruct(mem_, sqDiffExt_, _StackType._EXT_UINT);
+    ) private pure returns (uint256 r_) {
+        uint256 rBig_ = _new(mem_, _StackType._CALL);
+        r_ = _new(mem_, _StackType._EXT_UINT);
 
         assembly {
-            let rSize_ := mload(r_)
-            let rPtr_ := add(r_, rSize_)
+            function get_arg(a, i) -> result {
+                let idx := div(i, 0x20)
+                let word := mload(add(add(a, 0x20), mul(shr(1, idx), 0x20)))
+
+                switch and(idx, 1)
+                case 0 {
+                    result := shr(128, word)
+                }
+                case 1 {
+                    result := shr(128, shl(128, word))
+                }
+            }
+
+            function add_res(r, i, val) {
+                let ptr := add(r, add(i, 0x20))
+
+                mstore(ptr, add(mload(ptr), val))
+            }
+
+            let argSize_ := shl(1, mload(a_)) // 128
+            let resSize_ := shl(1, argSize_) // 256
+
+            for {
+                let i := 0
+            } lt(i, argSize_) {
+                i := add(i, 0x20)
+            } {
+                for {
+                    let j := 0
+                } lt(j, argSize_) {
+                    j := add(j, 0x20)
+                } {
+                    let a_i_ := get_arg(a_, i)
+                    let b_j_ := get_arg(b_, j)
+
+                    let val_ := mul(a_i_, b_j_)
+
+                    add_res(rBig_, add(i, j), val_)
+                }
+            }
+
+            let rBigPtr_ := add(rBig_, sub(resSize_, 0x20))
 
             for {
                 let i := 0x20
-            } lt(i, rSize_) {
+            } lt(i, resSize_) {
                 i := add(i, 0x20)
             } {
-                let rPtrNext_ := sub(rPtr_, 0x20)
-                let rWord_ := mload(rPtr_)
-                let rWordNext_ := mload(rPtrNext_)
+                let rBigPtrNext_ := sub(rBigPtr_, 0x20)
 
-            /// @dev (rWord_ >> 2) | (rWordNext_ << 254)
-                mstore(rPtr_, or(shr(2, rWord_), shl(254, rWordNext_)))
+                let carry_ := shr(128, mload(rBigPtr_))
 
-                rPtr_ := rPtrNext_
+                mstore(rBigPtr_, shr(128, shl(128, mload(rBigPtr_))))
+                mstore(rBigPtrNext_, add(mload(rBigPtrNext_), carry_))
+
+                rBigPtr_ := rBigPtrNext_
             }
 
-            mstore(rPtr_, shr(2, mload(rPtr_)))
+            for {
+                let i := 0x00
+            } lt(i, resSize_) {
+                i := add(i, 0x40)
+            } {
+                let rPtr_ := add(add(r_, 0x20), shr(1, i))
+
+                let highBits_ := mload(add(rBig_, i))
+                let lowBits_ := mload(add(rBig_, add(i, 0x20)))
+
+                mstore(rPtr_, add(shl(128, highBits_), lowBits_))
+            }
+
+            /// FIXME: fix
+            mstore(r_, argSize_)
         }
+
+        _destruct(mem_, rBig_, _StackType._CALL);
     }
 
     function _mod(
@@ -413,23 +539,18 @@ library MemoryUint {
     ) private view returns (uint256 r_) {
         uint256 two_ = _newUint(mem_, 2);
 
-        require(_cmp(mem_, m_, two_) >= 0, "MU: invalid modulus");
+        require(_cmp(m_, two_) >= 0, "MU: invalid modulus");
 
         uint256 exponent_ = _sub(mem_, m_, two_);
 
-        _destruct(mem_, two_, _StackType._UINT);
-
         r_ = _modexp(mem_, a_, exponent_, m_);
 
+        _destruct(mem_, two_, _StackType._UINT);
         _destruct(mem_, exponent_, _StackType._UINT);
     }
 
     /// @dev a_ and b_ are of the same size
-    function _cmp(
-        SharedMemory memory mem_,
-        uint256 a_,
-        uint256 b_
-    ) private view returns (int256 cmp_) {
+    function _cmp(uint256 a_, uint256 b_) private pure returns (int256 cmp_) {
         assembly {
             let aSize_ := mload(a_)
             let aPtr_ := add(a_, 0x20)
@@ -512,30 +633,30 @@ library MemoryUint {
         _CALL
     }
 
-    function _checkMemory(SharedMemory memory mem_, uint256 bytesCount_) private view {
+    function _checkMemory(SharedMemory memory mem_, uint256 bytesCount_) private pure {
         require(mem_.stack.elementSize == bytesCount_, "MU: invalid memory");
     }
 
     function _new(
         SharedMemory memory mem_,
         _StackType stackType_
-    ) private view returns (uint256 value_) {
+    ) private pure returns (uint256 value_) {
         if (stackType_ == _StackType._UINT) {
-            return mem_.stack.push0();
+            return mem_.stack.push();
         }
 
         if (stackType_ == _StackType._EXT_UINT) {
-            return mem_.extStack.push0();
+            return mem_.extStack.push();
         }
 
-        return mem_.callStack.push0();
+        return mem_.callStack.push();
     }
 
     function _destruct(
         SharedMemory memory mem_,
         uint256 value_,
         _StackType stackType_
-    ) private view {
+    ) private pure {
         if (stackType_ == _StackType._UINT) {
             mem_.stack.pop(value_);
             return;
@@ -552,7 +673,7 @@ library MemoryUint {
     function _memSize(
         SharedMemory memory mem_,
         _StackType stackType_
-    ) private view returns (uint256) {
+    ) private pure returns (uint256) {
         if (stackType_ == _StackType._UINT) {
             return mem_.stack.elementSize;
         }
@@ -567,7 +688,7 @@ library MemoryUint {
     function _valueType(
         SharedMemory memory mem_,
         uint256 value_
-    ) private view returns (_StackType) {
+    ) private pure returns (_StackType) {
         uint256 length_;
         assembly {
             length_ := mload(value_)
@@ -584,7 +705,7 @@ library MemoryUint {
         return _StackType._CALL;
     }
 
-    function _newUint(SharedMemory memory mem_, uint256 value_) private view returns (uint256 r_) {
+    function _newUint(SharedMemory memory mem_, uint256 value_) private pure returns (uint256 r_) {
         uint256 memSize_ = _memSize(mem_, _StackType._UINT);
 
         r_ = _new(mem_, _StackType._UINT);
@@ -595,7 +716,7 @@ library MemoryUint {
         }
     }
 
-    function _newMaxUint(SharedMemory memory mem_) private view returns (uint256 r_) {
+    function _newMaxUint(SharedMemory memory mem_) private pure returns (uint256 r_) {
         uint256 extMemSize_ = _memSize(mem_, _StackType._EXT_UINT);
 
         r_ = _new(mem_, _StackType._EXT_UINT);

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Vector} from "@solarity/solidity-lib/libs/data-structures/memory/Vector.sol";
+import "hardhat/console.sol";
 
 library MemoryStack {
     using Vector for Vector.UintVector;
@@ -22,31 +23,29 @@ library MemoryStack {
         return Stack({stack: Vector.newUint(), stackSize: 0, elementSize: elementSize_});
     }
 
-    function push0(Stack memory stack) internal view returns (uint256 pointer_) {
-        return push(stack, "");
-    }
-
-    function push(
-        Stack memory stack,
-        bytes memory data_
-    ) internal view returns (uint256 pointer_) {
+    function push(Stack memory stack) internal pure returns (uint256 pointer_) {
         /// @dev It's an invariant that can only be violated by direct memory manipulation
         require(stack.stackSize <= stack.stack.length(), "MS: stack overflow");
 
         uint256 elementSize_ = stack.elementSize;
-        require(data_.length <= elementSize_, "MS: element size exceeded");
 
         if (stack.stackSize == stack.stack.length()) {
             assembly {
                 pointer_ := mload(0x40)
 
-            /// @dev 32 bytes for metadata, 32 bytes for length, and `elementSize_` bytes for data
+                /// @dev 32 bytes for metadata, 32 bytes for length, and `elementSize_` bytes for data
                 mstore(0x40, add(pointer_, add(elementSize_, 0x40)))
 
                 pointer_ := add(pointer_, 0x20)
             }
 
             stack.stack.push(pointer_);
+
+            console.log(stack.stackSize);
+
+            if (stack.stackSize == 33) {
+                revert();
+            }
         } else {
             pointer_ = stack.stack.at(stack.stackSize);
         }
@@ -55,13 +54,6 @@ library MemoryStack {
 
         assembly {
             mstore(sub(pointer_, 0x20), index_)
-
-            let dataSize_ := add(mload(data_), 0x20)
-
-            let success_ := staticcall(gas(), 0x4, data_, dataSize_, pointer_, dataSize_)
-            if iszero(success_) {
-                revert(0, 0)
-            }
         }
 
         ++stack.stackSize;
