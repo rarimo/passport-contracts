@@ -62,6 +62,27 @@ library U384 {
         }
     }
 
+    function modexp(uint256 b_, uint256 eInteger_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(CALL_ALLOCATION);
+
+        assembly {
+            mstore(r_, 0x40)
+            mstore(add(0x20, r_), 0x20)
+            mstore(add(0x40, r_), 0x40)
+            mstore(add(0x60, r_), mload(b_))
+            mstore(add(0x80, r_), mload(add(b_, 0x20)))
+            mstore(add(0xA0, r_), eInteger_)
+            mstore(add(0xC0, r_), mload(m_))
+            mstore(add(0xE0, r_), mload(add(m_, 0x20)))
+
+            if iszero(staticcall(gas(), 0x5, r_, 0x0100, r_, 0x40)) {
+                revert(0, 0)
+            }
+        }
+
+        return r_;
+    }
+
     function modadd(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
         r_ = _allocate(CALL_ALLOCATION);
 
@@ -79,6 +100,12 @@ library U384 {
                 revert(0, 0)
             }
         }
+
+        return r_;
+    }
+
+    function mod(uint256 a_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = modexp(a_, 1, m_);
 
         return r_;
     }

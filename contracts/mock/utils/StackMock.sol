@@ -54,4 +54,17 @@ contract StackMock {
 
         return a.cmp(b);
     }
+
+    function modexp(
+        bytes memory b_,
+        uint256 eInteger_,
+        bytes memory m_
+    ) external view returns (bytes memory) {
+        uint256 b = b_.init();
+        uint256 m = m_.init();
+
+        uint256 r = b.modexp(eInteger_, m);
+
+        return r.toBytes();
+    }
 }
