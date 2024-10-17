@@ -47,4 +47,11 @@ contract StackMock {
 
         return r.toBytes();
     }
+
+    function cmp(bytes memory a_, bytes memory b_) external view returns (int256) {
+        uint256 a = a_.init();
+        uint256 b = b_.init();
+
+        return a.cmp(b);
+    }
 }

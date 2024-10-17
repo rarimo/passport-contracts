@@ -29,6 +29,39 @@ library U384 {
         return handler_;
     }
 
+    function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
+        assembly {
+            let aWord_ := mload(a_)
+            let bWord_ := mload(b_)
+
+            if gt(aWord_, bWord_) {
+                mstore(0x00, 0x01)
+                return(0x00, 0x20)
+            }
+
+            if lt(aWord_, bWord_) {
+                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+                return(0x00, 0x20)
+            }
+
+            aWord_ := mload(add(a_, 0x20))
+            bWord_ := mload(add(b_, 0x20))
+
+            if gt(aWord_, bWord_) {
+                mstore(0x00, 0x01)
+                return(0x00, 0x20)
+            }
+
+            if lt(aWord_, bWord_) {
+                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+                return(0x00, 0x20)
+            }
+
+            mstore(0x00, 0x00)
+            return(0x00, 0x20)
+        }
+    }
+
     function modadd(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
         r_ = _allocate(CALL_ALLOCATION);
 
