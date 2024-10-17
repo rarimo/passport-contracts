@@ -1,10 +1,7 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.10;
-
-import "hardhat/console.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.16;
 
 library U384 {
-    uint256 private constant LONG_ALLOCATION = 96;
     uint256 private constant SHORT_ALLOCATION = 64;
     uint256 private constant CALL_ALLOCATION = 288;
 
