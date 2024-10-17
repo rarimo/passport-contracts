@@ -26,40 +26,74 @@ library U384 {
         return handler_;
     }
 
-    function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
+    function copy(uint256 handler_) internal view returns (uint256 handlerCopy_) {
+        handlerCopy_ = _allocate(SHORT_ALLOCATION);
+
         assembly {
-            let aWord_ := mload(a_)
-            let bWord_ := mload(b_)
-
-            if gt(aWord_, bWord_) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
-
-            if lt(aWord_, bWord_) {
-                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-                return(0x00, 0x20)
-            }
-
-            aWord_ := mload(add(a_, 0x20))
-            bWord_ := mload(add(b_, 0x20))
-
-            if gt(aWord_, bWord_) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
-
-            if lt(aWord_, bWord_) {
-                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-                return(0x00, 0x20)
-            }
-
-            mstore(0x00, 0x00)
-            return(0x00, 0x20)
+            mstore(handlerCopy_, mload(handler_))
+            mstore(add(handlerCopy_, 0x20), mload(add(handler_, 0x20)))
         }
+
+        return handlerCopy_;
     }
 
-    function moddiv(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+    function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
+        uint256 aWord_;
+        uint256 bWord_;
+
+        assembly {
+            aWord_ := mload(a_)
+            bWord_ := mload(b_)
+        }
+
+        if (aWord_ > bWord_) {
+            return 1;
+        }
+
+        if (aWord_ < bWord_) {
+            return -1;
+        }
+
+        assembly {
+            aWord_ := mload(add(a_, 0x20))
+            bWord_ := mload(add(b_, 0x20))
+        }
+
+        if (aWord_ > bWord_) {
+            return 1;
+        }
+
+        if (aWord_ < bWord_) {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    function cmpInteger(uint256 a_, uint256 bInteger_) internal pure returns (int256 cmp_) {
+        uint256 aWord_;
+
+        assembly {
+            aWord_ := mload(a_)
+        }
+
+        if (aWord_ > 0) {
+            return 1;
+        }
+
+        assembly {
+            aWord_ := mload(add(a_, 0x20))
+        }
+
+        if (aWord_ > bInteger_) {
+            return 1;
+        }
+
+        if (aWord_ < bInteger_) {
+            return -1;
+        }
+
+        return 0;
     }
 
     function modexp(uint256 b_, uint256 eInteger_, uint256 m_) internal view returns (uint256 r_) {
@@ -152,6 +186,35 @@ library U384 {
         return r_;
     }
 
+    /*
+    mes 779149564533142355434093157610126726613246737199
+    s 29118654464229156312755475164902924590603964377702716942232927993582928167089
+    sInv 23250782235154357312578844266810365056083274447761806887500655809183072055193
+    n 76884956397045344220809746629001649092737531784414529538755519063063536359079
+    -> 30823410400962253491978005949535646087432096635784775122170630924100507445065
+    */
+    function moddiv(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(CALL_ALLOCATION);
+
+        uint256 two_ = init(2);
+
+        _sub(m_, two_, r_ + 0xA0);
+
+        assembly {
+            mstore(r_, 0x40)
+            mstore(add(0x20, r_), 0x40)
+            mstore(add(0x40, r_), 0x40)
+            mstore(add(0x60, r_), mload(b_))
+            mstore(add(0x80, r_), mload(add(b_, 0x20)))
+            mstore(add(0xE0, r_), mload(m_))
+            mstore(add(0x0100, r_), mload(add(m_, 0x20)))
+
+            if iszero(staticcall(gas(), 0x5, r_, 0x0120, r_, 0x40)) {
+                revert(0, 0)
+            }
+        }
+    }
+
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
         r_ = _allocate(SHORT_ALLOCATION);
 
@@ -169,7 +232,11 @@ library U384 {
     }
 
     function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
+        uint256 bytesHandler_ = _allocate(96);
+
         assembly {
+            bytes_ := bytesHandler_
+
             mstore(bytes_, 0x40)
             mstore(add(0x20, bytes_), mload(handler_))
             mstore(add(0x40, bytes_), mload(add(handler_, 0x20)))
