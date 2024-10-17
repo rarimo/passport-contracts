@@ -50,10 +50,39 @@ library U384 {
         return r_;
     }
 
+    function modsub(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(CALL_ALLOCATION);
+
+        _sub(a_, b_, r_ + 0x60);
+
+        assembly {
+            mstore(r_, 0x40)
+            mstore(add(0x20, r_), 0x20)
+            mstore(add(0x40, r_), 0x40)
+            mstore(add(0xA0, r_), 0x01)
+            mstore(add(0xC0, r_), mload(m_))
+            mstore(add(0xE0, r_), mload(add(m_, 0x20)))
+
+            if iszero(staticcall(gas(), 0x5, r_, 0x0100, r_, 0x40)) {
+                revert(0, 0)
+            }
+        }
+
+        return r_;
+    }
+
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
         r_ = _allocate(SHORT_ALLOCATION);
 
         _add(a_, b_, r_);
+
+        return r_;
+    }
+
+    function sub(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
+
+        _sub(a_, b_, r_);
 
         return r_;
     }
@@ -79,6 +108,20 @@ library U384 {
             sum_ := add(sum_, add(mload(a_), mload(b_)))
 
             mstore(r_, sum_)
+        }
+    }
+
+    function _sub(uint256 a_, uint256 b_, uint256 r_) private pure {
+        assembly {
+            let aWord_ := mload(add(a_, 0x20))
+            let diff_ := sub(aWord_, mload(add(b_, 0x20)))
+
+            mstore(add(r_, 0x20), diff_)
+
+            diff_ := gt(diff_, aWord_)
+            diff_ := sub(sub(mload(a_), mload(b_)), diff_)
+
+            mstore(r_, diff_)
         }
     }
 

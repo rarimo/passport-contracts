@@ -19,4 +19,18 @@ contract StackMock {
 
         return r.toBytes();
     }
+
+    function modsub(
+        bytes memory a_,
+        bytes memory b_,
+        bytes memory m_
+    ) external view returns (bytes memory) {
+        uint256 a = a_.init();
+        uint256 b = b_.init();
+        uint256 m = m_.init();
+
+        uint256 r = a.modsub(b, m);
+
+        return r.toBytes();
+    }
 }
