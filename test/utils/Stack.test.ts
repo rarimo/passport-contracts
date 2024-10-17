@@ -42,6 +42,15 @@ describe.only("Stack", () => {
         ),
       );
       console.log(((a - b) % m).toString(16));
+
+      console.log(
+        await stack.modmul(
+          "0x" + a.toString(16).padStart(128, "0"),
+          "0x" + b.toString(16).padStart(128, "0"),
+          "0x" + m.toString(16).padStart(128, "0"),
+        ),
+      );
+      console.log(((a * b) % m).toString(16));
     });
   });
 });

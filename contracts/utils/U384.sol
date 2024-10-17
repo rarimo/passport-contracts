@@ -71,6 +71,27 @@ library U384 {
         return r_;
     }
 
+    function modmul(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(CALL_ALLOCATION);
+
+        _mul(a_, b_, r_ + 0x60);
+
+        assembly {
+            mstore(r_, 0x60)
+            mstore(add(0x20, r_), 0x20)
+            mstore(add(0x40, r_), 0x40)
+            mstore(add(0xC0, r_), 0x01)
+            mstore(add(0xE0, r_), mload(m_))
+            mstore(add(0x0100, r_), mload(add(m_, 0x20)))
+
+            if iszero(staticcall(gas(), 0x5, r_, 0x0120, r_, 0x40)) {
+                revert(0, 0)
+            }
+        }
+
+        return r_;
+    }
+
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
         r_ = _allocate(SHORT_ALLOCATION);
 
@@ -122,6 +143,92 @@ library U384 {
             diff_ := sub(sub(mload(a_), mload(b_)), diff_)
 
             mstore(r_, diff_)
+        }
+    }
+
+    function _mul(uint256 a_, uint256 b_, uint256 r_) private view {
+        assembly {
+            function high128(x) -> y {
+                y := shr(128, x)
+            }
+
+            function low128(x) -> y {
+                y := and(x, 0xffffffffffffffffffffffffffffffff)
+            }
+
+            let a0_ := mload(a_)
+            let a1_ := high128(mload(add(a_, 0x20)))
+            let a2_ := low128(mload(add(a_, 0x20)))
+
+            let b0_ := mload(b_)
+            let b1_ := high128(mload(add(b_, 0x20)))
+            let b2_ := low128(mload(add(b_, 0x20)))
+
+            // r5
+            let current_ := mul(a2_, b2_)
+            let r5_ := low128(current_)
+
+            // r4
+            current_ := shr(128, current_)
+
+            let temp_ := mul(a1_, b2_)
+            current_ := add(current_, temp_)
+            let curry_ := lt(current_, temp_)
+
+            temp_ := mul(a2_, b1_)
+            current_ := add(current_, temp_)
+            curry_ := add(curry_, lt(current_, temp_))
+
+            let r4_ := low128(current_)
+
+            // r3
+            current_ := add(shl(128, curry_), shr(128, current_))
+            curry_ := 0
+
+            temp_ := mul(a0_, b2_)
+            current_ := add(current_, temp_)
+            curry_ := lt(current_, temp_)
+
+            temp_ := mul(a1_, b1_)
+            current_ := add(current_, temp_)
+            curry_ := add(curry_, lt(current_, temp_))
+
+            temp_ := mul(a2_, b0_)
+            current_ := add(current_, temp_)
+            curry_ := add(curry_, lt(current_, temp_))
+
+            let r3_ := low128(current_)
+
+            // r2
+            current_ := add(shl(128, curry_), shr(128, current_))
+            curry_ := 0
+
+            temp_ := mul(a0_, b1_)
+            current_ := add(current_, temp_)
+            curry_ := lt(current_, temp_)
+
+            temp_ := mul(a1_, b0_)
+            current_ := add(current_, temp_)
+            curry_ := add(curry_, lt(current_, temp_))
+
+            let r2_ := low128(current_)
+
+            // r1
+            current_ := add(shl(128, curry_), shr(128, current_))
+            curry_ := 0
+
+            temp_ := mul(a0_, b0_)
+            current_ := add(current_, temp_)
+            curry_ := lt(current_, temp_)
+
+            let r1_ := low128(current_)
+
+            // r0
+            let r0_ := shr(128, current_)
+
+            mstore(r_, add(shl(128, r0_), r1_))
+            mstore(add(r_, 0x20), add(shl(128, r2_), r3_))
+            mstore(add(r_, 0x40), add(shl(128, r4_), r5_))
         }
     }
 
