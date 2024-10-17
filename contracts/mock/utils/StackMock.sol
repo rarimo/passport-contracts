@@ -67,4 +67,24 @@ contract StackMock {
 
         return r.toBytes();
     }
+
+    function moddiv(
+        bytes memory a_,
+        bytes memory b_,
+        bytes memory m_
+    ) external view returns (bytes memory) {
+        uint256 a = a_.init();
+        uint256 b = b_.init();
+        uint256 m = m_.init();
+
+        uint256 r = a.moddiv(b, m);
+
+        return r.toBytes();
+    }
+
+    function cmpInteger(bytes memory a_, uint256 bInteger_) external view returns (int256) {
+        uint256 a = a_.init();
+
+        return a.cmpInteger(bInteger_);
+    }
 }

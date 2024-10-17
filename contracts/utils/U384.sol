@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
-
+import "hardhat/console.sol";
 library U384 {
     uint256 private constant SHORT_ALLOCATION = 64;
     uint256 private constant CALL_ALLOCATION = 288;
@@ -50,6 +50,32 @@ library U384 {
             }
 
             if lt(aWord_, bWord_) {
+                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+                return(0x00, 0x20)
+            }
+
+            mstore(0x00, 0x00)
+            return(0x00, 0x20)
+        }
+    }
+
+    function cmpInteger(uint256 a_, uint256 bInteger_) internal pure returns (int256 cmp_) {
+        assembly {
+            let aWord_ := mload(a_)
+
+            if gt(aWord_, 0) {
+                mstore(0x00, 0x01)
+                return(0x00, 0x20)
+            }
+
+            aWord_ := mload(add(a_, 0x20))
+
+            if gt(aWord_, bInteger_) {
+                mstore(0x00, 0x01)
+                return(0x00, 0x20)
+            }
+
+            if lt(aWord_, bInteger_) {
                 mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
                 return(0x00, 0x20)
             }
@@ -147,6 +173,30 @@ library U384 {
         }
 
         return r_;
+    }
+
+    function moddiv(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(CALL_ALLOCATION);
+
+        uint256 two_ = init(2);
+
+        _sub(m_, two_, r_ + 0xA0);
+
+        assembly {
+            mstore(r_, 0x40)
+            mstore(add(0x20, r_), 0x40)
+            mstore(add(0x40, r_), 0x40)
+            mstore(add(0x60, r_), mload(b_))
+            mstore(add(0x80, r_), mload(add(b_, 0x20)))
+            mstore(add(0xE0, r_), mload(m_))
+            mstore(add(0x0100, r_), mload(add(m_, 0x20)))
+
+            if iszero(staticcall(gas(), 0x5, r_, 0x0120, r_, 0x40)) {
+                revert(0, 0)
+            }
+        }
+
+        return modmul(a_, r_, m_);
     }
 
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {

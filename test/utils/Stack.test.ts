@@ -60,6 +60,16 @@ describe.only("Stack", () => {
         await stack.modexp("0x" + a.toString(16).padStart(128, "0"), 100, "0x" + m.toString(16).padStart(128, "0")),
       );
       console.log((a ** 100n % m).toString(16));
+
+      console.log(await stack.cmpInteger("0x" + a.toString(16).padStart(128, "0"), 8));
+      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 8));
+      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 7));
+      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 9));
+
+      console.log(
+        await stack.moddiv("0x" + "8".padStart(128, "0"), "0x" + "A".padStart(128, "0"), "0x" + "D".padStart(128, "0")),
+      );
+      console.log(((8n * 10n ** (13n - 2n)) % 13n).toString(16));
     });
   });
 });
