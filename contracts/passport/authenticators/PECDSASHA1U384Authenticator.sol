@@ -8,7 +8,7 @@ import "hardhat/console.sol";
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract PECDSASHA1Authenticator {
+contract PECDSASHA1U384Authenticator {
     using SHA1 for bytes;
     using U384 for *;
 

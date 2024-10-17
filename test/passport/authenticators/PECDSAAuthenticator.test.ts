@@ -4,7 +4,12 @@ import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 import { inverseMod, toAffinePoint, multiplyScalar, addProj, n, p, gx, gy, modmul } from "@/test/helpers/";
 
-import { PECDSASHA1Authenticator, PECDSASHA2Authenticator, PECDSASHA2NewAuthenticator } from "@ethers-v6";
+import {
+  PECDSASHA1Authenticator,
+  PECDSASHA2Authenticator,
+  PECDSASHA2NewAuthenticator,
+  PECDSASHA1U384Authenticator,
+} from "@ethers-v6";
 
 describe("PECDSAAuthenticator", () => {
   const reverter = new Reverter();
@@ -12,15 +17,18 @@ describe("PECDSAAuthenticator", () => {
   let authSha1: PECDSASHA1Authenticator;
   let authSha2: PECDSASHA2Authenticator;
   let authSha2New: PECDSASHA2NewAuthenticator;
+  let authU384: PECDSASHA1U384Authenticator;
 
   before("setup", async () => {
     const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
     const PECDSASHA2Authenticator = await ethers.getContractFactory("PECDSASHA2Authenticator");
     const PECDSASHA2NewAuthenticator = await ethers.getContractFactory("PECDSASHA2NewAuthenticator");
+    const PECDSASHA1U384Authenticator = await ethers.getContractFactory("PECDSASHA1U384Authenticator");
 
     authSha1 = await PECDSASHA1Authenticator.deploy();
     authSha2 = await PECDSASHA2Authenticator.deploy();
     authSha2New = await PECDSASHA2NewAuthenticator.deploy();
+    authU384 = await PECDSASHA1U384Authenticator.deploy();
 
     await reverter.snapshot();
   });
@@ -28,7 +36,7 @@ describe("PECDSAAuthenticator", () => {
   afterEach(reverter.revert);
 
   describe("#authenticate", () => {
-    it.only("should authenticate passport - brainpool256r1 & sha1", async () => {
+    it("should authenticate passport - brainpool256r1 & sha1", async () => {
       const challenge = "0xe7938ea62eb1980a";
 
       const r = "0x13DCD0CCE676DFB4C2EF2B26F3AC8BB640146391C12EC80E052ABA2D617A5888";
@@ -67,7 +75,7 @@ describe("PECDSAAuthenticator", () => {
       const y = "0x3d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304";
 
       //await authSha2New.forTest(y);
-      expect(await authSha2New.authenticate(challenge, r, s, x, y)).to.be.false;
+      expect(await authU384.authenticate(challenge, r, s, x, y)).to.be.false;
 
       //  console.log(gx, gy, modmul(BigInt(ethers.sha256(challenge)), sInv, n));
 
