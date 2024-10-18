@@ -249,6 +249,33 @@ library U384 {
         return bytes_;
     }
 
+    function modshl1(uint256 call_, uint256 a_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
+
+        _shl1(a_, m_, call_ + 0x60);
+
+        assembly {
+            mstore(call_, 0x40)
+            mstore(add(0x20, call_), 0x20)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0xA0, call_), 0x01)
+            mstore(add(0xC0, call_), mload(m_))
+            mstore(add(0xE0, call_), mload(add(m_, 0x20)))
+
+            pop(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40))
+        }
+    }
+
+    function _shl1(uint256 a_, uint256 m_, uint256 r_) internal view {
+        assembly {
+            let a0_ := mload(a_)
+            let a1_ := mload(add(a_, 0x20))
+
+            mstore(r_, or(shl(1, a0_), shr(255, a1_)))
+            mstore(add(r_, 0x20), shl(1, a1_))
+        }
+    }
+
     function _add(uint256 a_, uint256 b_, uint256 r_) private pure {
         assembly {
             let aWord_ := mload(add(a_, 0x20))

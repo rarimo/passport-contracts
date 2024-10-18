@@ -221,14 +221,13 @@ contract PECDSASHA1U384Authenticator {
         }
 
         uint256 u;
-        uint256 two = U384.init(2);
 
         u = U384.modmul(call, y0, z0, p);
-        u = U384.modmul(call, u, two, p);
+        u = U384.modshl1(call, u, p);
 
         x1 = U384.modmul(call, u, x0, p);
         x1 = U384.modmul(call, x1, y0, p);
-        x1 = U384.modmul(call, x1, two, p);
+        x1 = U384.modshl1(call, x1, p);
 
         x0 = U384.modexp(call, x0, 2, p);
 
@@ -239,7 +238,7 @@ contract PECDSASHA1U384Authenticator {
         y1 = U384.modadd(call, y1, z0, p);
 
         z1 = U384.modexp(call, y1, 2, p);
-        x0 = U384.modmul(call, two, x1, p);
+        x0 = U384.modshl1(call, x1, p);
         z1 = U384.modadd(call, z1, U384.sub(p, x0), p);
 
         x0 = U384.modadd(call, x1, U384.sub(p, z1), p);
@@ -247,7 +246,7 @@ contract PECDSASHA1U384Authenticator {
 
         y0 = U384.modmul(call, y0, u, p);
         y0 = U384.modexp(call, y0, 2, p);
-        y0 = U384.modmul(call, two, y0, p);
+        y0 = U384.modshl1(call, y0, p);
         y1 = U384.modadd(call, x0, U384.sub(p, y0), p);
 
         x1 = U384.modmul(call, u, z1, p);
