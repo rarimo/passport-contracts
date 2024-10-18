@@ -105,11 +105,11 @@ contract PECDSASHA1U384Authenticator {
         uint256 y0,
         uint256 scalar
     ) internal view returns (uint256 x1, uint256 y1) {
-        if (U384.cmpInteger(scalar, 0) == 0) {
+        if (U384.eqInteger(scalar, 0)) {
             return _zeroAffine();
-        } else if (U384.cmpInteger(scalar, 1) == 0) {
+        } else if (U384.eqInteger(scalar, 1)) {
             return (x0, y0);
-        } else if (U384.cmpInteger(scalar, 2) == 0) {
+        } else if (U384.eqInteger(scalar, 2)) {
             return _twice(params, x0, y0);
         }
 
@@ -241,8 +241,8 @@ contract PECDSASHA1U384Authenticator {
         ut.u0 = U384.modmul(x0, z1, params.p);
         ut.u1 = U384.modmul(x1, z0, params.p);
 
-        if (U384.cmp(ut.u0, ut.u1) == 0) {
-            if (U384.cmp(ut.t0, ut.t1) == 0) {
+        if (U384.eq(ut.u0, ut.u1)) {
+            if (U384.eq(ut.t0, ut.t1)) {
                 return _twiceProj(params, x0, y0, z0);
             } else {
                 return _zeroProj();
@@ -363,10 +363,10 @@ contract PECDSASHA1U384Authenticator {
      */
     function _isOnCurve(Parameters memory params, uint256 x, uint256 y) internal view returns (bool) {
          if (
-             U384.cmpInteger(x, 0) == 0 ||
-             U384.cmp(x, params.p) == 0 ||
-             U384.cmpInteger(y, 0) == 0 ||
-             U384.cmp(y, params.p) == 0
+             U384.eqInteger(x, 0) ||
+             U384.eq(x, params.p) ||
+             U384.eqInteger(y, 0) ||
+             U384.eq(y, params.p)
          ) {
              return false;
          }
@@ -376,15 +376,15 @@ contract PECDSASHA1U384Authenticator {
         //uint256 RHS = U384.modmul(U384.modmul(x, x, p), x, p); // x^3 --> modexp(x, 3, p)
         uint256 RHS = U384.modexp(x, 3, params.p);
 
-        if (U384.cmpInteger(params.a, 0) != 0) {
+        if (!U384.eqInteger(params.a, 0)) {
             RHS = U384.modadd(RHS, U384.modmul(x, params.a, params.p), params.p); // x^3 + a*x
         }
 
-        if (U384.cmpInteger(params.b, 0) != 0) {
+        if (!U384.eqInteger(params.b, 0)) {
             RHS = U384.modadd(RHS, params.b, params.p); // x^3 + a*x + b
         }
 
-        return U384.cmp(LHS, RHS) == 0;
+        return U384.eq(LHS, RHS);
     }
 
     /**
@@ -418,6 +418,6 @@ contract PECDSASHA1U384Authenticator {
      * @dev Check if the curve is the zero curve.
      */
     function _isZeroCurve(uint256 x0, uint256 y0) internal pure returns (bool isZero) {
-        return U384.cmpInteger(x0, 0) == 0 && U384.cmpInteger(y0, 0) == 0;
+        return U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0);
     }
 }

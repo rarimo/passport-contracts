@@ -39,6 +39,18 @@ library U384 {
         return handlerCopy_;
     }
 
+    function eq(uint256 a_, uint256 b_) internal pure returns (bool eq_) {
+        assembly {
+            eq_ := and(eq(mload(a_), mload(b_)), eq(mload(add(a_, 0x20)), mload(add(b_, 0x20))))
+        }
+    }
+
+    function eqInteger(uint256 a_, uint256 bInteger_) internal pure returns (bool eq_) {
+        assembly {
+            eq_ := and(eq(mload(a_), 0), eq(mload(add(a_, 0x20)), bInteger_))
+        }
+    }
+
     function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
         uint256 aWord_;
         uint256 bWord_;
