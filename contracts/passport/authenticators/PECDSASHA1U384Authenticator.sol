@@ -24,6 +24,13 @@ contract PECDSASHA1U384Authenticator {
     }
 
     struct Inputs {
+        bytes r;
+        bytes s;
+        bytes x;
+        bytes y;
+    }
+
+    struct _Inputs {
         uint256 r;
         uint256 s;
         uint256 x;
@@ -43,35 +50,37 @@ contract PECDSASHA1U384Authenticator {
         //     return false;
         // }
 
-        inputs.r = U384.init(inputs.r);
-        inputs.s = U384.init(inputs.s);
-        inputs.x = U384.init(inputs.x);
-        inputs.y = U384.init(inputs.y);
+        _Inputs memory _inputs;
+
+        _inputs.r = U384.init(inputs.r);
+        _inputs.s = U384.init(inputs.s);
+        _inputs.x = U384.init(inputs.x);
+        _inputs.y = U384.init(inputs.y);
 
         // brainpool256r1 parameters
         Parameters memory params = Parameters({
-            a: 0x7D5A0975FC2C3057EEF67530417AFFE7FB8055C126DC5C6CE94A4B44F330B5D9.init(),
-            b: 0x26DC5C6CE94A4B44F330B5D9BBD77CBF958416295CF7E1CE6BCCDC18FF8C07B6.init(),
-            gx: 0x8BD2AEB9CB7E57CB2C4B482FFC81B7AFB9DE27E1E3BD23C23A4453BD9ACE3262.init(),
-            gy: 0x547EF835C3DAC4FD97F8461A14611DC9C27745132DED8E545C1D54C72F046997.init(),
-            p: 0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377.init(),
-            n: 0xA9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7.init(),
-            lowSmax: 0x54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb.init(),
+            a: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC".init(),
+            b: hex"B3312FA7E23EE7E4988E056BE3F82D19181D9C6EFE8141120314088F5013875AC656398D8A2ED19D2A85C8EDD3EC2AEF".init(),
+            gx: hex"aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7".init(),
+            gy: hex"3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f".init(),
+            p: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF".init(),
+            n: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973".init(),
+            lowSmax: hex"7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b".init(),
             call: U384.initCall()
         });
 
-        if (!_isOnCurve(params, inputs.x, inputs.y)) {
+        if (!_isOnCurve(params, _inputs.x, _inputs.y)) {
             return false;
         }
 
-        uint256 message = uint256(uint160(challenge.sha1())).init();
+        uint256 message = uint256(sha256(challenge)).init();
 
-        (uint256 x1, uint256 y1) = _multiplyScalar(params, params.gx, params.gy, U384.moddiv(params.call, message, inputs.s, params.n));
+        (uint256 x1, uint256 y1) = _multiplyScalar(params, params.gx, params.gy, U384.moddiv(params.call, message, _inputs.s, params.n));
         console.log("x1y1");
         console.logBytes(U384.toBytes(x1));
         console.logBytes(U384.toBytes(y1));
 
-        (uint256 x2, uint256 y2) = _multiplyScalar(params, inputs.x, inputs.y, U384.moddiv(params.call, inputs.r, inputs.s, params.n));
+        (uint256 x2, uint256 y2) = _multiplyScalar(params, _inputs.x, _inputs.y, U384.moddiv(params.call, _inputs.r, _inputs.s, params.n));
         console.log("x2y2");
         console.logBytes(U384.toBytes(x2));
         console.logBytes(U384.toBytes(y2));

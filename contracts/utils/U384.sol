@@ -21,8 +21,9 @@ library U384 {
         handler_ = _allocate(SHORT_ALLOCATION);
 
         assembly {
-            mstore(handler_, mload(add(from_, 0x20)))
-            mstore(add(handler_, 0x20), mload(add(from_, 0x40)))
+            mstore(handler_, 0x00)
+            mstore(add(handler_, 0x10), mload(add(from_, 0x20)))
+            mstore(add(handler_, 0x20), mload(add(from_, 0x30)))
         }
 
         return handler_;
