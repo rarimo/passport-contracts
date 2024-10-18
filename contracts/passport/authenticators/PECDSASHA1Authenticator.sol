@@ -50,7 +50,14 @@ contract PECDSASHA1Authenticator {
         uint256 sInv = _inverseMod(s, n);
 
         (x1, y1) = _multiplyScalar(gx, gy, mulmod(message, sInv, n));
+        console.log("x1y1");
+        console.logBytes32(bytes32(x1));
+        console.logBytes32(bytes32(y1));
+
         (x2, y2) = _multiplyScalar(x, y, mulmod(r, sInv, n));
+        console.log("x2y2");
+        console.logBytes32(bytes32(x2));
+        console.logBytes32(bytes32(y2));
 
         uint256[3] memory P = _addAndReturnProjectivePoint(x1, y1, x2, y2);
 

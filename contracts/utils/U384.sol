@@ -3,12 +3,14 @@ pragma solidity 0.8.16;
 
 library U384 {
     uint256 private constant SHORT_ALLOCATION = 64;
+    uint256 private constant LONG_ALLOCATION = 96;
     uint256 private constant CALL_ALLOCATION = 288;
 
     function init(uint256 from_) internal pure returns (uint256 handler_) {
         handler_ = _allocate(SHORT_ALLOCATION);
 
         assembly {
+            mstore(handler_, 0x00)
             mstore(add(0x20, handler_), from_)
         }
 
@@ -186,13 +188,6 @@ library U384 {
         return r_;
     }
 
-    /*
-    mes 779149564533142355434093157610126726613246737199
-    s 29118654464229156312755475164902924590603964377702716942232927993582928167089
-    sInv 23250782235154357312578844266810365056083274447761806887500655809183072055193
-    n 76884956397045344220809746629001649092737531784414529538755519063063536359079
-    -> 30823410400962253491978005949535646087432096635784775122170630924100507445065
-    */
     function moddiv(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
         r_ = _allocate(CALL_ALLOCATION);
 
@@ -213,6 +208,8 @@ library U384 {
                 revert(0, 0)
             }
         }
+
+        return modmul(a_, r_, m_);
     }
 
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
@@ -232,7 +229,7 @@ library U384 {
     }
 
     function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
-        uint256 bytesHandler_ = _allocate(96);
+        uint256 bytesHandler_ = _allocate(LONG_ALLOCATION);
 
         assembly {
             bytes_ := bytesHandler_

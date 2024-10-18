@@ -30,72 +30,53 @@ contract PECDSASHA1U384Authenticator {
         bytes y;
     }
 
-    function authenticate(
-        bytes memory challenge,
-        bytes memory r,
-        bytes memory s,
-        bytes memory x,
-        bytes memory y
-    ) external view returns (bool) {
-        return _authenticate(challenge, U384.init(r), U384.init(s), U384.init(x), U384.init(y));
-    }
-
     /**
      * @notice Checks active authentication of a passport. ECDSA active authentication is an ECDSA signature of
      * raw SHA1 hash of challenge bytes. Usually brainpool256r1 elliptic curve is used.
      */
-    function _authenticate(
+    function authenticate(
         bytes memory challenge,
         uint256 r,
         uint256 s,
         uint256 x,
         uint256 y
-    ) internal view returns (bool) {
+    ) external view returns (bool) {
         /// @dev accept s only from the lower part of the curve
         // if (r == 0 || r >= n || s == 0 || s > lowSmax) {
         //     return false;
         // }
-//        BigIntOpt aOpt =
-//                            hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC"
-//                    .initOpt(false);
-//        BigIntOpt bOpt =
-//                            hex"B3312FA7E23EE7E4988E056BE3F82D19181D9C6EFE8141120314088F5013875AC656398D8A2ED19D2A85C8EDD3EC2AEF"
-//                    .initOpt(false);
-//        BigIntOpt gxOpt =
-//                            hex"aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7"
-//                    .initOpt(false);
-//        BigIntOpt gyOpt =
-//                            hex"3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f"
-//                    .initOpt(false);
-//        BigIntOpt pOpt =
-//                            hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
-//                    .initOpt(false);
-//        BigIntOpt nOpt =
-//                            hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973"
-//                    .initOpt(false);
-//
-//        BigIntOpt lowSmaxOpt =
-//                            hex"7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b"
-//                    .initOpt(false);
+
+        r = U384.init(r);
+        s = U384.init(s);
+        x = U384.init(x);
+        y = U384.init(y);
+
         // brainpool256r1 parameters
         Parameters memory params = Parameters({
-            a: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC".init(),
-            b: hex"B3312FA7E23EE7E4988E056BE3F82D19181D9C6EFE8141120314088F5013875AC656398D8A2ED19D2A85C8EDD3EC2AEF".init(),
-            gx: hex"aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7".init(),
-            gy: hex"3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f".init(),
-            p: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF".init(),
-            n: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973".init(),
-            lowSmax: hex"7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b".init()
+            a: 0x7D5A0975FC2C3057EEF67530417AFFE7FB8055C126DC5C6CE94A4B44F330B5D9.init(),
+            b: 0x26DC5C6CE94A4B44F330B5D9BBD77CBF958416295CF7E1CE6BCCDC18FF8C07B6.init(),
+            gx: 0x8BD2AEB9CB7E57CB2C4B482FFC81B7AFB9DE27E1E3BD23C23A4453BD9ACE3262.init(),
+            gy: 0x547EF835C3DAC4FD97F8461A14611DC9C27745132DED8E545C1D54C72F046997.init(),
+            p: 0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377.init(),
+            n: 0xA9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7.init(),
+            lowSmax: 0x54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb.init()
         });
 
         if (!_isOnCurve(params, x, y)) {
-            //return false;
+            return false;
         }
 
-        uint256 message = uint256(sha256(challenge)).init();
+        uint256 message = uint256(uint160(challenge.sha1())).init();
 
         (uint256 x1, uint256 y1) = _multiplyScalar(params, params.gx, params.gy, U384.moddiv(message, s, params.n));
+        console.log("x1y1");
+        console.logBytes(U384.toBytes(x1));
+        console.logBytes(U384.toBytes(y1));
+
         (uint256 x2, uint256 y2) = _multiplyScalar(params, x, y, U384.moddiv(r, s, params.n));
+        console.log("x2y2");
+        console.logBytes(U384.toBytes(x2));
+        console.logBytes(U384.toBytes(y2));
 
         uint256[3] memory P = _addAndReturnProjectivePoint(params, x1, y1, x2, y2);
 
@@ -145,7 +126,7 @@ contract PECDSASHA1U384Authenticator {
             lowBits_ := mload(add(scalar, 0x20))
         }
 
-        if (lowBits_ % 2 == 1) {
+        if (lowBits_ % 2 == 0) {
             x1 = U384.init(0);
             y1 = U384.init(0);
         } else {
@@ -157,7 +138,7 @@ contract PECDSASHA1U384Authenticator {
         lowBits_ |= highBits_ << 255;
         highBits_ >>= 1;
 
-        for (uint256 i = 0; i < 128; ++i) {
+        while (lowBits_ > 0 || highBits_ > 0) {
             (base2X, base2Y, base2Z) = _twiceProj(params, base2X, base2Y, base2Z);
 
             if (lowBits_ % 2 == 1) {
@@ -168,7 +149,7 @@ contract PECDSASHA1U384Authenticator {
             lowBits_ |= highBits_ << 255;
             highBits_ >>= 1;
 
-            console.log("gas", 300_000_000 - gasleft());
+            //console.log("gas", 300_000_000 - gasleft());
         }
 
         return _toAffinePoint(params, x1, y1, z1);
@@ -331,7 +312,7 @@ contract PECDSASHA1U384Authenticator {
     ) internal view returns (uint256, uint256) {
         uint256 z0;
 
-        (x0, y0, z0) = _addProj(params, x0, y0, 1, x1, y1, 1);
+        (x0, y0, z0) = _addProj(params, x0, y0, U384.init(1), x1, y1, U384.init(1));
 
         return _toAffinePoint(params,x0, y0, z0);
     }
