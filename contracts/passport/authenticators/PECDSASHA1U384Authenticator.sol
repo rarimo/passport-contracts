@@ -102,7 +102,15 @@ contract PECDSASHA1U384Authenticator {
         console.logBytes(U384.toBytes(x2));
         console.logBytes(U384.toBytes(y2));
 
-        uint256[3] memory P = _addAndReturnProjectivePoint(params, x1, y1, x2, y2);
+        uint256[3] memory P = _addAndReturnProjectivePoint(
+            params.call,
+            params.p,
+            params.a,
+            x1,
+            y1,
+            x2,
+            y2
+        );
 
         console.logBytes(P[0].toBytes());
         console.logBytes(P[1].toBytes());
@@ -150,7 +158,7 @@ contract PECDSASHA1U384Authenticator {
             lowBits_ := mload(add(scalar, 0x20))
         }
 
-        if (lowBits_ % 2 == 0) {
+        if (lowBits_ & 1 == 0) {
             x1 = U384.init(0);
             y1 = U384.init(0);
         } else {
@@ -172,15 +180,25 @@ contract PECDSASHA1U384Authenticator {
                 base2Z
             );
 
-            if (lowBits_ % 2 == 1) {
-                (x1, y1, z1) = _addProj(params, base2X, base2Y, base2Z, x1, y1, z1);
+            if (lowBits_ & 1 == 1) {
+                (x1, y1, z1) = _addProj(
+                    params.call,
+                    params.p,
+                    params.a,
+                    base2X,
+                    base2Y,
+                    base2Z,
+                    x1,
+                    y1,
+                    z1
+                );
             }
 
             lowBits_ >>= 1;
             lowBits_ |= highBits_ << 255;
             highBits_ >>= 1;
 
-            //console.log("gas", 300_000_000 - gasleft());
+            // console.log("gas", 300_000_000 - gasleft());
         }
 
         return _toAffinePoint(params.call, params.p, x1, y1, z1);
@@ -243,7 +261,9 @@ contract PECDSASHA1U384Authenticator {
      * https://www.nayuki.io/page/elliptic-curve-point-addition-in-projective-coordinates
      */
     function _addProj(
-        Parameters memory params,
+        uint256 call,
+        uint256 p,
+        uint256 a,
         uint256 x0,
         uint256 y0,
         uint256 z0,
@@ -251,9 +271,6 @@ contract PECDSASHA1U384Authenticator {
         uint256 y1,
         uint256 z1
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
-        uint256 call = params.call;
-        uint256 p = params.p;
-
         if (_isZeroCurve(x0, y0)) {
             return (x1, y1, z1);
         } else if (_isZeroCurve(x1, y1)) {
@@ -267,7 +284,7 @@ contract PECDSASHA1U384Authenticator {
 
         if (U384.eq(z2, y1)) {
             if (U384.eq(x2, y2)) {
-                return _twiceProj(call, p, params.a, x0, y0, z0);
+                return _twiceProj(call, p, a, x0, y0, z0);
             } else {
                 return _zeroProj();
             }
@@ -322,7 +339,9 @@ contract PECDSASHA1U384Authenticator {
      * @dev Add two elliptic curve points in affine coordinates.
      */
     function _add(
-        Parameters memory params,
+        uint256 call,
+        uint256 p,
+        uint256 a,
         uint256 x0,
         uint256 y0,
         uint256 x1,
@@ -330,9 +349,9 @@ contract PECDSASHA1U384Authenticator {
     ) internal view returns (uint256, uint256) {
         uint256 z0;
 
-        (x0, y0, z0) = _addProj(params, x0, y0, U384.init(1), x1, y1, U384.init(1));
+        (x0, y0, z0) = _addProj(call, p, a, x0, y0, U384.init(1), x1, y1, U384.init(1));
 
-        return _toAffinePoint(params.call, params.p, x0, y0, z0);
+        return _toAffinePoint(call, p, x0, y0, z0);
     }
 
     /**
@@ -356,7 +375,9 @@ contract PECDSASHA1U384Authenticator {
      * @dev Add two points in affine coordinates and return projective point.
      */
     function _addAndReturnProjectivePoint(
-        Parameters memory params,
+        uint256 call,
+        uint256 p,
+        uint256 a,
         uint256 x1,
         uint256 y1,
         uint256 x2,
@@ -365,8 +386,8 @@ contract PECDSASHA1U384Authenticator {
         uint256 x;
         uint256 y;
 
-        (x, y) = _add(params, x1, y1, x2, y2);
-        P = _toProjectivePoint(params.call, params.p, x, y);
+        (x, y) = _add(call, p, a, x1, y1, x2, y2);
+        return _toProjectivePoint(call, p, x, y);
     }
 
     /**
