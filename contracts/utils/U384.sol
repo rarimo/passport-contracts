@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
-import "hardhat/console.sol";
+
 library U384 {
     uint256 private constant SHORT_ALLOCATION = 64;
+    uint256 private constant LONG_ALLOCATION = 96;
     uint256 private constant CALL_ALLOCATION = 288;
 
     function init(uint256 from_) internal pure returns (uint256 handler_) {
@@ -26,63 +27,74 @@ library U384 {
         return handler_;
     }
 
-    function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
+    function copy(uint256 handler_) internal view returns (uint256 handlerCopy_) {
+        handlerCopy_ = _allocate(SHORT_ALLOCATION);
+
         assembly {
-            let aWord_ := mload(a_)
-            let bWord_ := mload(b_)
+            mstore(handlerCopy_, mload(handler_))
+            mstore(add(handlerCopy_, 0x20), mload(add(handler_, 0x20)))
+        }
 
-            if gt(aWord_, bWord_) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
+        return handlerCopy_;
+    }
 
-            if lt(aWord_, bWord_) {
-                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-                return(0x00, 0x20)
-            }
+    function cmp(uint256 a_, uint256 b_) internal pure returns (int256 cmp_) {
+        uint256 aWord_;
+        uint256 bWord_;
 
+        assembly {
+            aWord_ := mload(a_)
+            bWord_ := mload(b_)
+        }
+
+        if (aWord_ > bWord_) {
+            return 1;
+        }
+
+        if (aWord_ < bWord_) {
+            return -1;
+        }
+
+        assembly {
             aWord_ := mload(add(a_, 0x20))
             bWord_ := mload(add(b_, 0x20))
-
-            if gt(aWord_, bWord_) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
-
-            if lt(aWord_, bWord_) {
-                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-                return(0x00, 0x20)
-            }
-
-            mstore(0x00, 0x00)
-            return(0x00, 0x20)
         }
+
+        if (aWord_ > bWord_) {
+            return 1;
+        }
+
+        if (aWord_ < bWord_) {
+            return -1;
+        }
+
+        return 0;
     }
 
     function cmpInteger(uint256 a_, uint256 bInteger_) internal pure returns (int256 cmp_) {
+        uint256 aWord_;
+
         assembly {
-            let aWord_ := mload(a_)
-
-            if gt(aWord_, 0) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
-
-            aWord_ := mload(add(a_, 0x20))
-
-            if gt(aWord_, bInteger_) {
-                mstore(0x00, 0x01)
-                return(0x00, 0x20)
-            }
-
-            if lt(aWord_, bInteger_) {
-                mstore(0x00, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
-                return(0x00, 0x20)
-            }
-
-            mstore(0x00, 0x00)
-            return(0x00, 0x20)
+            aWord_ := mload(a_)
         }
+
+        if (aWord_ > 0) {
+            return 1;
+        }
+
+        assembly {
+            aWord_ := mload(add(a_, 0x20))
+        }
+
+        if (aWord_ > bInteger_) {
+            return 1;
+        }
+
+        if (aWord_ < bInteger_) {
+            return -1;
+        }
+
+        return 0;
     }
 
     function modexp(uint256 b_, uint256 eInteger_, uint256 m_) internal view returns (uint256 r_) {
@@ -216,7 +228,11 @@ library U384 {
     }
 
     function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
+        uint256 bytesHandler_ = _allocate(LONG_ALLOCATION);
+
         assembly {
+            bytes_ := bytesHandler_
+
             mstore(bytes_, 0x40)
             mstore(add(0x20, bytes_), mload(handler_))
             mstore(add(0x40, bytes_), mload(add(handler_, 0x20)))

@@ -21,55 +21,73 @@ describe.only("Stack", () => {
 
   describe("stack", () => {
     it("stack", async () => {
-      const a = BigInt("0x113d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304");
-      const b = BigInt("0xAd72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304");
-      const m = BigInt("0x10FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377");
+      // const a = BigInt("0x113d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304");
+      // const b = BigInt("0xAd72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304");
+      // const m = BigInt("0x10FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377");
+      //
+      // console.log(
+      //   await stack.modadd(
+      //     "0x" + a.toString(16).padStart(128, "0"),
+      //     "0x" + b.toString(16).padStart(128, "0"),
+      //     "0x" + m.toString(16).padStart(128, "0"),
+      //   ),
+      // );
+      // console.log(((a + b) % m).toString(16));
+      //
+      // console.log(
+      //   await stack.modsub(
+      //     "0x" + a.toString(16).padStart(128, "0"),
+      //     "0x" + b.toString(16).padStart(128, "0"),
+      //     "0x" + m.toString(16).padStart(128, "0"),
+      //   ),
+      // );
+      // console.log(((a - b) % m).toString(16));
+      //
+      // console.log(
+      //   await stack.modmul(
+      //     "0x" + a.toString(16).padStart(128, "0"),
+      //     "0x" + b.toString(16).padStart(128, "0"),
+      //     "0x" + m.toString(16).padStart(128, "0"),
+      //   ),
+      // );
+      // console.log(((a * b) % m).toString(16));
+      //
+      // console.log(await stack.cmp("0x" + a.toString(16).padStart(128, "0"), "0x" + b.toString(16).padStart(128, "0")));
+      // console.log(await stack.cmp("0x" + b.toString(16).padStart(128, "0"), "0x" + a.toString(16).padStart(128, "0")));
+      // console.log(await stack.cmp("0x" + a.toString(16).padStart(128, "0"), "0x" + a.toString(16).padStart(128, "0")));
+      //
+      // console.log(
+      //   await stack.modexp("0x" + a.toString(16).padStart(128, "0"), 100, "0x" + m.toString(16).padStart(128, "0")),
+      // );
+      // console.log((a ** 100n % m).toString(16));
+      //
+      // console.log(await stack.cmpInteger("0x" + a.toString(16).padStart(128, "0"), 8));
+      // console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 8));
+      // console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 7));
+      // console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 9));
+      //
+      // console.log(
+      //   await stack.moddiv("0x" + "8".padStart(128, "0"), "0x" + "A".padStart(128, "0"), "0x" + "D".padStart(128, "0")),
+      // );
+      // console.log(((8n * 10n ** (13n - 2n)) % 13n).toString(16));
 
-      console.log(
-        await stack.modadd(
-          "0x" + a.toString(16).padStart(128, "0"),
-          "0x" + b.toString(16).padStart(128, "0"),
-          "0x" + m.toString(16).padStart(128, "0"),
-        ),
-      );
-      console.log(((a + b) % m).toString(16));
+      function toBytes(n: bigint): string {
+        return "0x" + n.toString(16).padStart(128, "0");
+      }
 
-      console.log(
-        await stack.modsub(
-          "0x" + a.toString(16).padStart(128, "0"),
-          "0x" + b.toString(16).padStart(128, "0"),
-          "0x" + m.toString(16).padStart(128, "0"),
-        ),
-      );
-      console.log(((a - b) % m).toString(16));
+      function fromBytes(n: string): bigint {
+        return BigInt(n);
+      }
 
-      console.log(
-        await stack.modmul(
-          "0x" + a.toString(16).padStart(128, "0"),
-          "0x" + b.toString(16).padStart(128, "0"),
-          "0x" + m.toString(16).padStart(128, "0"),
-        ),
-      );
-      console.log(((a * b) % m).toString(16));
+      const a = 779149564533142355434093157610126726613246737199n;
+      const s = 29118654464229156312755475164902924590603964377702716942232927993582928167089n;
+      const n = 76884956397045344220809746629001649092737531784414529538755519063063536359079n;
 
-      console.log(await stack.cmp("0x" + a.toString(16).padStart(128, "0"), "0x" + b.toString(16).padStart(128, "0")));
-      console.log(await stack.cmp("0x" + b.toString(16).padStart(128, "0"), "0x" + a.toString(16).padStart(128, "0")));
-      console.log(await stack.cmp("0x" + a.toString(16).padStart(128, "0"), "0x" + a.toString(16).padStart(128, "0")));
+      const expected = 30823410400962253491978005949535646087432096635784775122170630924100507445065n;
 
-      console.log(
-        await stack.modexp("0x" + a.toString(16).padStart(128, "0"), 100, "0x" + m.toString(16).padStart(128, "0")),
-      );
-      console.log((a ** 100n % m).toString(16));
+      const result = await stack.moddiv(toBytes(a), toBytes(s), toBytes(n));
 
-      console.log(await stack.cmpInteger("0x" + a.toString(16).padStart(128, "0"), 8));
-      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 8));
-      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 7));
-      console.log(await stack.cmpInteger("0x" + "8".padStart(128, "0"), 9));
-
-      console.log(
-        await stack.moddiv("0x" + "8".padStart(128, "0"), "0x" + "A".padStart(128, "0"), "0x" + "D".padStart(128, "0")),
-      );
-      console.log(((8n * 10n ** (13n - 2n)) % 13n).toString(16));
+      console.log(fromBytes(result));
     });
   });
 });
