@@ -28,6 +28,10 @@ library U384 {
         return handler_;
     }
 
+    function initCall() internal pure returns (uint256 handler_) {
+        return _allocate(CALL_ALLOCATION);
+    }
+
     function copy(uint256 handler_) internal view returns (uint256 handlerCopy_) {
         handlerCopy_ = _allocate(SHORT_ALLOCATION);
 
@@ -110,20 +114,20 @@ library U384 {
         return 0;
     }
 
-    function modexp(uint256 b_, uint256 eInteger_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = _allocate(CALL_ALLOCATION);
+    function modexp(uint256 call_, uint256 b_, uint256 eInteger_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
 
         assembly {
-            mstore(r_, 0x40)
-            mstore(add(0x20, r_), 0x20)
-            mstore(add(0x40, r_), 0x40)
-            mstore(add(0x60, r_), mload(b_))
-            mstore(add(0x80, r_), mload(add(b_, 0x20)))
-            mstore(add(0xA0, r_), eInteger_)
-            mstore(add(0xC0, r_), mload(m_))
-            mstore(add(0xE0, r_), mload(add(m_, 0x20)))
+            mstore(call_, 0x40)
+            mstore(add(0x20, call_), 0x20)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0x60, call_), mload(b_))
+            mstore(add(0x80, call_), mload(add(b_, 0x20)))
+            mstore(add(0xA0, call_), eInteger_)
+            mstore(add(0xC0, call_), mload(m_))
+            mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, r_, 0x0100, r_, 0x40)) {
+            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -131,20 +135,20 @@ library U384 {
         return r_;
     }
 
-    function modadd(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = _allocate(CALL_ALLOCATION);
+    function modadd(uint256 call_, uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
 
-        _add(a_, b_, r_ + 0x60);
+        _add(a_, b_, call_ + 0x60);
 
         assembly {
-            mstore(r_, 0x40)
-            mstore(add(0x20, r_), 0x20)
-            mstore(add(0x40, r_), 0x40)
-            mstore(add(0xA0, r_), 0x01)
-            mstore(add(0xC0, r_), mload(m_))
-            mstore(add(0xE0, r_), mload(add(m_, 0x20)))
+            mstore(call_, 0x40)
+            mstore(add(0x20, call_), 0x20)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0xA0, call_), 0x01)
+            mstore(add(0xC0, call_), mload(m_))
+            mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, r_, 0x0100, r_, 0x40)) {
+            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -152,26 +156,26 @@ library U384 {
         return r_;
     }
 
-    function mod(uint256 a_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = modexp(a_, 1, m_);
+    function mod(uint256 call_, uint256 a_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = modexp(call_, a_, 1, m_);
 
         return r_;
     }
 
-    function modsub(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = _allocate(CALL_ALLOCATION);
+    function modsub(uint256 call_, uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
 
-        _sub(a_, b_, r_ + 0x60);
+        _sub(a_, b_, call_ + 0x60);
 
         assembly {
-            mstore(r_, 0x40)
-            mstore(add(0x20, r_), 0x20)
-            mstore(add(0x40, r_), 0x40)
-            mstore(add(0xA0, r_), 0x01)
-            mstore(add(0xC0, r_), mload(m_))
-            mstore(add(0xE0, r_), mload(add(m_, 0x20)))
+            mstore(call_, 0x40)
+            mstore(add(0x20, call_), 0x20)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0xA0, call_), 0x01)
+            mstore(add(0xC0, call_), mload(m_))
+            mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, r_, 0x0100, r_, 0x40)) {
+            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -179,20 +183,20 @@ library U384 {
         return r_;
     }
 
-    function modmul(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = _allocate(CALL_ALLOCATION);
+    function modmul(uint256 call_, uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(LONG_ALLOCATION);
 
-        _mul(a_, b_, r_ + 0x60);
+        _mul(a_, b_, call_ + 0x60);
 
         assembly {
-            mstore(r_, 0x60)
-            mstore(add(0x20, r_), 0x20)
-            mstore(add(0x40, r_), 0x40)
-            mstore(add(0xC0, r_), 0x01)
-            mstore(add(0xE0, r_), mload(m_))
-            mstore(add(0x0100, r_), mload(add(m_, 0x20)))
+            mstore(call_, 0x60)
+            mstore(add(0x20, call_), 0x20)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0xC0, call_), 0x01)
+            mstore(add(0xE0, call_), mload(m_))
+            mstore(add(0x0100, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, r_, 0x0120, r_, 0x40)) {
+            if iszero(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40)) {
                 revert(0, 0)
             }
         }
@@ -200,28 +204,28 @@ library U384 {
         return r_;
     }
 
-    function moddiv(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
-        r_ = _allocate(CALL_ALLOCATION);
+    function moddiv(uint256 call_, uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+        r_ = _allocate(SHORT_ALLOCATION);
 
         uint256 two_ = init(2);
 
-        _sub(m_, two_, r_ + 0xA0);
+        _sub(m_, two_, call_ + 0xA0);
 
         assembly {
-            mstore(r_, 0x40)
-            mstore(add(0x20, r_), 0x40)
-            mstore(add(0x40, r_), 0x40)
-            mstore(add(0x60, r_), mload(b_))
-            mstore(add(0x80, r_), mload(add(b_, 0x20)))
-            mstore(add(0xE0, r_), mload(m_))
-            mstore(add(0x0100, r_), mload(add(m_, 0x20)))
+            mstore(call_, 0x40)
+            mstore(add(0x20, call_), 0x40)
+            mstore(add(0x40, call_), 0x40)
+            mstore(add(0x60, call_), mload(b_))
+            mstore(add(0x80, call_), mload(add(b_, 0x20)))
+            mstore(add(0xE0, call_), mload(m_))
+            mstore(add(0x0100, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, r_, 0x0120, r_, 0x40)) {
+            if iszero(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40)) {
                 revert(0, 0)
             }
         }
 
-        return modmul(a_, r_, m_);
+        return modmul(call_, a_, r_, m_);
     }
 
     function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {

@@ -20,14 +20,14 @@ contract PECDSASHA1U384Authenticator {
         uint256 p;
         uint256 n;
         uint256 lowSmax;
+        uint256 call;
     }
 
     struct Inputs {
-        bytes challenge;
-        bytes r;
-        bytes s;
-        bytes x;
-        bytes y;
+        uint256 r;
+        uint256 s;
+        uint256 x;
+        uint256 y;
     }
 
     /**
@@ -36,20 +36,17 @@ contract PECDSASHA1U384Authenticator {
      */
     function authenticate(
         bytes memory challenge,
-        uint256 r,
-        uint256 s,
-        uint256 x,
-        uint256 y
+        Inputs memory inputs
     ) external view returns (bool) {
         /// @dev accept s only from the lower part of the curve
         // if (r == 0 || r >= n || s == 0 || s > lowSmax) {
         //     return false;
         // }
 
-        r = U384.init(r);
-        s = U384.init(s);
-        x = U384.init(x);
-        y = U384.init(y);
+        inputs.r = U384.init(inputs.r);
+        inputs.s = U384.init(inputs.s);
+        inputs.x = U384.init(inputs.x);
+        inputs.y = U384.init(inputs.y);
 
         // brainpool256r1 parameters
         Parameters memory params = Parameters({
@@ -59,21 +56,22 @@ contract PECDSASHA1U384Authenticator {
             gy: 0x547EF835C3DAC4FD97F8461A14611DC9C27745132DED8E545C1D54C72F046997.init(),
             p: 0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377.init(),
             n: 0xA9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7.init(),
-            lowSmax: 0x54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb.init()
+            lowSmax: 0x54fdabedd0f754de1f3305484ec1c6b9371dfb11ea9310141009a40e8fb729bb.init(),
+            call: U384.initCall()
         });
 
-        if (!_isOnCurve(params, x, y)) {
+        if (!_isOnCurve(params, inputs.x, inputs.y)) {
             return false;
         }
 
         uint256 message = uint256(uint160(challenge.sha1())).init();
 
-        (uint256 x1, uint256 y1) = _multiplyScalar(params, params.gx, params.gy, U384.moddiv(message, s, params.n));
+        (uint256 x1, uint256 y1) = _multiplyScalar(params, params.gx, params.gy, U384.moddiv(params.call, message, inputs.s, params.n));
         console.log("x1y1");
         console.logBytes(U384.toBytes(x1));
         console.logBytes(U384.toBytes(y1));
 
-        (uint256 x2, uint256 y2) = _multiplyScalar(params, x, y, U384.moddiv(r, s, params.n));
+        (uint256 x2, uint256 y2) = _multiplyScalar(params, inputs.x, inputs.y, U384.moddiv(params.call, inputs.r, inputs.s, params.n));
         console.log("x2y2");
         console.logBytes(U384.toBytes(x2));
         console.logBytes(U384.toBytes(y2));
@@ -89,7 +87,7 @@ contract PECDSASHA1U384Authenticator {
         // }
 
         // uint256 Px = _inverseMod(P[2], p);
-        // Px = U384.modmul(P[0], U384.modmul(Px, Px, p), p);
+        // Px = U384.modmul(params.call, P[0], U384.modmul(params.call, Px, Px, p), p);
 
         // return Px % n == r;
 
@@ -175,37 +173,36 @@ contract PECDSASHA1U384Authenticator {
         }
 
         uint256 two = U384.init(2);
-        uint256 three = U384.init(3);
 
-        u = U384.modmul(y0, z0, params.p);
-        u = U384.modmul(u, two, params.p);
+        u = U384.modmul(params.call, y0, z0, params.p);
+        u = U384.modmul(params.call, u, two, params.p);
 
-        v = U384.modmul(u, x0, params.p);
-        v = U384.modmul(v, y0, params.p);
-        v = U384.modmul(v, two, params.p);
+        v = U384.modmul(params.call, u, x0, params.p);
+        v = U384.modmul(params.call, v, y0, params.p);
+        v = U384.modmul(params.call, v, two, params.p);
 
-        x0 = U384.modmul(x0, x0, params.p);
-        t = U384.modmul(x0, three, params.p);
+        x0 = U384.modmul(params.call, x0, x0, params.p);
+        t = U384.modmul(params.call, x0, U384.init(3), params.p);
 
-        z0 = U384.modmul(z0, z0, params.p);
-        z0 = U384.modmul(z0, params.a, params.p);
-        t = U384.modadd(t, z0, params.p);
+        z0 = U384.modmul(params.call, z0, z0, params.p);
+        z0 = U384.modmul(params.call, z0, params.a, params.p);
+        t = U384.modadd(params.call, t, z0, params.p);
 
-        w = U384.modmul(t, t, params.p);
-        x0 = U384.modmul(two, v, params.p);
-        w = U384.modadd(w, U384.sub(params.p, x0), params.p);
+        w = U384.modmul(params.call, t, t, params.p);
+        x0 = U384.modmul(params.call, two, v, params.p);
+        w = U384.modadd(params.call, w, U384.sub(params.p, x0), params.p);
 
-        x0 = U384.modadd(v, U384.sub(params.p, w), params.p);
-        x0 = U384.modmul(t, x0, params.p);
-        y0 = U384.modmul(y0, u, params.p);
-        y0 = U384.modmul(y0, y0, params.p);
-        y0 = U384.modmul(two, y0, params.p);
-        y1 = U384.modadd(x0, U384.sub(params.p, y0), params.p);
+        x0 = U384.modadd(params.call, v, U384.sub(params.p, w), params.p);
+        x0 = U384.modmul(params.call, t, x0, params.p);
+        y0 = U384.modmul(params.call, y0, u, params.p);
+        y0 = U384.modmul(params.call, y0, y0, params.p);
+        y0 = U384.modmul(params.call, two, y0, params.p);
+        y1 = U384.modadd(params.call, x0, U384.sub(params.p, y0), params.p);
 
-        x1 = U384.modmul(u, w, params.p);
+        x1 = U384.modmul(params.call, u, w, params.p);
 
-        z1 = U384.modmul(u, u, params.p);
-        z1 = U384.modmul(z1, u, params.p);
+        z1 = U384.modmul(params.call, u, u, params.p);
+        z1 = U384.modmul(params.call, z1, u, params.p);
     }
 
     struct UT {
@@ -236,10 +233,10 @@ contract PECDSASHA1U384Authenticator {
 
         UT memory ut;
 
-        ut.t0 = U384.modmul(y0, z1, params.p);
-        ut.t1 = U384.modmul(y1, z0, params.p);
-        ut.u0 = U384.modmul(x0, z1, params.p);
-        ut.u1 = U384.modmul(x1, z0, params.p);
+        ut.t0 = U384.modmul(params.call, y0, z1, params.p);
+        ut.t1 = U384.modmul(params.call, y1, z0, params.p);
+        ut.u0 = U384.modmul(params.call, x0, z1, params.p);
+        ut.u1 = U384.modmul(params.call, x1, z0, params.p);
 
         if (U384.eq(ut.u0, ut.u1)) {
             if (U384.eq(ut.t0, ut.t1)) {
@@ -249,7 +246,9 @@ contract PECDSASHA1U384Authenticator {
             }
         }
 
-        (x2, y2, z2) = _addProj2(params, U384.modmul(z0, z1, params.p), ut.u0, ut.u1, ut.t1, ut.t0);
+        uint256 v = U384.modmul(params.call, z0, z1, params.p);
+
+        (x2, y2, z2) = _addProj2(params, v, ut.u0, ut.u1, ut.t1, ut.t0);
     }
 
     struct UTW {
@@ -273,31 +272,31 @@ contract PECDSASHA1U384Authenticator {
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
         UTW memory utw;
 
-        utw.t = U384.modadd(t0, U384.sub(params.p, t1), params.p);
-        utw.u = U384.modadd(u0, U384.sub(params.p, u1), params.p);
+        utw.t = U384.modadd(params.call, t0, U384.sub(params.p, t1), params.p);
+        utw.u = U384.modadd(params.call, u0, U384.sub(params.p, u1), params.p);
 
-        //u2 = U384.modmul(u, u, p);
-        utw.u2 = U384.modexp(utw.u, 2, params.p);
+        //u2 = U384.modmul(params.call, u, u, p);
+        utw.u2 = U384.modexp(params.call, utw.u, 2, params.p);
 
-        //w = U384.modmul(t, t, p);
-        utw.w = U384.modexp(utw.t, 2, params.p);
+        //w = U384.modmul(params.call, t, t, p);
+        utw.w = U384.modexp(params.call, utw.t, 2, params.p);
 
-        utw.w = U384.modmul(utw.w, v, params.p);
-        u1 = U384.modadd(u1, u0, params.p);
-        u1 = U384.modmul(u1, utw.u2, params.p);
-        utw.w = U384.modadd(utw.w, U384.sub(params.p, u1), params.p);
+        utw.w = U384.modmul(params.call, utw.w, v, params.p);
+        u1 = U384.modadd(params.call, u1, u0, params.p);
+        u1 = U384.modmul(params.call, u1, utw.u2, params.p);
+        utw.w = U384.modadd(params.call, utw.w, U384.sub(params.p, u1), params.p);
 
-        x2 = U384.modmul(utw.u, utw.w, params.p);
+        x2 = U384.modmul(params.call, utw.u, utw.w, params.p);
 
-        utw.u3 = U384.modmul(utw.u2, utw.u, params.p);
-        u0 = U384.modmul(u0, utw.u2, params.p);
-        u0 = U384.modadd(u0, U384.sub(params.p, utw.w), params.p);
-        utw.t = U384.modmul(utw.t, u0, params.p);
-        t0 = U384.modmul(t0, utw.u3, params.p);
+        utw.u3 = U384.modmul(params.call, utw.u2, utw.u, params.p);
+        u0 = U384.modmul(params.call, u0, utw.u2, params.p);
+        u0 = U384.modadd(params.call, u0, U384.sub(params.p, utw.w), params.p);
+        utw.t = U384.modmul(params.call, utw.t, u0, params.p);
+        t0 = U384.modmul(params.call, t0, utw.u3, params.p);
 
-        y2 = U384.modadd(utw.t, U384.sub(params.p, t0), params.p);
+        y2 = U384.modadd(params.call, utw.t, U384.sub(params.p, t0), params.p);
 
-        z2 = U384.modmul(utw.u3, v, params.p);
+        z2 = U384.modmul(params.call, utw.u3, v, params.p);
     }
 
     /**
@@ -354,8 +353,8 @@ contract PECDSASHA1U384Authenticator {
         uint256 y0,
         uint256 z0
     ) internal view returns (uint256 x1, uint256 y1) {
-        x1 = U384.moddiv(x0, z0, params.p);
-        y1 = U384.moddiv(y0, z0, params.p);
+        x1 = U384.moddiv(params.call, x0, z0, params.p);
+        y1 = U384.moddiv(params.call, y0, z0, params.p);
     }
 
     /**
@@ -371,17 +370,17 @@ contract PECDSASHA1U384Authenticator {
              return false;
          }
 
-        //uint256 LHS = U384.modmul(y, y, p); // y^2 --> modexp(y, 2, p)
-        uint256 LHS = U384.modexp(y, 2, params.p);
-        //uint256 RHS = U384.modmul(U384.modmul(x, x, p), x, p); // x^3 --> modexp(x, 3, p)
-        uint256 RHS = U384.modexp(x, 3, params.p);
+        //uint256 LHS = U384.modmul(params.call, y, y, p); // y^2 --> modexp(params.call, y, 2, p)
+        uint256 LHS = U384.modexp(params.call, y, 2, params.p);
+        //uint256 RHS = U384.modmul(params.call, U384.modmul(params.call, x, x, p), x, p); // x^3 --> modexp(params.call, x, 3, p)
+        uint256 RHS = U384.modexp(params.call, x, 3, params.p);
 
         if (!U384.eqInteger(params.a, 0)) {
-            RHS = U384.modadd(RHS, U384.modmul(x, params.a, params.p), params.p); // x^3 + a*x
+            RHS = U384.modadd(params.call, RHS, U384.modmul(params.call, x, params.a, params.p), params.p); // x^3 + a*x
         }
 
         if (!U384.eqInteger(params.b, 0)) {
-            RHS = U384.modadd(RHS, params.b, params.p); // x^3 + a*x + b
+            RHS = U384.modadd(params.call, RHS, params.b, params.p); // x^3 + a*x + b
         }
 
         return U384.eq(LHS, RHS);
@@ -395,9 +394,9 @@ contract PECDSASHA1U384Authenticator {
         uint256 x0,
         uint256 y0
     ) internal view returns (uint256[3] memory P) {
-        P[2] = U384.modadd(U384.init(0), U384.init(1), params.p);
-        P[0] = U384.modmul(x0, P[2], params.p);
-        P[1] = U384.modmul(y0, P[2], params.p);
+        P[2] = U384.modadd(params.call, U384.init(0), U384.init(1), params.p);
+        P[0] = U384.modmul(params.call, x0, P[2], params.p);
+        P[1] = U384.modmul(params.call, y0, P[2], params.p);
     }
 
     /**
