@@ -17,7 +17,7 @@ library U384 {
         return handler_;
     }
 
-    function init(bytes memory from_) internal view returns (uint256 handler_) {
+    function init(bytes memory from_) internal pure returns (uint256 handler_) {
         handler_ = _allocate(SHORT_ALLOCATION);
 
         assembly {
@@ -33,7 +33,7 @@ library U384 {
         return _allocate(CALL_ALLOCATION);
     }
 
-    function copy(uint256 handler_) internal view returns (uint256 handlerCopy_) {
+    function copy(uint256 handler_) internal pure returns (uint256 handlerCopy_) {
         handlerCopy_ = _allocate(SHORT_ALLOCATION);
 
         assembly {
@@ -128,9 +128,7 @@ library U384 {
             mstore(add(0xC0, call_), mload(m_))
             mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
-                revert(0, 0)
-            }
+            pop(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40))
         }
 
         return r_;
@@ -149,9 +147,7 @@ library U384 {
             mstore(add(0xC0, call_), mload(m_))
             mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
-                revert(0, 0)
-            }
+            pop(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40))
         }
 
         return r_;
@@ -176,9 +172,7 @@ library U384 {
             mstore(add(0xC0, call_), mload(m_))
             mstore(add(0xE0, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40)) {
-                revert(0, 0)
-            }
+            pop(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40))
         }
 
         return r_;
@@ -197,9 +191,7 @@ library U384 {
             mstore(add(0xE0, call_), mload(m_))
             mstore(add(0x0100, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40)) {
-                revert(0, 0)
-            }
+            pop(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40))
         }
 
         return r_;
@@ -221,9 +213,7 @@ library U384 {
             mstore(add(0xE0, call_), mload(m_))
             mstore(add(0x0100, call_), mload(add(m_, 0x20)))
 
-            if iszero(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40)) {
-                revert(0, 0)
-            }
+            pop(staticcall(gas(), 0x5, call_, 0x0120, r_, 0x40))
         }
 
         return modmul(call_, a_, r_, m_);
@@ -324,7 +314,7 @@ library U384 {
 
             // r3
             current_ := add(shl(128, curry_), shr(128, current_))
-            curry_ := 0
+            curry_ := callvalue() // equals := 0 but less expensive
 
             temp_ := mul(a0_, b2_)
             current_ := add(current_, temp_)
@@ -342,7 +332,7 @@ library U384 {
 
             // r2
             current_ := add(shl(128, curry_), shr(128, current_))
-            curry_ := 0
+            curry_ := callvalue()
 
             temp_ := mul(a0_, b1_)
             current_ := add(current_, temp_)
@@ -356,7 +346,7 @@ library U384 {
 
             // r1
             current_ := add(shl(128, curry_), shr(128, current_))
-            curry_ := 0
+            curry_ := callvalue()
 
             temp_ := mul(a0_, b0_)
             current_ := add(current_, temp_)
