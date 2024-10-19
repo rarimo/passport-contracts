@@ -306,25 +306,17 @@ library U384 {
 
     function _mul(uint256 a_, uint256 b_, uint256 r_) private view {
         assembly {
-            function high128(x) -> y {
-                y := shr(128, x)
-            }
-
-            function low128(x) -> y {
-                y := and(x, 0xffffffffffffffffffffffffffffffff)
-            }
-
             let a0_ := mload(a_)
-            let a1_ := high128(mload(add(a_, 0x20)))
-            let a2_ := low128(mload(add(a_, 0x20)))
+            let a1_ := shr(128, mload(add(a_, 0x20)))
+            let a2_ := and(mload(add(a_, 0x20)), 0xffffffffffffffffffffffffffffffff)
 
             let b0_ := mload(b_)
-            let b1_ := high128(mload(add(b_, 0x20)))
-            let b2_ := low128(mload(add(b_, 0x20)))
+            let b1_ := shr(128, mload(add(b_, 0x20)))
+            let b2_ := and(mload(add(b_, 0x20)), 0xffffffffffffffffffffffffffffffff)
 
             // r5
             let current_ := mul(a2_, b2_)
-            let r5_ := low128(current_)
+            let r0_ := and(current_, 0xffffffffffffffffffffffffffffffff)
 
             // r4
             current_ := shr(128, current_)
@@ -337,7 +329,7 @@ library U384 {
             current_ := add(current_, temp_)
             curry_ := add(curry_, lt(current_, temp_))
 
-            let r4_ := low128(current_)
+            mstore(add(r_, 0x40), add(shl(128, current_), r0_))
 
             // r3
             current_ := add(shl(128, curry_), shr(128, current_))
@@ -355,7 +347,7 @@ library U384 {
             current_ := add(current_, temp_)
             curry_ := add(curry_, lt(current_, temp_))
 
-            let r3_ := low128(current_)
+            r0_ := and(current_, 0xffffffffffffffffffffffffffffffff)
 
             // r2
             current_ := add(shl(128, curry_), shr(128, current_))
@@ -369,7 +361,7 @@ library U384 {
             current_ := add(current_, temp_)
             curry_ := add(curry_, lt(current_, temp_))
 
-            let r2_ := low128(current_)
+            mstore(add(r_, 0x20), add(shl(128, current_), r0_))
 
             // r1
             current_ := add(shl(128, curry_), shr(128, current_))
@@ -379,14 +371,7 @@ library U384 {
             current_ := add(current_, temp_)
             curry_ := lt(current_, temp_)
 
-            let r1_ := low128(current_)
-
-            // r0
-            let r0_ := shr(128, current_)
-
-            mstore(r_, add(shl(128, r0_), r1_))
-            mstore(add(r_, 0x20), add(shl(128, r2_), r3_))
-            mstore(add(r_, 0x40), add(shl(128, r4_), r5_))
+            mstore(r_, current_)
         }
     }
 
