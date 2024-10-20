@@ -75,7 +75,7 @@ describe("PECDSAAuthenticator", () => {
       // const y = "0x3d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304";
 
       //await authSha2New.forTest(y);
-      expect(await authU384.authenticate(challenge, { r, s, x, y })).to.be.false;
+      expect(await authU384.authenticate(challenge, { r, s, x, y })).to.be.true;
 
       //  console.log(gx, gy, modmul(BigInt(ethers.sha256(challenge)), sInv, n));
 
