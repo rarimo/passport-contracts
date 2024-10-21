@@ -215,42 +215,44 @@ contract PECDSASHA1U384Authenticator {
         uint256 y0,
         uint256 z0
     ) internal view returns (uint256 x1, uint256 y1, uint256 z1) {
+        x0 = x0.copy();
+        y0 = y0.copy();
+        z0 = z0.copy();
+
         if (_isZeroCurve(x0, y0)) {
             return _zeroProj();
         }
 
-        uint256 u;
-
-        u = U384.modmul(call, y0, z0, p);
+        uint256 u = U384.modmul(call, y0, z0, p);
         U384.modshl1Assign(call, u, p);
 
         x1 = U384.modmul(call, u, x0, p);
         U384.modmulAssign(call, x1, y0, p);
         U384.modshl1Assign(call, x1, p);
 
-        x0 = U384.modexp(call, x0, 2, p);
+        U384.modexpAssign(call, x0, 2, p);
 
         y1 = U384.modmul(call, x0, U384.init(3), p);
 
-        z0 = U384.modexp(call, z0, 2, p);
-        z0 = U384.modmul(call, z0, a, p);
+        U384.modexpAssign(call, z0, 2, p);
+        U384.modmulAssign(call, z0, a, p);
         U384.modaddAssign(call, y1, z0, p);
 
         z1 = U384.modexp(call, y1, 2, p);
-        x0 = U384.modshl1(call, x1, p);
+        U384.modshl1AssignTo(call, x0, x1, p);
         U384.modaddAssign(call, z1, U384.sub(p, x0), p);
 
-        x0 = U384.modadd(call, x1, U384.sub(p, z1), p);
-        x0 = U384.modmul(call, x0, y1, p);
+        U384.modaddAssignTo(call, x0, x1, U384.sub(p, z1), p);
+        U384.modmulAssign(call, x0, y1, p);
 
-        y0 = U384.modmul(call, y0, u, p);
-        y0 = U384.modexp(call, y0, 2, p);
-        y0 = U384.modshl1(call, y0, p);
-        y1 = U384.modadd(call, x0, U384.sub(p, y0), p);
+        U384.modmulAssign(call, y0, u, p);
+        U384.modexpAssign(call, y0, 2, p);
+        U384.modshl1Assign(call, y0, p);
+        U384.modaddAssignTo(call, y1, x0, U384.sub(p, y0), p);
 
-        x1 = U384.modmul(call, u, z1, p);
+        U384.modmulAssignTo(call, x1, u, z1, p);
 
-        z1 = U384.modexp(call, u, 2, p);
+        U384.modexpAssignTo(call, z1, u, 2, p);
         U384.modmulAssign(call, z1, u, p);
     }
 
@@ -305,32 +307,33 @@ contract PECDSASHA1U384Authenticator {
         uint256 t1,
         uint256 t0
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
-        uint256 u2;
-        uint256 u3;
+        u0 = u0.copy();
+        u1 = u1.copy();
+        t0 = t0.copy();
 
         y2 = U384.modadd(call, t0, U384.sub(p, t1), p);
         x2 = U384.modadd(call, u0, U384.sub(p, u1), p);
-        u2 = U384.modexp(call, x2, 2, p);
+        uint256 u2 = U384.modexp(call, x2, 2, p);
 
         z2 = U384.modexp(call, y2, 2, p);
 
         U384.modmulAssign(call, z2, v, p);
-        u1 = U384.modadd(call, u1, u0, p);
-        u1 = U384.modmul(call, u1, u2, p);
+        U384.modaddAssign(call, u1, u0, p);
+        U384.modmulAssign(call, u1, u2, p);
         U384.modaddAssign(call, z2, U384.sub(p, u1), p);
 
-        u3 = U384.modmul(call, u2, x2, p);
+        uint256 u3 = U384.modmul(call, u2, x2, p);
 
         U384.modmulAssign(call, x2, z2, p);
 
-        u0 = U384.modmul(call, u0, u2, p);
-        u0 = U384.modadd(call, u0, U384.sub(p, z2), p);
+        U384.modmulAssign(call, u0, u2, p);
+        U384.modaddAssign(call, u0, U384.sub(p, z2), p);
         U384.modmulAssign(call, y2, u0, p);
-        t0 = U384.modmul(call, t0, u3, p);
+        U384.modmulAssign(call, t0, u3, p);
 
         U384.modaddAssign(call, y2, U384.sub(p, t0), p);
 
-        z2 = U384.modmul(call, u3, v, p);
+        U384.modmulAssignTo(call, z2, u3, v, p);
     }
 
     /**
