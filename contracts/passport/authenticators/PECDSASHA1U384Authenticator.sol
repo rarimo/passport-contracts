@@ -216,10 +216,6 @@ contract PECDSASHA1U384Authenticator {
                 return _zeroProj();
             }
 
-            x0 = x0.copy();
-            y0 = y0.copy();
-            z0 = z0.copy();
-
             uint256 u = U384.modmul(call, y0, z0, p);
             U384.modshl1Assign(call, u, p);
 
@@ -227,11 +223,11 @@ contract PECDSASHA1U384Authenticator {
             U384.modmulAssign(call, x1, y0, p);
             U384.modshl1Assign(call, x1, p);
 
-            U384.modexpAssign(call, x0, 2, p);
+            x0 = U384.modexp(call, x0, 2, p);
 
             y1 = U384.modmul(call, x0, three, p);
 
-            U384.modexpAssign(call, z0, 2, p);
+            z0 = U384.modexp(call, z0, 2, p);
             U384.modmulAssign(call, z0, a, p);
             U384.modaddAssign(call, y1, z0, p);
 
@@ -245,7 +241,7 @@ contract PECDSASHA1U384Authenticator {
             U384.modaddAssignTo(call, x0, x1, diff, p);
             U384.modmulAssign(call, x0, y1, p);
 
-            U384.modmulAssign(call, y0, u, p);
+            y0 = U384.modmul(call, y0, u, p);
             U384.modexpAssign(call, y0, 2, p);
             U384.modshl1Assign(call, y0, p);
 
@@ -314,10 +310,6 @@ contract PECDSASHA1U384Authenticator {
         uint256 t0
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
         unchecked {
-            u0 = u0.copy();
-            u1 = u1.copy();
-            t0 = t0.copy();
-
             uint256 diff = U384.sub(p, t1);
             y2 = U384.modadd(call, t0, diff, p);
 
@@ -328,7 +320,7 @@ contract PECDSASHA1U384Authenticator {
             z2 = U384.modexp(call, y2, 2, p);
 
             U384.modmulAssign(call, z2, v, p);
-            U384.modaddAssign(call, u1, u0, p);
+            u1 = U384.modadd(call, u1, u0, p);
             U384.modmulAssign(call, u1, u2, p);
             U384.subAssignTo(diff, p, u1);
             U384.modaddAssign(call, z2, diff, p);
@@ -337,12 +329,12 @@ contract PECDSASHA1U384Authenticator {
 
             U384.modmulAssign(call, x2, z2, p);
 
-            U384.modmulAssign(call, u0, u2, p);
+            u0 = U384.modmul(call, u0, u2, p);
 
             U384.subAssignTo(diff, p, z2);
             U384.modaddAssign(call, u0, diff, p);
             U384.modmulAssign(call, y2, u0, p);
-            U384.modmulAssign(call, t0, u3, p);
+            t0 = U384.modmul(call, t0, u3, p);
 
             U384.subAssignTo(diff, p, t0);
             U384.modaddAssign(call, y2, diff, p);
