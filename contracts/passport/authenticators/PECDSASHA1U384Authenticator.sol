@@ -161,8 +161,7 @@ contract PECDSASHA1U384Authenticator {
                 y1 = U384.copy(y0);
             }
 
-            lowBits_ >>= 1;
-            lowBits_ |= highBits_ << 255;
+            lowBits_ = (lowBits_ >> 1) | (highBits_ << 255);
             highBits_ >>= 1;
 
             while (lowBits_ > 0 || highBits_ > 0) {
@@ -191,8 +190,7 @@ contract PECDSASHA1U384Authenticator {
                     );
                 }
 
-                lowBits_ >>= 1;
-                lowBits_ |= highBits_ << 255;
+                lowBits_ = (lowBits_ >> 1) | (highBits_ << 255);
                 highBits_ >>= 1;
             }
 
@@ -214,13 +212,13 @@ contract PECDSASHA1U384Authenticator {
         uint256 z0
     ) internal view returns (uint256 x1, uint256 y1, uint256 z1) {
         unchecked {
-            x0 = x0.copy();
-            y0 = y0.copy();
-            z0 = z0.copy();
-
             if (_isZeroCurve(x0, y0)) {
                 return _zeroProj();
             }
+
+            x0 = x0.copy();
+            y0 = y0.copy();
+            z0 = z0.copy();
 
             uint256 u = U384.modmul(call, y0, z0, p);
             U384.modshl1Assign(call, u, p);
@@ -299,7 +297,7 @@ contract PECDSASHA1U384Authenticator {
 
             a = U384.modmul(call, z0, z1, p);
 
-            return _addProj2(call, p, a, z2, y1, y2, x2);
+            return _addProj2(call, a, z2, p, y1, y2, x2);
         }
     }
 
@@ -308,9 +306,9 @@ contract PECDSASHA1U384Authenticator {
      */
     function _addProj2(
         uint256 call,
-        uint256 p,
         uint256 v,
         uint256 u0,
+        uint256 p,
         uint256 u1,
         uint256 t1,
         uint256 t0
@@ -349,8 +347,7 @@ contract PECDSASHA1U384Authenticator {
             U384.subAssignTo(diff, p, t0);
             U384.modaddAssign(call, y2, diff, p);
 
-            U384.modmulAssign(call, u3, v, p); // stack too deep
-            z2 = u3;
+            U384.modmulAssignTo(call, z2, u3, v, p);
         }
     }
 
@@ -429,8 +426,7 @@ contract PECDSASHA1U384Authenticator {
         uint256 z0
     ) internal view returns (uint256 x1, uint256 y1) {
         unchecked {
-            x1 = U384.moddiv(call, x0, z0, p);
-            y1 = U384.moddiv(call, y0, z0, p);
+            return (U384.moddiv(call, x0, z0, p), U384.moddiv(call, y0, z0, p));
         }
     }
 
@@ -485,20 +481,26 @@ contract PECDSASHA1U384Authenticator {
      * @dev Return the zero curve in projective coordinates.
      */
     function _zeroProj() internal pure returns (uint256 x, uint256 y, uint256 z) {
-        return (U384.init(0), U384.init(1), U384.init(0));
+        unchecked {
+            return (U384.init(0), U384.init(1), U384.init(0));
+        }
     }
 
     /**
      * @dev Return the zero curve in affine coordinates.
      */
     function _zeroAffine() internal pure returns (uint256 x, uint256 y) {
-        return (U384.init(0), U384.init(0));
+        unchecked {
+            return (U384.init(0), U384.init(0));
+        }
     }
 
     /**
      * @dev Check if the curve is the zero curve.
      */
     function _isZeroCurve(uint256 x0, uint256 y0) internal pure returns (bool isZero) {
-        return U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0);
+        unchecked {
+            return U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0);
+        }
     }
 }
