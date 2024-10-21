@@ -21,6 +21,7 @@ contract PECDSASHA1U384Authenticator {
         uint256 n;
         uint256 lowSmax;
         uint256 call;
+        uint256 three;
     }
 
     struct Inputs {
@@ -73,7 +74,8 @@ contract PECDSASHA1U384Authenticator {
                 .init(),
             lowSmax: hex"7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b"
                 .init(),
-            call: U384.initCall()
+            call: U384.initCall(),
+            three: U384.init(3)
         });
 
         if (!_isOnCurve(params.call, params.p, params.a, params.b, _inputs.x, _inputs.y)) {
@@ -106,6 +108,7 @@ contract PECDSASHA1U384Authenticator {
         uint256[3] memory P = _addAndReturnProjectivePoint(
             params.call,
             params.p,
+            params.three,
             params.a,
             x1,
             y1,
@@ -141,7 +144,7 @@ contract PECDSASHA1U384Authenticator {
         } else if (U384.eqInteger(scalar, 1)) {
             return (x0, y0);
         } else if (U384.eqInteger(scalar, 2)) {
-            return _twice(params.call, params.p, params.a, x0, y0);
+            return _twice(params.call, params.p, params.three, params.a, x0, y0);
         }
 
         uint256 base2X = x0;
@@ -173,6 +176,7 @@ contract PECDSASHA1U384Authenticator {
             (base2X, base2Y, base2Z) = _twiceProj(
                 params.call,
                 params.p,
+                params.three,
                 params.a,
                 base2X,
                 base2Y,
@@ -183,6 +187,7 @@ contract PECDSASHA1U384Authenticator {
                 (x1, y1, z1) = _addProj(
                     params.call,
                     params.p,
+                    params.three,
                     params.a,
                     base2X,
                     base2Y,
@@ -210,6 +215,7 @@ contract PECDSASHA1U384Authenticator {
     function _twiceProj(
         uint256 call,
         uint256 p,
+        uint256 three,
         uint256 a,
         uint256 x0,
         uint256 y0,
@@ -232,7 +238,7 @@ contract PECDSASHA1U384Authenticator {
 
         U384.modexpAssign(call, x0, 2, p);
 
-        y1 = U384.modmul(call, x0, U384.init(3), p);
+        y1 = U384.modmul(call, x0, three, p);
 
         U384.modexpAssign(call, z0, 2, p);
         U384.modmulAssign(call, z0, a, p);
@@ -240,15 +246,20 @@ contract PECDSASHA1U384Authenticator {
 
         z1 = U384.modexp(call, y1, 2, p);
         U384.modshl1AssignTo(call, x0, x1, p);
-        U384.modaddAssign(call, z1, U384.sub(p, x0), p);
 
-        U384.modaddAssignTo(call, x0, x1, U384.sub(p, z1), p);
+        uint256 diff = U384.sub(p, x0);
+        U384.modaddAssign(call, z1, diff, p);
+
+        U384.subAssignTo(diff, p, z1);
+        U384.modaddAssignTo(call, x0, x1, diff, p);
         U384.modmulAssign(call, x0, y1, p);
 
         U384.modmulAssign(call, y0, u, p);
         U384.modexpAssign(call, y0, 2, p);
         U384.modshl1Assign(call, y0, p);
-        U384.modaddAssignTo(call, y1, x0, U384.sub(p, y0), p);
+
+        U384.subAssignTo(diff, p, y0);
+        U384.modaddAssignTo(call, y1, x0, diff, p);
 
         U384.modmulAssignTo(call, x1, u, z1, p);
 
@@ -263,6 +274,7 @@ contract PECDSASHA1U384Authenticator {
     function _addProj(
         uint256 call,
         uint256 p,
+        uint256 three,
         uint256 a,
         uint256 x0,
         uint256 y0,
@@ -284,15 +296,15 @@ contract PECDSASHA1U384Authenticator {
 
         if (U384.eq(z2, y1)) {
             if (U384.eq(x2, y2)) {
-                return _twiceProj(call, p, a, x0, y0, z0);
+                return _twiceProj(call, p, three, a, x0, y0, z0);
             } else {
                 return _zeroProj();
             }
         }
 
-        uint256 v = U384.modmul(call, z0, z1, p);
+        a = U384.modmul(call, z0, z1, p);
 
-        return _addProj2(call, p, v, z2, y1, y2, x2);
+        return _addProj2(call, p, a, z2, y1, y2, x2);
     }
 
     /**
@@ -311,8 +323,11 @@ contract PECDSASHA1U384Authenticator {
         u1 = u1.copy();
         t0 = t0.copy();
 
-        y2 = U384.modadd(call, t0, U384.sub(p, t1), p);
-        x2 = U384.modadd(call, u0, U384.sub(p, u1), p);
+        uint256 diff = U384.sub(p, t1);
+        y2 = U384.modadd(call, t0, diff, p);
+
+        U384.subAssignTo(diff, p, u1);
+        x2 = U384.modadd(call, u0, diff, p);
         uint256 u2 = U384.modexp(call, x2, 2, p);
 
         z2 = U384.modexp(call, y2, 2, p);
@@ -320,20 +335,25 @@ contract PECDSASHA1U384Authenticator {
         U384.modmulAssign(call, z2, v, p);
         U384.modaddAssign(call, u1, u0, p);
         U384.modmulAssign(call, u1, u2, p);
-        U384.modaddAssign(call, z2, U384.sub(p, u1), p);
+        U384.subAssignTo(diff, p, u1);
+        U384.modaddAssign(call, z2, diff, p);
 
         uint256 u3 = U384.modmul(call, u2, x2, p);
 
         U384.modmulAssign(call, x2, z2, p);
 
         U384.modmulAssign(call, u0, u2, p);
-        U384.modaddAssign(call, u0, U384.sub(p, z2), p);
+
+        U384.subAssignTo(diff, p, z2);
+        U384.modaddAssign(call, u0, diff, p);
         U384.modmulAssign(call, y2, u0, p);
         U384.modmulAssign(call, t0, u3, p);
 
-        U384.modaddAssign(call, y2, U384.sub(p, t0), p);
+        U384.subAssignTo(diff, p, t0);
+        U384.modaddAssign(call, y2, diff, p);
 
-        U384.modmulAssignTo(call, z2, u3, v, p);
+        U384.modmulAssign(call, u3, v, p); // stack too deep
+        z2 = u3;
     }
 
     /**
@@ -342,6 +362,7 @@ contract PECDSASHA1U384Authenticator {
     function _add(
         uint256 call,
         uint256 p,
+        uint256 three,
         uint256 a,
         uint256 x0,
         uint256 y0,
@@ -350,7 +371,7 @@ contract PECDSASHA1U384Authenticator {
     ) internal view returns (uint256, uint256) {
         uint256 z0;
 
-        (x0, y0, z0) = _addProj(call, p, a, x0, y0, U384.init(1), x1, y1, U384.init(1));
+        (x0, y0, z0) = _addProj(call, p, three, a, x0, y0, U384.init(1), x1, y1, U384.init(1));
 
         return _toAffinePoint(call, p, x0, y0, z0);
     }
@@ -361,13 +382,14 @@ contract PECDSASHA1U384Authenticator {
     function _twice(
         uint256 call,
         uint256 p,
+        uint256 three,
         uint256 a,
         uint256 x0,
         uint256 y0
     ) internal view returns (uint256, uint256) {
         uint256 z0;
 
-        (x0, y0, z0) = _twiceProj(call, p, a, x0, y0, U384.init(1));
+        (x0, y0, z0) = _twiceProj(call, p, three, a, x0, y0, U384.init(1));
 
         return _toAffinePoint(call, p, x0, y0, z0);
     }
@@ -378,6 +400,7 @@ contract PECDSASHA1U384Authenticator {
     function _addAndReturnProjectivePoint(
         uint256 call,
         uint256 p,
+        uint256 three,
         uint256 a,
         uint256 x1,
         uint256 y1,
@@ -387,7 +410,7 @@ contract PECDSASHA1U384Authenticator {
         uint256 x;
         uint256 y;
 
-        (x, y) = _add(call, p, a, x1, y1, x2, y2);
+        (x, y) = _add(call, p, three, a, x1, y1, x2, y2);
         return _toProjectivePoint(call, p, x, y);
     }
 

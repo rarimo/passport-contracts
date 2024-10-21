@@ -355,6 +355,10 @@ library U384 {
         return r_;
     }
 
+    function subAssignTo(uint256 to_, uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
+        _sub(a_, b_, to_);
+    }
+
     function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
         uint256 bytesHandler_ = _allocate(LONG_ALLOCATION);
 
