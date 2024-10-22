@@ -1,5 +1,7 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
+import { deployPoseidons } from "./helpers";
+
 import { CRSADispatcher__factory, PRSASHADispatcher__factory, Registration2, Registration2__factory } from "@ethers-v6";
 import {
   PPerPassport_1_256_3_5_576_248_NAVerifier2__factory,
@@ -123,7 +125,9 @@ async function displayCertificateUpgradeData(deployer: Deployer, chainName: stri
       nonce++,
     );
 
-    console.log(++counter, dt, data);
+    console.log(++counter, dt);
+    console.log("Data to sign:", Object.values(data)[0]);
+    console.log("Data for upgrade:", Object.values(data)[1]);
     console.log();
   }
 }
@@ -152,7 +156,9 @@ async function displayPassportUpgradeData(deployer: Deployer, chainName: string,
       nonce++,
     );
 
-    console.log(++counter, dt, data);
+    console.log(++counter, dt);
+    console.log("Data to sign:", Object.values(data)[0]);
+    console.log("Data for upgrade:", Object.values(data)[1]);
     console.log();
   }
 }
@@ -214,7 +220,9 @@ async function displayVerifierUpgradeData(deployer: Deployer, chainName: string,
       nonce++,
     );
 
-    console.log(++counter, dt, data);
+    console.log(++counter, dt);
+    console.log("Data to sign:", Object.values(data)[0]);
+    console.log("Data for upgrade:", Object.values(data)[1]);
     console.log();
   }
 }
@@ -223,6 +231,7 @@ export = async (deployer: Deployer) => {
   const chainName = "Rarimo-mainnet";
   const registration = await deployer.deployed(Registration2__factory, "0xC0B09085Fa2ad3A8BbF96494B8d5cd10702FE20d");
 
+  await deployPoseidons(deployer, [1, 2, 3, 5]);
   await deployAll(deployer);
 
   await displayCertificateUpgradeData(deployer, chainName, registration);

@@ -20,13 +20,13 @@ export class TSSUpgrader {
     dispatcherType: string,
     dispatcher: string,
     nonce: BigNumberish,
-  ): string {
+  ): Record<string, string> {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32", "address"], [dispatcherType, dispatcher]);
 
     const dataToDisplay = this.getArbitraryData(operationType, data, nonce);
 
-    return dataToDisplay;
+    return { dataToDisplay, data };
   }
 
   public getRemoveDependencyData(
@@ -36,13 +36,13 @@ export class TSSUpgrader {
       | RegistrationMethodId.RemovePassportVerifier,
     dispatcherType: string,
     nonce: BigNumberish,
-  ): string {
+  ): Record<string, string> {
     const encoder = new ethers.AbiCoder();
     const data = encoder.encode(["bytes32"], [dispatcherType]);
 
     const dataToDisplay = this.getArbitraryData(operationType, data, nonce);
 
-    return dataToDisplay;
+    return { dataToDisplay, data };
   }
 
   getArbitraryData(methodId: number, data: string, nonce: BigNumberish): string {
