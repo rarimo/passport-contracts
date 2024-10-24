@@ -2,7 +2,6 @@
 pragma solidity 0.8.16;
 
 import {SHA1} from "../../utils/SHA1.sol";
-import "hardhat/console.sol";
 
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
@@ -32,9 +31,9 @@ contract PECDSASHA1Authenticator {
         uint256 y
     ) external pure returns (bool) {
         /// @dev accept s only from the lower part of the curve
-        // if (r == 0 || r >= n || s == 0 || s > lowSmax) {
-        //     return false;
-        // }
+//        if (r == 0 || r >= n || s == 0 || s > lowSmax) {
+//             return false;
+//        }
 
         if (!_isOnCurve(x, y)) {
             return false;
@@ -50,31 +49,18 @@ contract PECDSASHA1Authenticator {
         uint256 sInv = _inverseMod(s, n);
 
         (x1, y1) = _multiplyScalar(gx, gy, mulmod(message, sInv, n));
-        console.log("x1y1");
-        console.logBytes32(bytes32(x1));
-        console.logBytes32(bytes32(y1));
-
         (x2, y2) = _multiplyScalar(x, y, mulmod(r, sInv, n));
-        console.log("x2y2");
-        console.logBytes32(bytes32(x2));
-        console.logBytes32(bytes32(y2));
 
         uint256[3] memory P = _addAndReturnProjectivePoint(x1, y1, x2, y2);
 
-        console.logBytes32(bytes32(P[0]));
-        console.logBytes32(bytes32(P[1]));
-        console.logBytes32(bytes32(P[2]));
+        if (P[2] == 0) {
+            return false;
+        }
 
-        // if (P[2] == 0) {
-        //     return false;
-        // }
+        uint256 Px = _inverseMod(P[2], p);
+        Px = mulmod(P[0], mulmod(Px, Px, p), p);
 
-        // uint256 Px = _inverseMod(P[2], p);
-        // Px = mulmod(P[0], mulmod(Px, Px, p), p);
-
-        // return Px % n == r;
-
-        return true;
+        return Px % n == r;
     }
 
     /**

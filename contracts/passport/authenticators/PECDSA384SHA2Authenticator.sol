@@ -6,7 +6,7 @@ import {U384} from "../../utils/U384.sol";
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract PECDSASHA1U384Authenticator {
+contract PECDSA384SHA2Authenticator {
     using U384 for *;
 
     struct Parameters {
@@ -44,11 +44,6 @@ contract PECDSASHA1U384Authenticator {
         Inputs memory inputs
     ) external view returns (bool) {
         unchecked {
-            /// @dev accept s only from the lower part of the curve
-            // if (r == 0 || r >= n || s == 0 || s > lowSmax) {
-            //     return false;
-            // }
-
             _Inputs memory _inputs;
 
             _inputs.r = U384.init(inputs.r);
@@ -75,6 +70,16 @@ contract PECDSASHA1U384Authenticator {
                 call: U384.initCall(),
                 three: U384.init(3)
             });
+
+            /// @dev accept s only from the lower part of the curve
+//            if (
+//                U384.eqInteger(_inputs.r, 0) ||
+//                U384.cmp(_inputs.r, params.n) != -1 ||
+//                U384.eqInteger(_inputs.s, 0) ||
+//                U384.cmp(_inputs.s, params.lowSmax) == 1
+//            ) {
+//                return false;
+//            }
 
             if (!_isOnCurve(params.call, params.p, params.a, params.b, _inputs.x, _inputs.y)) {
                 return false;
