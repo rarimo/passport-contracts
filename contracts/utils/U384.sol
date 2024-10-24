@@ -21,7 +21,7 @@ library U384 {
 
     function init(bytes memory from_) internal pure returns (uint256 handler_) {
         unchecked {
-            require(from_.length == 64, "U384: not 384");
+            require(from_.length == 48, "U384: not 384");
 
             handler_ = _allocate(SHORT_ALLOCATION);
 
