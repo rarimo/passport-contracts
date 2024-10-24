@@ -72,14 +72,14 @@ contract PECDSA384SHA2Authenticator {
             });
 
             /// @dev accept s only from the lower part of the curve
-//            if (
-//                U384.eqInteger(_inputs.r, 0) ||
-//                U384.cmp(_inputs.r, params.n) != -1 ||
-//                U384.eqInteger(_inputs.s, 0) ||
-//                U384.cmp(_inputs.s, params.lowSmax) == 1
-//            ) {
-//                return false;
-//            }
+            if (
+                U384.eqInteger(_inputs.r, 0) ||
+                U384.cmp(_inputs.r, params.n) >= 0 ||
+                U384.eqInteger(_inputs.s, 0) ||
+                U384.cmp(_inputs.s, params.lowSmax) == 1
+            ) {
+                return false;
+            }
 
             if (!_isOnCurve(params.call, params.p, params.a, params.b, _inputs.x, _inputs.y)) {
                 return false;
