@@ -17,22 +17,58 @@ export const C_RSAPSS_SHA512_4096 = keccak256(["string"], ["C_RSAPSS_SHA512_4096
 export const P_NO_AA = keccak256(["string"], ["P_NO_AA"]);
 export const P_RSA_SHA1_2688 = keccak256(["string"], ["P_RSA_SHA1_2688"]);
 export const P_RSA_SHA1_2688_3 = keccak256(["string"], ["P_RSA_SHA1_2688_3"]);
+export const P_ECDSA_SHA1_2704 = keccak256(["string"], ["P_ECDSA_SHA1_2704"]);
 export const P_RSA_SHA2_2688 = keccak256(["string"], ["P_RSA_SHA2_2688"]);
 export const P_RSA_SHA2_2688_3 = keccak256(["string"], ["P_RSA_SHA2_2688_3"]);
-export const P_ECDSA_SHA1_2704 = keccak256(["string"], ["P_ECDSA_SHA1_2704"]);
 
 // -------------------------- VERIFIER --------------------------
+
+export const Z_PER_PASSPORT_1_256_3_5_576_248_NA = keccak256(["string"], ["Z_PER_PASSPORT_1_256_3_5_576_248_NA"]);
+export const Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296"],
+);
+export const Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_2_256_3_6_336_264_21_2448_6_2008"],
+);
+export const Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008"],
+);
+export const Z_PER_PASSPORT_1_256_3_6_576_264_1_2448_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_1_256_3_6_576_264_1_2448_3_256"],
+);
+export const Z_PER_PASSPORT_2_256_3_6_336_248_1_2432_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_2_256_3_6_336_248_1_2432_3_256"],
+);
+export const Z_PER_PASSPORT_2_256_3_6_576_248_1_2432_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_2_256_3_6_576_248_1_2432_3_256"],
+);
+export const Z_PER_PASSPORT_11_256_3_3_576_248_1_1184_5_264 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_11_256_3_3_576_248_1_1184_5_264"],
+);
+export const Z_PER_PASSPORT_12_256_3_3_336_232_NA = keccak256(["string"], ["Z_PER_PASSPORT_12_256_3_3_336_232_NA"]);
+export const Z_PER_PASSPORT_1_256_3_4_336_232_1_1480_5_296 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_1_256_3_4_336_232_1_1480_5_296"],
+);
+export const Z_PER_PASSPORT_1_256_3_4_600_248_1_1496_3_256 = keccak256(
+  ["string"],
+  ["Z_PER_PASSPORT_1_256_3_4_600_248_1_1496_3_256"],
+);
 
 export const Z_UNIVERSAL_4096 = keccak256(["string"], ["Z_UNIVERSAL_4096"]);
 export const Z_UNIVERSAL_2048 = keccak256(["string"], ["Z_UNIVERSAL_2048"]);
 export const Z_UNIVERSAL_2048_V2 = keccak256(["string"], ["Z_UNIVERSAL_2048_V2"]);
-export const Z_UNIVERSAL_2048_V3 = keccak256(["string"], ["Z_UNIVERSAL_2048_V3"]);
 
 export const Z_UNIVERSAL_PSS_2048_S32_E2 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S32_E2"]);
 export const Z_UNIVERSAL_PSS_2048_S32_E17 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S32_E17"]);
 export const Z_UNIVERSAL_PSS_2048_S64_E17 = keccak256(["string"], ["Z_UNIVERSAL_PSS_2048_S64_E17"]);
-
-export const Z_UKR_ECDSA_BRAINPOOL_256 = keccak256(["string"], ["Z_UKR_ECDSA_BRAINPOOL_256"]);
 
 export const Z_INTERNAL = keccak256(["string"], ["Z_INTERNAL"]);
 export const Z_INTERNAL_OPT = keccak256(["string"], ["Z_INTERNAL_OPT"]);
