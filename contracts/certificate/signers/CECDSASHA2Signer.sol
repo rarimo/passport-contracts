@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {U384} from "../../utils/U384.sol";
-import "hardhat/console.sol";
+
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
