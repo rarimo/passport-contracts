@@ -7,12 +7,12 @@ import { PECDSASHA1Authenticator } from "@ethers-v6";
 describe("PECDSASHA1Authenticator", () => {
   const reverter = new Reverter();
 
-  let auth256: PECDSASHA1Authenticator;
+  let auth: PECDSASHA1Authenticator;
 
   before("setup", async () => {
     const PECDSASHA1Authenticator = await ethers.getContractFactory("PECDSASHA1Authenticator");
 
-    auth256 = await PECDSASHA1Authenticator.deploy();
+    auth = await PECDSASHA1Authenticator.deploy();
 
     await reverter.snapshot();
   });
@@ -28,7 +28,7 @@ describe("PECDSASHA1Authenticator", () => {
       const x = "0x69501be7dac08517dfe4a44e1952cc9f5b21d22cbe4d3db26ea22542afbf8548";
       const y = "0x3d72a4671baa4bcd74f4cdc71bf6fe45a9ddaf50c5f6e3327078c90da2fcb304";
 
-      expect(await auth256.authenticate(challenge, r, s, x, y)).to.be.true;
+      expect(await auth.authenticate(challenge, r, s, x, y)).to.be.true;
     });
   });
 });

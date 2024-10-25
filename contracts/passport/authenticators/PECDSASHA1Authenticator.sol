@@ -32,7 +32,7 @@ contract PECDSASHA1Authenticator {
     ) external pure returns (bool) {
         /// @dev accept s only from the lower part of the curve
         if (r == 0 || r >= n || s == 0 || s > lowSmax) {
-             return false;
+            return false;
         }
 
         if (!_isOnCurve(x, y)) {

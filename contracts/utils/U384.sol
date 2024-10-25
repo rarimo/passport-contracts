@@ -35,7 +35,9 @@ library U384 {
         }
     }
 
-    function init2(bytes memory from2_) internal pure returns (uint256 handler1_, uint256 handler2_) {
+    function init2(
+        bytes memory from2_
+    ) internal pure returns (uint256 handler1_, uint256 handler2_) {
         unchecked {
             require(from2_.length == 96, "U384: not 768");
 

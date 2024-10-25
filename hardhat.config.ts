@@ -22,9 +22,6 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialDate: "2004-01-01",
-      allowUnlimitedContractSize: true,
-      gas: "auto",
-      blockGasLimit: 300_000_000, // whatever you want here
     },
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -96,7 +93,6 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-      viaIR: false,
     },
   },
   etherscan: {
@@ -155,7 +151,7 @@ const config: HardhatUserConfig = {
   gasReporter: {
     currency: "USD",
     gasPrice: 50,
-    enabled: true,
+    enabled: false,
     reportPureAndViewMethods: true,
     coinmarketcap: `${process.env.COINMARKETCAP_KEY}`,
   },
