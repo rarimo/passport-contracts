@@ -35,6 +35,27 @@ library U384 {
         }
     }
 
+    function init2(bytes memory from2_) internal pure returns (uint256 handler1_, uint256 handler2_) {
+        unchecked {
+            require(from2_.length == 96, "U384: not 768");
+
+            handler1_ = _allocate(SHORT_ALLOCATION);
+            handler2_ = _allocate(SHORT_ALLOCATION);
+
+            assembly {
+                mstore(handler1_, 0x00)
+                mstore(add(handler1_, 0x10), mload(add(from2_, 0x20)))
+                mstore(add(handler1_, 0x20), mload(add(from2_, 0x30)))
+
+                mstore(handler2_, 0x00)
+                mstore(add(handler2_, 0x10), mload(add(from2_, 0x50)))
+                mstore(add(handler2_, 0x20), mload(add(from2_, 0x60)))
+            }
+
+            return (handler1_, handler2_);
+        }
+    }
+
     function assign(uint256 to_, uint256 from_) internal pure {
         assembly {
             mstore(to_, mload(from_))

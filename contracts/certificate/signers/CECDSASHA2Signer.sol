@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {U384} from "../../utils/U384.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import {U384} from "../../utils/U384.sol";
+import "hardhat/console.sol";
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract PECDSA384SHA2Authenticator {
+contract CECDSASHA2Signer is Initializable {
     using U384 for *;
 
     struct Parameters {
@@ -22,34 +24,28 @@ contract PECDSA384SHA2Authenticator {
     }
 
     struct Inputs {
-        bytes r;
-        bytes s;
-        bytes x;
-        bytes y;
-    }
-
-    struct _Inputs {
         uint256 r;
         uint256 s;
         uint256 x;
         uint256 y;
     }
 
+    function __CECDSASHA2Signer_init() external initializer {}
+
     /**
      * @notice Checks active authentication of a passport. ECDSA active authentication is an ECDSA signature of
      * raw SHA1 hash of challenge bytes. Usually brainpool256r1 elliptic curve is used.
      */
-    function authenticate(
-        bytes memory challenge,
-        Inputs memory inputs
+    function verifyICAOSignature(
+        bytes memory x509SignedAttributes_,
+        bytes memory icaoMemberSignature_,
+        bytes memory icaoMemberKey_
     ) external view returns (bool) {
         unchecked {
-            _Inputs memory _inputs;
+            Inputs memory inputs;
 
-            _inputs.r = U384.init(inputs.r);
-            _inputs.s = U384.init(inputs.s);
-            _inputs.x = U384.init(inputs.x);
-            _inputs.y = U384.init(inputs.y);
+            (inputs.r, inputs.s) = U384.init2(icaoMemberSignature_);
+            (inputs.x, inputs.y) = U384.init2(icaoMemberKey_);
 
             // brainpool256r1 parameters
             Parameters memory params = Parameters({
@@ -73,31 +69,31 @@ contract PECDSA384SHA2Authenticator {
 
             /// @dev accept s only from the lower part of the curve
             if (
-                U384.eqInteger(_inputs.r, 0) ||
-                U384.cmp(_inputs.r, params.n) >= 0 ||
-                U384.eqInteger(_inputs.s, 0) ||
-                U384.cmp(_inputs.s, params.lowSmax) > 0
+                U384.eqInteger(inputs.r, 0) ||
+                U384.cmp(inputs.r, params.n) >= 0 ||
+                U384.eqInteger(inputs.s, 0) ||
+                U384.cmp(inputs.s, params.lowSmax) > 0
             ) {
                 return false;
             }
 
-            if (!_isOnCurve(params.call, params.p, params.a, params.b, _inputs.x, _inputs.y)) {
+            if (!_isOnCurve(params.call, params.p, params.a, params.b, inputs.x, inputs.y)) {
                 return false;
             }
 
-            uint256 message = uint256(sha256(challenge)).init();
+            uint256 message = uint256(sha256(x509SignedAttributes_)).init();
 
             (uint256 x1, uint256 y1) = _multiplyScalar(
                 params,
                 params.gx,
                 params.gy,
-                U384.moddiv(params.call, message, _inputs.s, params.n)
+                U384.moddiv(params.call, message, inputs.s, params.n)
             );
             (uint256 x2, uint256 y2) = _multiplyScalar(
                 params,
-                _inputs.x,
-                _inputs.y,
-                U384.moddiv(params.call, _inputs.r, _inputs.s, params.n)
+                inputs.x,
+                inputs.y,
+                U384.moddiv(params.call, inputs.r, inputs.s, params.n)
             );
 
             uint256[3] memory P = _addAndReturnProjectivePoint(
@@ -123,7 +119,7 @@ contract PECDSA384SHA2Authenticator {
                 params.p
             );
 
-            return U384.eq(U384.mod(params.call, Px, params.n), _inputs.r);
+            return U384.eq(U384.mod(params.call, Px, params.n), inputs.r);
         }
     }
 
