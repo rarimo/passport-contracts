@@ -76,7 +76,7 @@ contract PECDSA384SHA2Authenticator {
                 U384.eqInteger(_inputs.r, 0) ||
                 U384.cmp(_inputs.r, params.n) >= 0 ||
                 U384.eqInteger(_inputs.s, 0) ||
-                U384.cmp(_inputs.s, params.lowSmax) == 1
+                U384.cmp(_inputs.s, params.lowSmax) > 0
             ) {
                 return false;
             }
