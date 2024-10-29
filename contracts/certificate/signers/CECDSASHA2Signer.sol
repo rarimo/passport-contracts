@@ -3,12 +3,14 @@ pragma solidity 0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.sol";
+
 import {U384} from "../../utils/U384.sol";
 
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract CECDSASHA2Signer is Initializable {
+contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     using U384 for *;
 
     struct Parameters {

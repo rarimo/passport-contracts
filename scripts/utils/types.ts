@@ -11,6 +11,7 @@ export const C_RSAPSS_SHA2_2048 = keccak256(["string"], ["C_RSAPSS_SHA2_2048"]);
 export const C_RSAPSS_SHA2_4096 = keccak256(["string"], ["C_RSAPSS_SHA2_4096"]);
 export const C_RSAPSS_SHA512_2048 = keccak256(["string"], ["C_RSAPSS_SHA512_2048"]);
 export const C_RSAPSS_SHA512_4096 = keccak256(["string"], ["C_RSAPSS_SHA512_4096"]);
+export const C_ECDSA_SHA2_512 = keccak256(["string"], ["C_ECDSA_SHA2_512"]);
 
 // -------------------------- PASSPORT --------------------------
 

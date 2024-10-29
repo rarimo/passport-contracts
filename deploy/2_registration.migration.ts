@@ -8,6 +8,7 @@ import {
   deployPNOAADispatcher,
   deployPRSASHA2688Dispatcher,
   deployPECDSASHA12704Dispatcher,
+  deployCECDSADispatcher,
 } from "./helpers";
 
 import { Registration2Mock__factory, StateKeeperMock__factory } from "@ethers-v6";
@@ -32,6 +33,8 @@ export = async (deployer: Deployer) => {
   await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "256", "0x0282010100");
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
+
+  await deployCECDSADispatcher(deployer, "SHA2", "64", "0x0103420004");
 
   await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA1");
   await deployPRSASHA2688Dispatcher(deployer, "3", "SHA1");

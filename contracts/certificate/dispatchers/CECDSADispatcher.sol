@@ -5,10 +5,10 @@ import {AbstractCDispatcher} from "./abstract/AbstractCDispatcher.sol";
 
 import {Bytes2Poseidon} from "../../utils/Bytes2Poseidon.sol";
 
-contract CRSADispatcher is AbstractCDispatcher {
+contract CECDSADispatcher is AbstractCDispatcher {
     using Bytes2Poseidon for bytes;
 
-    function __CRSADispatcher_init(
+    function __CECDSADispatcher_init(
         address signer_,
         uint256 keyByteLength_,
         bytes calldata keyCheckPrefix_
@@ -19,6 +19,6 @@ contract CRSADispatcher is AbstractCDispatcher {
     function getCertificateKey(
         bytes memory certificatePublicKey_
     ) external pure override returns (uint256 keyHash_) {
-        return certificatePublicKey_.hashPacked();
+        return certificatePublicKey_.hash512();
     }
 }
