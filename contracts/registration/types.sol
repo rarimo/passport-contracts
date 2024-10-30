@@ -13,7 +13,7 @@ bytes32 constant C_RSAPSS_SHA2_4096 = keccak256("C_RSAPSS_SHA2_4096");
 bytes32 constant C_RSAPSS_SHA512_2048 = keccak256("C_RSAPSS_SHA512_2048");
 bytes32 constant C_RSAPSS_SHA512_4096 = keccak256("C_RSAPSS_SHA512_4096");
 
-bytes32 constant C_ECDSA_SHA2_512 = keccak256("C_ECDSA_SHA2_512");
+bytes32 constant C_ECDSA_SECP384R1_SHA2_512 = keccak256("C_ECDSA_SECP384R1_SHA2_512");
 
 // -------------------------- PASSPORT --------------------------
 

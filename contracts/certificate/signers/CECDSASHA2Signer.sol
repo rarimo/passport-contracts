@@ -34,10 +34,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
 
     function __CECDSASHA2Signer_init() external initializer {}
 
-    /**
-     * @notice Checks active authentication of a passport. ECDSA active authentication is an ECDSA signature of
-     * raw SHA1 hash of challenge bytes. Usually brainpool256r1 elliptic curve is used.
-     */
     function verifyICAOSignature(
         bytes memory x509SignedAttributes_,
         bytes memory icaoMemberSignature_,
@@ -49,7 +45,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             (inputs.r, inputs.s) = U384.init2(icaoMemberSignature_);
             (inputs.x, inputs.y) = U384.init2(icaoMemberKey_);
 
-            // brainpool256r1 parameters
+            // secp384r1 parameters
             Parameters memory params = Parameters({
                 a: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC"
                     .init(),
