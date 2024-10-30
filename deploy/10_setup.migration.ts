@@ -87,7 +87,10 @@ export = async (deployer: Deployer) => {
   const cRsaPss2048Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 256");
   const cRsaPss4096Sha512Dispatcher = await deployer.deployed(CRSADispatcher__factory, "CRSAPSSDispatcher SHA512 512");
 
-  const cEcdsa512Sha2Dispatcher = await deployer.deployed(CECDSADispatcher__factory, "CECDSADispatcher SHA2 64");
+  const cEcdsaSecp384r1512Sha2Dispatcher = await deployer.deployed(
+    CECDSADispatcher__factory,
+    "CECDSADispatcher SHA2 64",
+  );
 
   const pRsaSha12688Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 65537 SHA1");
   const pRsaSha126883Dispatcher = await deployer.deployed(PRSASHADispatcher__factory, "PRSASHADispatcher 3 SHA1");
@@ -159,7 +162,7 @@ export = async (deployer: Deployer) => {
 
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP384R1_SHA2_512,
-    await cEcdsa512Sha2Dispatcher.getAddress(),
+    await cEcdsaSecp384r1512Sha2Dispatcher.getAddress(),
   );
 
   await registration.mockAddPassportDispatcher(P_RSA_SHA1_2688, await pRsaSha12688Dispatcher.getAddress());
