@@ -47,8 +47,10 @@ contract PECDSASHA1Authenticator {
         uint256 y2;
 
         uint256 sInv = _inverseMod(s, n);
+
         (x1, y1) = _multiplyScalar(gx, gy, mulmod(message, sInv, n));
         (x2, y2) = _multiplyScalar(x, y, mulmod(r, sInv, n));
+
         uint256[3] memory P = _addAndReturnProjectivePoint(x1, y1, x2, y2);
 
         if (P[2] == 0) {
@@ -81,7 +83,6 @@ contract PECDSASHA1Authenticator {
 
         while (r2 != 0) {
             q = r1 / r2;
-
             unchecked {
                 (t1, t2, r1, r2) = (t2, t1 - int256(q) * t2, r2, r1 - q * r2);
             }

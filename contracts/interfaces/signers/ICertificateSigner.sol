@@ -4,7 +4,7 @@ pragma solidity 0.8.16;
 /**
  * @notice Certificate signer interface
  */
-interface ICertificateRSASigner {
+interface ICertificateSigner {
     function verifyICAOSignature(
         bytes calldata x509SignedAttributes_,
         bytes calldata icaoMemberSignature_,

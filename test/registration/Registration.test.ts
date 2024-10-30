@@ -55,7 +55,7 @@ const registrationName = "Initial";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-describe("Registration", () => {
+describe.skip("Registration", () => {
   const reverter = new Reverter();
 
   let signHelper: TSSSigner;

@@ -3,11 +3,11 @@ pragma solidity 0.8.16;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {ICertificateRSASigner} from "../../interfaces/signers/ICertificateRSASigner.sol";
+import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.sol";
 
 import {RSAPSS} from "../../utils/RSAPSS.sol";
 
-contract CRSAPSSSigner is ICertificateRSASigner, Initializable {
+contract CRSAPSSSigner is ICertificateSigner, Initializable {
     uint256 public exponent; // RSAPSS exponent
     bool public isSha2; // hash function switcher, true - sha2, false - sha512
 
