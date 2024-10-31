@@ -94,30 +94,51 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 U384.moddiv(params.call, inputs.r, inputs.s, params.n)
             );
 
-            uint256[3] memory P = _addAndReturnProjectivePoint(
+            (x1, y1, x2) = _addProj(
                 params.call,
                 params.p,
                 params.three,
                 params.a,
                 x1,
                 y1,
+                U384.init(1),
                 x2,
-                y2
+                y2,
+                U384.init(1)
             );
 
-            if (U384.eqInteger(P[2], 0)) {
+            return U384.eq(U384.moddiv(params.call, x1, x2, params.p), inputs.r);
+        }
+    }
+
+    /**
+     * @dev Check if a point in affine coordinates is on the curve.
+     */
+    function _isOnCurve(
+        uint256 call,
+        uint256 p,
+        uint256 a,
+        uint256 b,
+        uint256 x,
+        uint256 y
+    ) internal view returns (bool) {
+        unchecked {
+            if (U384.eqInteger(x, 0) || U384.eq(x, p) || U384.eqInteger(y, 0) || U384.eq(y, p)) {
                 return false;
             }
 
-            uint256 Px = U384.modinv(params.call, P[2], params.p);
-            Px = U384.modmul(
-                params.call,
-                P[0],
-                U384.modmul(params.call, Px, Px, params.p),
-                params.p
-            );
+            uint256 LHS = U384.modexp(call, y, 2, p);
+            uint256 RHS = U384.modexp(call, x, 3, p);
 
-            return U384.eq(U384.mod(params.call, Px, params.n), inputs.r);
+            if (!U384.eqInteger(a, 0)) {
+                RHS = U384.modadd(call, RHS, U384.modmul(call, x, a, p), p); // x^3 + a*x
+            }
+
+            if (!U384.eqInteger(b, 0)) {
+                RHS = U384.modadd(call, RHS, b, p); // x^3 + a*x + b
+            }
+
+            return U384.eq(LHS, RHS);
         }
     }
 
@@ -132,7 +153,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x1, uint256 y1) {
         unchecked {
             if (U384.eqInteger(scalar, 0)) {
-                return _zeroAffine();
+                return (U384.init(0), U384.init(0)); // zero affine coordinates
             } else if (U384.eqInteger(scalar, 1)) {
                 return (x0, y0);
             } else if (U384.eqInteger(scalar, 2)) {
@@ -193,7 +214,30 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 highBits_ >>= 1;
             }
 
-            return _toAffinePoint(params.call, params.p, x1, y1, z1);
+            uint256 p_ = params.p;
+            uint256 call_ = params.call;
+
+            return (U384.moddiv(call_, x1, z1, p_), U384.moddiv(call_, y1, z1, p_));
+        }
+    }
+
+    /**
+     * @dev Double an elliptic curve point in affine coordinates.
+     */
+    function _twice(
+        uint256 call,
+        uint256 p,
+        uint256 three,
+        uint256 a,
+        uint256 x0,
+        uint256 y0
+    ) internal view returns (uint256, uint256) {
+        unchecked {
+            uint256 z0;
+
+            (x0, y0, z0) = _twiceProj(call, p, three, a, x0, y0, U384.init(1));
+
+            return (U384.moddiv(call, x0, z0, p), U384.moddiv(call, y0, z0, p));
         }
     }
 
@@ -211,8 +255,8 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 z0
     ) internal view returns (uint256 x1, uint256 y1, uint256 z1) {
         unchecked {
-            if (_isZeroCurve(x0, y0)) {
-                return _zeroProj();
+            if (U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0)) {
+                return (U384.init(0), U384.init(1), U384.init(0)); // zero proj
             }
 
             uint256 u = U384.modmul(call, y0, z0, p);
@@ -271,9 +315,9 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 z1
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
         unchecked {
-            if (_isZeroCurve(x0, y0)) {
+            if (U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0)) {
                 return (x1, y1, z1);
-            } else if (_isZeroCurve(x1, y1)) {
+            } else if (U384.eqInteger(x1, 0) && U384.eqInteger(y1, 0)) {
                 return (x0, y0, z0);
             }
 
@@ -286,7 +330,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 if (U384.eq(x2, y2)) {
                     return _twiceProj(call, p, three, a, x0, y0, z0);
                 } else {
-                    return _zeroProj();
+                    return (U384.init(0), U384.init(1), U384.init(0)); // zero proj
                 }
             }
 
@@ -339,159 +383,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             U384.modaddAssign(call, y2, diff, p);
 
             U384.modmulAssignTo(call, z2, u3, v, p);
-        }
-    }
-
-    /**
-     * @dev Add two elliptic curve points in affine coordinates.
-     */
-    function _add(
-        uint256 call,
-        uint256 p,
-        uint256 three,
-        uint256 a,
-        uint256 x0,
-        uint256 y0,
-        uint256 x1,
-        uint256 y1
-    ) internal view returns (uint256, uint256) {
-        unchecked {
-            uint256 z0;
-
-            (x0, y0, z0) = _addProj(call, p, three, a, x0, y0, U384.init(1), x1, y1, U384.init(1));
-
-            return _toAffinePoint(call, p, x0, y0, z0);
-        }
-    }
-
-    /**
-     * @dev Double an elliptic curve point in affine coordinates.
-     */
-    function _twice(
-        uint256 call,
-        uint256 p,
-        uint256 three,
-        uint256 a,
-        uint256 x0,
-        uint256 y0
-    ) internal view returns (uint256, uint256) {
-        unchecked {
-            uint256 z0;
-
-            (x0, y0, z0) = _twiceProj(call, p, three, a, x0, y0, U384.init(1));
-
-            return _toAffinePoint(call, p, x0, y0, z0);
-        }
-    }
-
-    /**
-     * @dev Add two points in affine coordinates and return projective point.
-     */
-    function _addAndReturnProjectivePoint(
-        uint256 call,
-        uint256 p,
-        uint256 three,
-        uint256 a,
-        uint256 x1,
-        uint256 y1,
-        uint256 x2,
-        uint256 y2
-    ) internal view returns (uint256[3] memory P) {
-        unchecked {
-            uint256 x;
-            uint256 y;
-
-            (x, y) = _add(call, p, three, a, x1, y1, x2, y2);
-            return _toProjectivePoint(call, p, x, y);
-        }
-    }
-
-    /**
-     * @dev Transform from projective to affine coordinates.
-     */
-    function _toAffinePoint(
-        uint256 call,
-        uint256 p,
-        uint256 x0,
-        uint256 y0,
-        uint256 z0
-    ) internal view returns (uint256 x1, uint256 y1) {
-        unchecked {
-            return (U384.moddiv(call, x0, z0, p), U384.moddiv(call, y0, z0, p));
-        }
-    }
-
-    /**
-     * @dev Check if a point in affine coordinates is on the curve.
-     */
-    function _isOnCurve(
-        uint256 call,
-        uint256 p,
-        uint256 a,
-        uint256 b,
-        uint256 x,
-        uint256 y
-    ) internal view returns (bool) {
-        unchecked {
-            if (U384.eqInteger(x, 0) || U384.eq(x, p) || U384.eqInteger(y, 0) || U384.eq(y, p)) {
-                return false;
-            }
-
-            uint256 LHS = U384.modexp(call, y, 2, p);
-            uint256 RHS = U384.modexp(call, x, 3, p);
-
-            if (!U384.eqInteger(a, 0)) {
-                RHS = U384.modadd(call, RHS, U384.modmul(call, x, a, p), p); // x^3 + a*x
-            }
-
-            if (!U384.eqInteger(b, 0)) {
-                RHS = U384.modadd(call, RHS, b, p); // x^3 + a*x + b
-            }
-
-            return U384.eq(LHS, RHS);
-        }
-    }
-
-    /**
-     * @dev Transform affine coordinates into projective coordinates.
-     */
-    function _toProjectivePoint(
-        uint256 call,
-        uint256 p,
-        uint256 x0,
-        uint256 y0
-    ) internal view returns (uint256[3] memory P) {
-        unchecked {
-            P[2] = U384.init(1);
-            P[0] = U384.modmul(call, x0, P[2], p);
-            P[1] = U384.modmul(call, y0, P[2], p);
-        }
-    }
-
-    /**
-     * @dev Return the zero curve in projective coordinates.
-     */
-    function _zeroProj() internal pure returns (uint256 x, uint256 y, uint256 z) {
-        unchecked {
-            return (U384.init(0), U384.init(1), U384.init(0));
-        }
-    }
-
-    /**
-     * @dev Return the zero curve in affine coordinates.
-     */
-    function _zeroAffine() internal pure returns (uint256 x, uint256 y) {
-        unchecked {
-            return (U384.init(0), U384.init(0));
-        }
-    }
-
-    /**
-     * @dev Check if the curve is the zero curve.
-     */
-    function _isZeroCurve(uint256 x0, uint256 y0) internal pure returns (bool isZero) {
-        unchecked {
-            return U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0);
         }
     }
 }
