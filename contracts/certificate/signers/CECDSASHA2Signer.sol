@@ -131,11 +131,11 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             uint256 RHS = U384.modexp(call, x, 3, p);
 
             if (!U384.eqInteger(a, 0)) {
-                RHS = U384.modadd(call, RHS, U384.modmul(call, x, a, p), p); // x^3 + a*x
+                RHS = U384.modadd(RHS, U384.modmul(call, x, a, p), p); // x^3 + a*x
             }
 
             if (!U384.eqInteger(b, 0)) {
-                RHS = U384.modadd(call, RHS, b, p); // x^3 + a*x + b
+                RHS = U384.modadd(RHS, b, p); // x^3 + a*x + b
             }
 
             return U384.eq(LHS, RHS);
@@ -260,11 +260,11 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             }
 
             uint256 u = U384.modmul(call, y0, z0, p);
-            U384.modshl1Assign(call, u, p);
+            U384.modshl1Assign(u, p);
 
             x1 = U384.modmul(call, u, x0, p);
             U384.modmulAssign(call, x1, y0, p);
-            U384.modshl1Assign(call, x1, p);
+            U384.modshl1Assign(x1, p);
 
             x0 = U384.modexp(call, x0, 2, p);
 
@@ -272,24 +272,24 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
 
             z0 = U384.modexp(call, z0, 2, p);
             U384.modmulAssign(call, z0, a, p);
-            U384.modaddAssign(call, y1, z0, p);
+            U384.modaddAssign(y1, z0, p);
 
             z1 = U384.modexp(call, y1, 2, p);
-            U384.modshl1AssignTo(call, x0, x1, p);
+            U384.modshl1AssignTo(x0, x1, p);
 
             uint256 diff = U384.sub(p, x0);
-            U384.modaddAssign(call, z1, diff, p);
+            U384.modaddAssign(z1, diff, p);
 
             U384.subAssignTo(diff, p, z1);
-            U384.modaddAssignTo(call, x0, x1, diff, p);
+            U384.modaddAssignTo(x0, x1, diff, p);
             U384.modmulAssign(call, x0, y1, p);
 
             y0 = U384.modmul(call, y0, u, p);
             U384.modexpAssign(call, y0, 2, p);
-            U384.modshl1Assign(call, y0, p);
+            U384.modshl1Assign(y0, p);
 
             U384.subAssignTo(diff, p, y0);
-            U384.modaddAssignTo(call, y1, x0, diff, p);
+            U384.modaddAssignTo(y1, x0, diff, p);
 
             U384.modmulAssignTo(call, x1, u, z1, p);
 
@@ -354,19 +354,19 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
         unchecked {
             uint256 diff = U384.sub(p, t1);
-            y2 = U384.modadd(call, t0, diff, p);
+            y2 = U384.modadd(t0, diff, p);
 
             U384.subAssignTo(diff, p, u1);
-            x2 = U384.modadd(call, u0, diff, p);
+            x2 = U384.modadd(u0, diff, p);
             uint256 u2 = U384.modexp(call, x2, 2, p);
 
             z2 = U384.modexp(call, y2, 2, p);
 
             U384.modmulAssign(call, z2, v, p);
-            u1 = U384.modadd(call, u1, u0, p);
+            u1 = U384.modadd(u1, u0, p);
             U384.modmulAssign(call, u1, u2, p);
             U384.subAssignTo(diff, p, u1);
-            U384.modaddAssign(call, z2, diff, p);
+            U384.modaddAssign(z2, diff, p);
 
             uint256 u3 = U384.modmul(call, u2, x2, p);
 
@@ -375,12 +375,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             u0 = U384.modmul(call, u0, u2, p);
 
             U384.subAssignTo(diff, p, z2);
-            U384.modaddAssign(call, u0, diff, p);
+            U384.modaddAssign(u0, diff, p);
             U384.modmulAssign(call, y2, u0, p);
             t0 = U384.modmul(call, t0, u3, p);
 
             U384.subAssignTo(diff, p, t0);
-            U384.modaddAssign(call, y2, diff, p);
+            U384.modaddAssign(y2, diff, p);
 
             U384.modmulAssignTo(call, z2, u3, v, p);
         }
