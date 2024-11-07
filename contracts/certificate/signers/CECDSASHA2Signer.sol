@@ -87,19 +87,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 params.gy,
                 U384.moddiv(params.call, message, inputs.s, params.n)
             );
-            console.log("RESULT");
-            console.logBytes(x1.toBytes());
-            console.logBytes(y1.toBytes());
-
             (uint256 x2, uint256 y2) = _multiplyScalar(
                 params,
                 inputs.x,
                 inputs.y,
                 U384.moddiv(params.call, inputs.r, inputs.s, params.n)
             );
-            console.log("RESULT");
-            console.logBytes(x2.toBytes());
-            console.logBytes(y2.toBytes());
 
             (x1, y1, x2) = _addProj(
                 params.call,
@@ -167,12 +160,58 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 lowBits_ := mload(add(scalar, 0x20))
             }
 
-            uint256 z0 = U384.init(1);
             x1 = U384.init(0);
             y1 = U384.init(0);
             uint256 z1 = U384.init(0);
 
-            for (uint256 bit = 0; bit < 184; ++bit) {
+            uint256[3][16] memory p;
+
+            (p[0][0], p[0][1], p[0][2]) = (U384.init(0), U384.init(0), U384.init(0));
+            (p[1][0], p[1][1], p[1][2]) = (x0.copy(), y0.copy(), U384.init(1));
+
+            for (uint256 i = 2; i < 16; ++i) {
+                (p[i][0], p[i][1], p[i][2]) = _addProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    p[1][0],
+                    p[1][1],
+                    p[1][2],
+                    p[i - 1][0],
+                    p[i - 1][1],
+                    p[i - 1][2]
+                );
+            }
+
+            for (uint256 bit = 1; bit <= 46; ++bit) {
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
                 (x1, y1, z1) = _twiceProj(
                     params.call,
                     params.p,
@@ -183,15 +222,17 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                     z1
                 );
 
-                if ((highBits_ >> (183 - bit)) & 1 == 1) {
+                uint256 mask = (highBits_ >> (184 - (bit << 2))) & 0x0F;
+
+                if (mask != 0) {
                     (x1, y1, z1) = _addProj(
                         params.call,
                         params.p,
                         params.three,
                         params.a,
-                        x0,
-                        y0,
-                        z0,
+                        p[mask][0],
+                        p[mask][1],
+                        p[mask][2],
                         x1,
                         y1,
                         z1
@@ -199,7 +240,34 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 }
             }
 
-            for (uint256 bit = 0; bit < 256; ++bit) {
+            for (uint256 bit = 1; bit <= 64; ++bit) {
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
                 (x1, y1, z1) = _twiceProj(
                     params.call,
                     params.p,
@@ -210,15 +278,17 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                     z1
                 );
 
-                if ((lowBits_ >> (255 - bit)) & 1 == 1) {
+                uint256 mask = (lowBits_ >> (256 - (bit << 2))) & 0x0F;
+
+                if (mask != 0) {
                     (x1, y1, z1) = _addProj(
                         params.call,
                         params.p,
                         params.three,
                         params.a,
-                        x0,
-                        y0,
-                        z0,
+                        p[mask][0],
+                        p[mask][1],
+                        p[mask][2],
                         x1,
                         y1,
                         z1
