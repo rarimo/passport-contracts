@@ -167,22 +167,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 lowBits_ := mload(add(scalar, 0x20))
             }
 
-            while (lowBits_ > 0 || highBits_ > 0) {
-                if ((highBits_ >> 255) == 1) break;
+            uint256 z0 = U384.init(1);
+            x1 = U384.init(0);
+            y1 = U384.init(0);
+            uint256 z1 = U384.init(0);
 
-                highBits_ <<= 1;
-                highBits_ |= lowBits_ >> 255;
-                lowBits_ <<= 1;
-            }
-
-            x1 = x0.copy();
-            y1 = y0.copy();
-            uint256 z1 = U384.init(1);
-
-            highBits_ <<= 1;
-            highBits_ |= lowBits_ >> 255;
-            lowBits_ <<= 1;
-            while (lowBits_ > 0 || highBits_ > 0) {
+            for (uint256 bit = 0; bit < 184; ++bit) {
                 (x1, y1, z1) = _twiceProj(
                     params.call,
                     params.p,
@@ -193,7 +183,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                     z1
                 );
 
-                if ((highBits_ >> 255) == 1) {
+                if ((highBits_ >> (183 - bit)) & 1 == 1) {
                     (x1, y1, z1) = _addProj(
                         params.call,
                         params.p,
@@ -201,16 +191,39 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                         params.a,
                         x0,
                         y0,
-                        U384.init(1),
+                        z0,
                         x1,
                         y1,
                         z1
                     );
                 }
+            }
 
-                highBits_ <<= 1;
-                highBits_ |= lowBits_ >> 255;
-                lowBits_ <<= 1;
+            for (uint256 bit = 0; bit < 256; ++bit) {
+                (x1, y1, z1) = _twiceProj(
+                    params.call,
+                    params.p,
+                    params.three,
+                    params.a,
+                    x1,
+                    y1,
+                    z1
+                );
+
+                if ((lowBits_ >> (255 - bit)) & 1 == 1) {
+                    (x1, y1, z1) = _addProj(
+                        params.call,
+                        params.p,
+                        params.three,
+                        params.a,
+                        x0,
+                        y0,
+                        z0,
+                        x1,
+                        y1,
+                        z1
+                    );
+                }
             }
 
             uint256 p_ = params.p;
@@ -255,7 +268,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x1, uint256 y1, uint256 z1) {
         unchecked {
             if (U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0)) {
-                return (U384.init(0), U384.init(1), U384.init(0)); // zero proj
+                return (U384.init(0), U384.init(0), U384.init(0)); // zero proj
             }
 
             uint256 u = U384.modmul(call, y0, z0, p);
@@ -315,9 +328,9 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x2, uint256 y2, uint256 z2) {
         unchecked {
             if (U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0)) {
-                return (x1, y1, z1);
+                return (x1.copy(), y1.copy(), z1.copy());
             } else if (U384.eqInteger(x1, 0) && U384.eqInteger(y1, 0)) {
-                return (x0, y0, z0);
+                return (x0.copy(), y0.copy(), z0.copy());
             }
 
             x2 = U384.modmul(call, y0, z1, p);
