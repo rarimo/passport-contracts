@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.sol";
 
 import {U384} from "../../utils/U384.sol";
-
+import "hardhat/console.sol";
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
@@ -87,12 +87,19 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 params.gy,
                 U384.moddiv(params.call, message, inputs.s, params.n)
             );
+            console.log("RESULT");
+            console.logBytes(x1.toBytes());
+            console.logBytes(y1.toBytes());
+
             (uint256 x2, uint256 y2) = _multiplyScalar(
                 params,
                 inputs.x,
                 inputs.y,
                 U384.moddiv(params.call, inputs.r, inputs.s, params.n)
             );
+            console.log("RESULT");
+            console.logBytes(x2.toBytes());
+            console.logBytes(y2.toBytes());
 
             (x1, y1, x2) = _addProj(
                 params.call,
@@ -152,19 +159,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 scalar
     ) internal view returns (uint256 x1, uint256 y1) {
         unchecked {
-            if (U384.eqInteger(scalar, 0)) {
-                return (U384.init(0), U384.init(0)); // zero affine coordinates
-            } else if (U384.eqInteger(scalar, 1)) {
-                return (x0, y0);
-            } else if (U384.eqInteger(scalar, 2)) {
-                return _twice(params.call, params.p, params.three, params.a, x0, y0);
-            }
-
-            uint256 base2X = x0;
-            uint256 base2Y = y0;
-            uint256 base2Z = U384.init(1);
-            uint256 z1 = U384.init(1);
-
             uint256 highBits_;
             uint256 lowBits_;
 
@@ -173,45 +167,50 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 lowBits_ := mload(add(scalar, 0x20))
             }
 
-            if (lowBits_ & 1 == 0) {
-                x1 = U384.init(0);
-                y1 = U384.init(0);
-            } else {
-                x1 = U384.copy(x0);
-                y1 = U384.copy(y0);
+            while (lowBits_ > 0 || highBits_ > 0) {
+                if ((highBits_ >> 255) == 1) break;
+
+                highBits_ <<= 1;
+                highBits_ |= lowBits_ >> 255;
+                lowBits_ <<= 1;
             }
 
-            lowBits_ = (lowBits_ >> 1) | (highBits_ << 255);
-            highBits_ >>= 1;
+            x1 = x0.copy();
+            y1 = y0.copy();
+            uint256 z1 = U384.init(1);
 
+            highBits_ <<= 1;
+            highBits_ |= lowBits_ >> 255;
+            lowBits_ <<= 1;
             while (lowBits_ > 0 || highBits_ > 0) {
-                (base2X, base2Y, base2Z) = _twiceProj(
+                (x1, y1, z1) = _twiceProj(
                     params.call,
                     params.p,
                     params.three,
                     params.a,
-                    base2X,
-                    base2Y,
-                    base2Z
+                    x1,
+                    y1,
+                    z1
                 );
 
-                if (lowBits_ & 1 == 1) {
+                if ((highBits_ >> 255) == 1) {
                     (x1, y1, z1) = _addProj(
                         params.call,
                         params.p,
                         params.three,
                         params.a,
-                        base2X,
-                        base2Y,
-                        base2Z,
+                        x0,
+                        y0,
+                        U384.init(1),
                         x1,
                         y1,
                         z1
                     );
                 }
 
-                lowBits_ = (lowBits_ >> 1) | (highBits_ << 255);
-                highBits_ >>= 1;
+                highBits_ <<= 1;
+                highBits_ |= lowBits_ >> 255;
+                lowBits_ <<= 1;
             }
 
             uint256 p_ = params.p;
