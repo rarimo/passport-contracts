@@ -62,20 +62,6 @@ library U384 {
         }
     }
 
-    function assign(uint256 to_, uint256 from_) internal pure {
-        assembly {
-            mstore(to_, mload(from_))
-            mstore(add(to_, 0x20), mload(add(from_, 0x20)))
-        }
-    }
-
-    function assignInteger(uint256 to_, uint256 fromInteger_) internal pure {
-        assembly {
-            mstore(to_, 0x00)
-            mstore(add(to_, 0x20), fromInteger_)
-        }
-    }
-
     function initCall(uint256 m_) internal pure returns (uint256 handler_) {
         unchecked {
             handler_ = _allocate(CALL_ALLOCATION);
@@ -154,32 +140,6 @@ library U384 {
             }
 
             if (aWord_ < bWord_) {
-                return -1;
-            }
-        }
-    }
-
-    function cmpInteger(uint256 a_, uint256 bInteger_) internal pure returns (int256 cmp_) {
-        unchecked {
-            uint256 aWord_;
-
-            assembly {
-                aWord_ := mload(a_)
-            }
-
-            if (aWord_ > 0) {
-                return 1;
-            }
-
-            assembly {
-                aWord_ := mload(add(a_, 0x20))
-            }
-
-            if (aWord_ > bInteger_) {
-                return 1;
-            }
-
-            if (aWord_ < bInteger_) {
                 return -1;
             }
         }
@@ -270,32 +230,6 @@ library U384 {
         }
     }
 
-    function modsub(
-        uint256 call_,
-        uint256 a_,
-        uint256 b_,
-        uint256 m_
-    ) internal view returns (uint256 r_) {
-        unchecked {
-            r_ = _allocate(SHORT_ALLOCATION);
-
-            _sub(a_, b_, call_ + 0x60);
-
-            assembly {
-                mstore(call_, 0x40)
-                mstore(add(0x20, call_), 0x20)
-                mstore(add(0x40, call_), 0x40)
-                mstore(add(0xA0, call_), 0x01)
-                mstore(add(0xC0, call_), mload(m_))
-                mstore(add(0xE0, call_), mload(add(m_, 0x20)))
-
-                pop(staticcall(gas(), 0x5, call_, 0x0100, r_, 0x40))
-            }
-
-            return r_;
-        }
-    }
-
     function modmul(uint256 call_, uint256 a_, uint256 b_) internal view returns (uint256 r_) {
         unchecked {
             r_ = _allocate(SHORT_ALLOCATION);
@@ -336,16 +270,6 @@ library U384 {
         }
     }
 
-    function add(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
-        unchecked {
-            r_ = _allocate(SHORT_ALLOCATION);
-
-            _add(a_, b_, r_);
-
-            return r_;
-        }
-    }
-
     function sub(uint256 a_, uint256 b_) internal pure returns (uint256 r_) {
         unchecked {
             r_ = _allocate(SHORT_ALLOCATION);
@@ -359,22 +283,6 @@ library U384 {
     function subAssignTo(uint256 to_, uint256 a_, uint256 b_) internal pure {
         unchecked {
             _sub(a_, b_, to_);
-        }
-    }
-
-    function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
-        unchecked {
-            uint256 bytesHandler_ = _allocate(LONG_ALLOCATION);
-
-            assembly {
-                bytes_ := bytesHandler_
-
-                mstore(bytes_, 0x40)
-                mstore(add(0x20, bytes_), mload(handler_))
-                mstore(add(0x40, bytes_), mload(add(handler_, 0x20)))
-            }
-
-            return bytes_;
         }
     }
 
@@ -474,6 +382,22 @@ library U384 {
             }
 
             return r_;
+        }
+    }
+
+    function toBytes(uint256 handler_) internal pure returns (bytes memory bytes_) {
+        unchecked {
+            uint256 bytesHandler_ = _allocate(LONG_ALLOCATION);
+
+            assembly {
+                bytes_ := bytesHandler_
+
+                mstore(bytes_, 0x40)
+                mstore(add(0x20, bytes_), mload(handler_))
+                mstore(add(0x40, bytes_), mload(add(handler_, 0x20)))
+            }
+
+            return bytes_;
         }
     }
 
