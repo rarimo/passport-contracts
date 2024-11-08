@@ -143,7 +143,13 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x, uint256 y, uint256 z) {
         unchecked {
             /// We use 4-bit masks where the first 2 bits refer to `scalar1` and the last 2 bits refer to `scalar2`.
-            uint256[3][16] memory points = _precomputePointsTable(params, gh);
+            uint256[3][16] memory points = _precomputePointsTable(
+                params.call,
+                params.p,
+                params.three,
+                params.a,
+                gh
+            );
 
             uint256 scalar1Bits_;
             uint256 scalar2Bits_;
@@ -209,26 +215,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             }
 
             return (x, y, z);
-        }
-    }
-
-    /**
-     * @dev Double an elliptic curve point in affine coordinates.
-     */
-    function _twice(
-        uint256 call,
-        uint256 p,
-        uint256 three,
-        uint256 a,
-        uint256 x0,
-        uint256 y0
-    ) internal view returns (uint256, uint256) {
-        unchecked {
-            uint256 z0;
-
-            (x0, y0, z0) = _twiceProj(call, p, three, a, x0, y0, U384.init(1));
-
-            return (U384.moddiv(call, x0, z0, p), U384.moddiv(call, y0, z0, p));
         }
     }
 
@@ -378,7 +364,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     }
 
     function _precomputePointsTable(
-        Parameters memory params,
+        uint256 call,
+        uint256 p,
+        uint256 three,
+        uint256 a,
         GH memory gh
     ) private view returns (uint256[3][16] memory points) {
         /// 0b0100: 1G + 0H
@@ -389,20 +378,20 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1000: 2G + 0H
         (points[0x08][0], points[0x08][1], points[0x08][2]) = _twiceProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x04][0],
             points[0x04][1],
             points[0x04][2]
         );
         /// 0b1100: 3G + 0H
         (points[0x0C][0], points[0x0C][1], points[0x0C][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x04][0],
             points[0x04][1],
             points[0x04][2],
@@ -418,20 +407,20 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b0010: 0G + 2H
         (points[0x02][0], points[0x02][1], points[0x02][2]) = _twiceProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x01][0],
             points[0x01][1],
             points[0x01][2]
         );
         /// 0b0011: 0G + 3H
         (points[0x03][0], points[0x03][1], points[0x03][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x01][0],
             points[0x01][1],
             points[0x01][2],
@@ -441,10 +430,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b0101: 1G + 1H
         (points[0x05][0], points[0x05][1], points[0x05][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x04][0],
             points[0x04][1],
             points[0x04][2],
@@ -454,10 +443,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b0110: 1G + 2H
         (points[0x06][0], points[0x06][1], points[0x06][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x04][0],
             points[0x04][1],
             points[0x04][2],
@@ -467,10 +456,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b0111: 1G + 3H
         (points[0x07][0], points[0x07][1], points[0x07][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x04][0],
             points[0x04][1],
             points[0x04][2],
@@ -480,10 +469,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1001: 2G + 1H
         (points[0x09][0], points[0x09][1], points[0x09][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x08][0],
             points[0x08][1],
             points[0x08][2],
@@ -493,10 +482,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1010: 2G + 2H
         (points[0x0A][0], points[0x0A][1], points[0x0A][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x08][0],
             points[0x08][1],
             points[0x08][2],
@@ -506,10 +495,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1011: 2G + 3H
         (points[0x0B][0], points[0x0B][1], points[0x0B][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x08][0],
             points[0x08][1],
             points[0x08][2],
@@ -519,10 +508,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1101: 3G + 1H
         (points[0x0D][0], points[0x0D][1], points[0x0D][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x0C][0],
             points[0x0C][1],
             points[0x0C][2],
@@ -532,10 +521,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1110: 3G + 2H
         (points[0x0E][0], points[0x0E][1], points[0x0E][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x0C][0],
             points[0x0C][1],
             points[0x0C][2],
@@ -545,10 +534,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         );
         /// 0b1111: 3G + 3H
         (points[0x0F][0], points[0x0F][1], points[0x0F][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
+            call,
+            p,
+            three,
+            a,
             points[0x0C][0],
             points[0x0C][1],
             points[0x0C][2],
