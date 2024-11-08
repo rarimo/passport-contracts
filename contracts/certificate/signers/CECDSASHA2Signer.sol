@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.sol";
 
 import {U384} from "../../utils/U384.sol";
-import "hardhat/console.sol";
+
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
@@ -338,7 +338,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x1, uint256 y1, uint256 z1) {
         unchecked {
             if (U384.eqInteger(x0, 0) && U384.eqInteger(y0, 0)) {
-                return (U384.init(0), U384.init(0), U384.init(0)); // zero proj
+                return (U384.init(0), U384.init(0), U384.init(1)); // zero proj
             }
 
             uint256 u = U384.modmul(call, y0, z0, p);
@@ -412,7 +412,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 if (U384.eq(x2, y2)) {
                     return _twiceProj(call, p, three, a, x0, y0, z0);
                 } else {
-                    return (U384.init(0), U384.init(1), U384.init(0)); // zero proj
+                    return (U384.init(0), U384.init(0), U384.init(1)); // zero proj
                 }
             }
 
