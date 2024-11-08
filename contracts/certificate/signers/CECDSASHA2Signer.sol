@@ -52,6 +52,9 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             (inputs.r, inputs.s) = U384.init2(icaoMemberSignature_);
             (inputs.x, inputs.y) = U384.init2(icaoMemberKey_);
 
+            uint256 p = hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
+                    .init();
+
             // secp384r1 parameters
             Parameters memory params = Parameters({
                 a: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC"
@@ -62,13 +65,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                     .init(),
                 gy: hex"3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f"
                     .init(),
-                p: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
-                    .init(),
+                p: p,
                 n: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973"
                     .init(),
                 lowSmax: hex"7fffffffffffffffffffffffffffffffffffffffffffffffe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b9"
                     .init(),
-                call: U384.initCall(),
+                call: U384.initCall(p),
                 three: U384.init(3)
             });
 
@@ -117,11 +119,11 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 return false;
             }
 
-            uint256 LHS = U384.modexp(call, y, 2, p);
-            uint256 RHS = U384.modexp(call, x, 3, p);
+            uint256 LHS = U384.modexp(call, y, 2);
+            uint256 RHS = U384.modexp(call, x, 3);
 
             if (!U384.eqInteger(a, 0)) {
-                RHS = U384.modadd(RHS, U384.modmul(call, x, a, p), p); // x^3 + a*x
+                RHS = U384.modadd(RHS, U384.modmul(call, x, a), p); // x^3 + a*x
             }
 
             if (!U384.eqInteger(b, 0)) {
@@ -236,22 +238,22 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 return (U384.init(0), U384.init(0), U384.init(1)); // zero proj
             }
 
-            uint256 u = U384.modmul(call, y0, z0, p);
+            uint256 u = U384.modmul(call, y0, z0);
             U384.modshl1Assign(u, p);
 
-            x1 = U384.modmul(call, u, x0, p);
-            U384.modmulAssign(call, x1, y0, p);
+            x1 = U384.modmul(call, u, x0);
+            U384.modmulAssign(call, x1, y0);
             U384.modshl1Assign(x1, p);
 
-            x0 = U384.modexp(call, x0, 2, p);
+            x0 = U384.modexp(call, x0, 2);
 
-            y1 = U384.modmul(call, x0, three, p);
+            y1 = U384.modmul(call, x0, three);
 
-            z0 = U384.modexp(call, z0, 2, p);
-            U384.modmulAssign(call, z0, a, p);
+            z0 = U384.modexp(call, z0, 2);
+            U384.modmulAssign(call, z0, a);
             U384.modaddAssign(y1, z0, p);
 
-            z1 = U384.modexp(call, y1, 2, p);
+            z1 = U384.modexp(call, y1, 2);
             U384.modshl1AssignTo(x0, x1, p);
 
             uint256 diff = U384.sub(p, x0);
@@ -259,19 +261,19 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
 
             U384.subAssignTo(diff, p, z1);
             U384.modaddAssignTo(x0, x1, diff, p);
-            U384.modmulAssign(call, x0, y1, p);
+            U384.modmulAssign(call, x0, y1);
 
-            y0 = U384.modmul(call, y0, u, p);
-            U384.modexpAssign(call, y0, 2, p);
+            y0 = U384.modmul(call, y0, u);
+            U384.modexpAssign(call, y0, 2);
             U384.modshl1Assign(y0, p);
 
             U384.subAssignTo(diff, p, y0);
             U384.modaddAssignTo(y1, x0, diff, p);
 
-            U384.modmulAssignTo(call, x1, u, z1, p);
+            U384.modmulAssignTo(call, x1, u, z1);
 
-            U384.modexpAssignTo(call, z1, u, 2, p);
-            U384.modmulAssign(call, z1, u, p);
+            U384.modexpAssignTo(call, z1, u, 2);
+            U384.modmulAssign(call, z1, u);
         }
     }
 
@@ -298,10 +300,10 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 return (x0.copy(), y0.copy(), z0.copy());
             }
 
-            x2 = U384.modmul(call, y0, z1, p);
-            y2 = U384.modmul(call, y1, z0, p);
-            z2 = U384.modmul(call, x0, z1, p);
-            y1 = U384.modmul(call, x1, z0, p);
+            x2 = U384.modmul(call, y0, z1);
+            y2 = U384.modmul(call, y1, z0);
+            z2 = U384.modmul(call, x0, z1);
+            y1 = U384.modmul(call, x1, z0);
 
             if (U384.eq(z2, y1)) {
                 if (U384.eq(x2, y2)) {
@@ -311,7 +313,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 }
             }
 
-            a = U384.modmul(call, z0, z1, p);
+            a = U384.modmul(call, z0, z1);
 
             return _addProj2(call, a, z2, p, y1, y2, x2);
         }
@@ -335,31 +337,31 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
 
             U384.subAssignTo(diff, p, u1);
             x2 = U384.modadd(u0, diff, p);
-            uint256 u2 = U384.modexp(call, x2, 2, p);
+            uint256 u2 = U384.modexp(call, x2, 2);
 
-            z2 = U384.modexp(call, y2, 2, p);
+            z2 = U384.modexp(call, y2, 2);
 
-            U384.modmulAssign(call, z2, v, p);
+            U384.modmulAssign(call, z2, v);
             u1 = U384.modadd(u1, u0, p);
-            U384.modmulAssign(call, u1, u2, p);
+            U384.modmulAssign(call, u1, u2);
             U384.subAssignTo(diff, p, u1);
             U384.modaddAssign(z2, diff, p);
 
-            uint256 u3 = U384.modmul(call, u2, x2, p);
+            uint256 u3 = U384.modmul(call, u2, x2);
 
-            U384.modmulAssign(call, x2, z2, p);
+            U384.modmulAssign(call, x2, z2);
 
-            u0 = U384.modmul(call, u0, u2, p);
+            u0 = U384.modmul(call, u0, u2);
 
             U384.subAssignTo(diff, p, z2);
             U384.modaddAssign(u0, diff, p);
-            U384.modmulAssign(call, y2, u0, p);
-            t0 = U384.modmul(call, t0, u3, p);
+            U384.modmulAssign(call, y2, u0);
+            t0 = U384.modmul(call, t0, u3);
 
             U384.subAssignTo(diff, p, t0);
             U384.modaddAssign(y2, diff, p);
 
-            U384.modmulAssignTo(call, z2, u3, v, p);
+            U384.modmulAssignTo(call, z2, u3, v);
         }
     }
 
