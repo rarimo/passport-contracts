@@ -388,14 +388,11 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             U384.init(1)
         );
         /// 0b1000: 2G + 0H
-        (points[0x08][0], points[0x08][1], points[0x08][2]) = _addProj(
+        (points[0x08][0], points[0x08][1], points[0x08][2]) = _twiceProj(
             params.call,
             params.p,
             params.three,
             params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
             points[0x04][0],
             points[0x04][1],
             points[0x04][2]
@@ -420,14 +417,11 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             U384.init(1)
         );
         /// 0b0010: 0G + 2H
-        (points[0x02][0], points[0x02][1], points[0x02][2]) = _addProj(
+        (points[0x02][0], points[0x02][1], points[0x02][2]) = _twiceProj(
             params.call,
             params.p,
             params.three,
             params.a,
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2],
             points[0x01][0],
             points[0x01][1],
             points[0x01][2]
