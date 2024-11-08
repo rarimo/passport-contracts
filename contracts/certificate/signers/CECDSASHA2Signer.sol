@@ -32,6 +32,13 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 y;
     }
 
+    struct GH {
+        uint256 gx;
+        uint256 gy;
+        uint256 hx;
+        uint256 hy;
+    }
+
     function __CECDSASHA2Signer_init() external initializer {}
 
     function verifyICAOSignature(
@@ -125,197 +132,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         }
     }
 
-    function _precomputePointsTable(
-        Parameters memory params,
-        uint256 gx,
-        uint256 gy,
-        uint256 hx,
-        uint256 hy
-    ) private view returns (uint256[3][16] memory points) {
-        /// 0b0100: 1G + 0H
-        (points[0x04][0], points[0x04][1], points[0x04][2]) = (gx.copy(), gy.copy(), U384.init(1));
-        /// 0b1000: 2G + 0H
-        (points[0x08][0], points[0x08][1], points[0x08][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2]
-        );
-        /// 0b1100: 3G + 0H
-        (points[0x0C][0], points[0x0C][1], points[0x0C][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
-            points[0x08][0],
-            points[0x08][1],
-            points[0x08][2]
-        );
-        /// 0b0001: 0G + 1H
-        (points[0x01][0], points[0x01][1], points[0x01][2]) = (hx.copy(), hy.copy(), U384.init(1));
-        /// 0b0010: 0G + 2H
-        (points[0x02][0], points[0x02][1], points[0x02][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2],
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2]
-        );
-        /// 0b0011: 0G + 3H
-        (points[0x03][0], points[0x03][1], points[0x03][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2],
-            points[0x02][0],
-            points[0x02][1],
-            points[0x02][2]
-        );
-        /// 0b0101: 1G + 1H
-        (points[0x05][0], points[0x05][1], points[0x05][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2]
-        );
-        /// 0b0110: 1G + 2H
-        (points[0x06][0], points[0x06][1], points[0x06][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
-            points[0x02][0],
-            points[0x02][1],
-            points[0x02][2]
-        );
-        /// 0b0111: 1G + 3H
-        (points[0x07][0], points[0x07][1], points[0x07][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x04][0],
-            points[0x04][1],
-            points[0x04][2],
-            points[0x03][0],
-            points[0x03][1],
-            points[0x03][2]
-        );
-        /// 0b1001: 2G + 1H
-        (points[0x09][0], points[0x09][1], points[0x09][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x08][0],
-            points[0x08][1],
-            points[0x08][2],
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2]
-        );
-        /// 0b1010: 2G + 2H
-        (points[0x0A][0], points[0x0A][1], points[0x0A][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x08][0],
-            points[0x08][1],
-            points[0x08][2],
-            points[0x02][0],
-            points[0x02][1],
-            points[0x02][2]
-        );
-        /// 0b1011: 2G + 3H
-        (points[0x0B][0], points[0x0B][1], points[0x0B][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x08][0],
-            points[0x08][1],
-            points[0x08][2],
-            points[0x03][0],
-            points[0x03][1],
-            points[0x03][2]
-        );
-        /// 0b1101: 3G + 1H
-        (points[0x0D][0], points[0x0D][1], points[0x0D][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x0C][0],
-            points[0x0C][1],
-            points[0x0C][2],
-            points[0x01][0],
-            points[0x01][1],
-            points[0x01][2]
-        );
-        /// 0b1110: 3G + 2H
-        (points[0x0E][0], points[0x0E][1], points[0x0E][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x0C][0],
-            points[0x0C][1],
-            points[0x0C][2],
-            points[0x02][0],
-            points[0x02][1],
-            points[0x02][2]
-        );
-        /// 0b1111: 3G + 3H
-        (points[0x0F][0], points[0x0F][1], points[0x0F][2]) = _addProj(
-            params.call,
-            params.p,
-            params.three,
-            params.a,
-            points[0x0C][0],
-            points[0x0C][1],
-            points[0x0C][2],
-            points[0x03][0],
-            points[0x03][1],
-            points[0x03][2]
-        );
-
-        return points;
-    }
-
-    struct GH {
-        uint256 gx;
-        uint256 gy;
-        uint256 hx;
-        uint256 hy;
-    }
-
     /**
      * @dev Multiply an elliptic curve point by a scalar.
      */
@@ -327,13 +143,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     ) internal view returns (uint256 x, uint256 y, uint256 z) {
         unchecked {
             /// We use 4-bit masks where the first 2 bits refer to `scalar1` and the last 2 bits refer to `scalar2`.
-            uint256[3][16] memory points = _precomputePointsTable(
-                params,
-                gh.gx,
-                gh.gy,
-                gh.hx,
-                gh.hy
-            );
+            uint256[3][16] memory points = _precomputePointsTable(params, gh);
 
             uint256 scalar1Bits_;
             uint256 scalar2Bits_;
@@ -347,12 +157,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             y = U384.init(0);
             z = U384.init(1);
 
-            for (uint256 bit = 1; bit <= 92; ++bit) {
+            for (uint256 word = 2; word <= 184; word += 2) {
                 (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
                 (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
 
-                uint256 mask = (((scalar1Bits_ >> (184 - (bit << 1))) & 0x03) << 2) |
-                    ((scalar2Bits_ >> (184 - (bit << 1))) & 0x03);
+                uint256 mask = (((scalar1Bits_ >> (184 - word)) & 0x03) << 2) |
+                    ((scalar2Bits_ >> (184 - word)) & 0x03);
 
                 if (mask != 0) {
                     (x, y, z) = _addProj(
@@ -375,12 +185,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 scalar2Bits_ := mload(add(scalar2, 0x20))
             }
 
-            for (uint256 bit = 1; bit <= 128; ++bit) {
+            for (uint256 word = 2; word <= 256; word += 2) {
                 (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
                 (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
 
-                uint256 mask = (((scalar1Bits_ >> (256 - (bit << 1))) & 0x03) << 2) |
-                    ((scalar2Bits_ >> (256 - (bit << 1))) & 0x03);
+                uint256 mask = (((scalar1Bits_ >> (256 - word)) & 0x03) << 2) |
+                    ((scalar2Bits_ >> (256 - word)) & 0x03);
 
                 if (mask != 0) {
                     (x, y, z) = _addProj(
@@ -565,5 +375,194 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
 
             U384.modmulAssignTo(call, z2, u3, v, p);
         }
+    }
+
+    function _precomputePointsTable(
+        Parameters memory params,
+        GH memory gh
+    ) private view returns (uint256[3][16] memory points) {
+        /// 0b0100: 1G + 0H
+        (points[0x04][0], points[0x04][1], points[0x04][2]) = (
+            gh.gx.copy(),
+            gh.gy.copy(),
+            U384.init(1)
+        );
+        /// 0b1000: 2G + 0H
+        (points[0x08][0], points[0x08][1], points[0x08][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2],
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2]
+        );
+        /// 0b1100: 3G + 0H
+        (points[0x0C][0], points[0x0C][1], points[0x0C][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2],
+            points[0x08][0],
+            points[0x08][1],
+            points[0x08][2]
+        );
+        /// 0b0001: 0G + 1H
+        (points[0x01][0], points[0x01][1], points[0x01][2]) = (
+            gh.hx.copy(),
+            gh.hy.copy(),
+            U384.init(1)
+        );
+        /// 0b0010: 0G + 2H
+        (points[0x02][0], points[0x02][1], points[0x02][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2],
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2]
+        );
+        /// 0b0011: 0G + 3H
+        (points[0x03][0], points[0x03][1], points[0x03][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2],
+            points[0x02][0],
+            points[0x02][1],
+            points[0x02][2]
+        );
+        /// 0b0101: 1G + 1H
+        (points[0x05][0], points[0x05][1], points[0x05][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2],
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2]
+        );
+        /// 0b0110: 1G + 2H
+        (points[0x06][0], points[0x06][1], points[0x06][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2],
+            points[0x02][0],
+            points[0x02][1],
+            points[0x02][2]
+        );
+        /// 0b0111: 1G + 3H
+        (points[0x07][0], points[0x07][1], points[0x07][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x04][0],
+            points[0x04][1],
+            points[0x04][2],
+            points[0x03][0],
+            points[0x03][1],
+            points[0x03][2]
+        );
+        /// 0b1001: 2G + 1H
+        (points[0x09][0], points[0x09][1], points[0x09][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x08][0],
+            points[0x08][1],
+            points[0x08][2],
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2]
+        );
+        /// 0b1010: 2G + 2H
+        (points[0x0A][0], points[0x0A][1], points[0x0A][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x08][0],
+            points[0x08][1],
+            points[0x08][2],
+            points[0x02][0],
+            points[0x02][1],
+            points[0x02][2]
+        );
+        /// 0b1011: 2G + 3H
+        (points[0x0B][0], points[0x0B][1], points[0x0B][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x08][0],
+            points[0x08][1],
+            points[0x08][2],
+            points[0x03][0],
+            points[0x03][1],
+            points[0x03][2]
+        );
+        /// 0b1101: 3G + 1H
+        (points[0x0D][0], points[0x0D][1], points[0x0D][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x0C][0],
+            points[0x0C][1],
+            points[0x0C][2],
+            points[0x01][0],
+            points[0x01][1],
+            points[0x01][2]
+        );
+        /// 0b1110: 3G + 2H
+        (points[0x0E][0], points[0x0E][1], points[0x0E][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x0C][0],
+            points[0x0C][1],
+            points[0x0C][2],
+            points[0x02][0],
+            points[0x02][1],
+            points[0x02][2]
+        );
+        /// 0b1111: 3G + 3H
+        (points[0x0F][0], points[0x0F][1], points[0x0F][2]) = _addProj(
+            params.call,
+            params.p,
+            params.three,
+            params.a,
+            points[0x0C][0],
+            points[0x0C][1],
+            points[0x0C][2],
+            points[0x03][0],
+            points[0x03][1],
+            points[0x03][2]
+        );
+
+        return points;
     }
 }
