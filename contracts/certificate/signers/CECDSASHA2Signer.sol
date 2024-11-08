@@ -135,7 +135,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     }
 
     /**
-     * @dev Multiply an elliptic curve point by a scalar.
+     * @dev Compute the double scalar multiplication scalar1*G + scalar2*H.
      */
     function _doubleScalarMultiplication(
         Parameters memory params,
