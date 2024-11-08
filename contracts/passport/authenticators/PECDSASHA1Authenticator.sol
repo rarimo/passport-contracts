@@ -384,7 +384,7 @@ contract PECDSASHA1Authenticator {
      * @dev Return the zero curve in projective coordinates.
      */
     function _zeroProj() internal pure returns (uint256 x, uint256 y, uint256 z) {
-        return (0, 1, 0);
+        return (0, 0, 1);
     }
 
     /**
