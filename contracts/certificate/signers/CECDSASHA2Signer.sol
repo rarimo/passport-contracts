@@ -21,8 +21,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 p;
         uint256 n;
         uint256 lowSmax;
-        uint256 call;
-        uint256 three;
     }
 
     struct Inputs {
@@ -30,13 +28,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 s;
         uint256 x;
         uint256 y;
-    }
-
-    struct GH {
-        uint256 gx;
-        uint256 gy;
-        uint256 hx;
-        uint256 hy;
     }
 
     function __CECDSASHA2Signer_init() external initializer {}
@@ -52,9 +43,6 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             (inputs.r, inputs.s) = U384.init2(icaoMemberSignature_);
             (inputs.x, inputs.y) = U384.init2(icaoMemberKey_);
 
-            uint256 p = hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
-                    .init();
-
             // secp384r1 parameters
             Parameters memory params = Parameters({
                 a: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFC"
@@ -65,14 +53,15 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                     .init(),
                 gy: hex"3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f"
                     .init(),
-                p: p,
+                p: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
+                    .init(),
                 n: hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFC7634D81F4372DDF581A0DB248B0A77AECEC196ACCC52973"
                     .init(),
                 lowSmax: hex"7fffffffffffffffffffffffffffffffffffffffffffffffe3b1a6c0fa1b96efac0d06d9245853bd76760cb5666294b9"
-                    .init(),
-                call: U384.initCall(p),
-                three: U384.init(3)
+                    .init()
             });
+
+            uint256 call = U384.initCall(params.p);
 
             /// @dev accept s only from the lower part of the curve
             if (
@@ -84,22 +73,45 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
                 return false;
             }
 
-            if (!_isOnCurve(params.call, params.p, params.a, params.b, inputs.x, inputs.y)) {
+            if (!_isOnCurve(call, params.p, params.a, params.b, inputs.x, inputs.y)) {
                 return false;
             }
 
-            uint256 message = uint256(sha256(x509SignedAttributes_)).init();
-            uint256 scalar1 = U384.moddiv(params.call, message, inputs.s, params.n);
-            uint256 scalar2 = U384.moddiv(params.call, inputs.r, inputs.s, params.n);
-
-            (uint256 x, , uint256 z) = _doubleScalarMultiplication(
-                params,
-                GH(params.gx, params.gy, inputs.x, inputs.y),
-                scalar1,
-                scalar2
+            uint256 scalar1 = U384.moddiv(
+                call,
+                uint256(sha256(x509SignedAttributes_)).init(),
+                inputs.s,
+                params.n
             );
+            uint256 scalar2 = U384.moddiv(call, inputs.r, inputs.s, params.n);
 
-            return U384.eq(U384.moddiv(params.call, x, z, params.p), inputs.r);
+            {
+                uint256 three = U384.init(3);
+
+                /// We use 4-bit masks where the first 2 bits refer to `scalar1` and the last 2 bits refer to `scalar2`.
+                uint256[3][16] memory points = _precomputePointsTable(
+                    call,
+                    params.p,
+                    three,
+                    params.a,
+                    params.gx,
+                    params.gy,
+                    inputs.x,
+                    inputs.y
+                );
+
+                (scalar1, , scalar2) = _doubleScalarMultiplication(
+                    call,
+                    params.p,
+                    three,
+                    params.a,
+                    points,
+                    scalar1,
+                    scalar2
+                );
+            }
+
+            return U384.eq(U384.moddiv(call, scalar1, scalar2, params.p), inputs.r);
         }
     }
 
@@ -138,21 +150,16 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
      * @dev Compute the double scalar multiplication scalar1*G + scalar2*H.
      */
     function _doubleScalarMultiplication(
-        Parameters memory params,
-        GH memory gh,
+        uint256 call,
+        uint256 p,
+        uint256 three,
+        uint256 a,
+        uint256[3][16] memory points,
         uint256 scalar1,
         uint256 scalar2
     ) internal view returns (uint256 x, uint256 y, uint256 z) {
         unchecked {
-            /// We use 4-bit masks where the first 2 bits refer to `scalar1` and the last 2 bits refer to `scalar2`.
-            uint256[3][16] memory points = _precomputePointsTable(
-                params.call,
-                params.p,
-                params.three,
-                params.a,
-                gh
-            );
-
+            uint256 mask;
             uint256 scalar1Bits_;
             uint256 scalar2Bits_;
 
@@ -166,21 +173,24 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             z = U384.init(1);
 
             for (uint256 word = 2; word <= 184; word += 2) {
-                (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
-                (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
+                (x, y, z) = _twiceProj(call, p, three, a, x, y, z);
+                (x, y, z) = _twiceProj(call, p, three, a, x, y, z);
 
-                uint256 mask = (((scalar1Bits_ >> (184 - word)) & 0x03) << 2) |
+                mask =
+                    (((scalar1Bits_ >> (184 - word)) & 0x03) << 2) |
                     ((scalar2Bits_ >> (184 - word)) & 0x03);
 
                 if (mask != 0) {
+                    uint256[3] memory maskedPoints = points[mask];
+
                     (x, y, z) = _addProj(
-                        params.call,
-                        params.p,
-                        params.three,
-                        params.a,
-                        points[mask][0],
-                        points[mask][1],
-                        points[mask][2],
+                        call,
+                        p,
+                        three,
+                        a,
+                        maskedPoints[0],
+                        maskedPoints[1],
+                        maskedPoints[2],
                         x,
                         y,
                         z
@@ -194,21 +204,24 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             }
 
             for (uint256 word = 2; word <= 256; word += 2) {
-                (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
-                (x, y, z) = _twiceProj(params.call, params.p, params.three, params.a, x, y, z);
+                (x, y, z) = _twiceProj(call, p, three, a, x, y, z);
+                (x, y, z) = _twiceProj(call, p, three, a, x, y, z);
 
-                uint256 mask = (((scalar1Bits_ >> (256 - word)) & 0x03) << 2) |
+                mask =
+                    (((scalar1Bits_ >> (256 - word)) & 0x03) << 2) |
                     ((scalar2Bits_ >> (256 - word)) & 0x03);
 
                 if (mask != 0) {
+                    uint256[3] memory maskedPoints = points[mask];
+
                     (x, y, z) = _addProj(
-                        params.call,
-                        params.p,
-                        params.three,
-                        params.a,
-                        points[mask][0],
-                        points[mask][1],
-                        points[mask][2],
+                        call,
+                        p,
+                        three,
+                        a,
+                        maskedPoints[0],
+                        maskedPoints[1],
+                        maskedPoints[2],
                         x,
                         y,
                         z
@@ -370,14 +383,13 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         uint256 p,
         uint256 three,
         uint256 a,
-        GH memory gh
+        uint256 gx,
+        uint256 gy,
+        uint256 hx,
+        uint256 hy
     ) private view returns (uint256[3][16] memory points) {
         /// 0b0100: 1G + 0H
-        (points[0x04][0], points[0x04][1], points[0x04][2]) = (
-            gh.gx.copy(),
-            gh.gy.copy(),
-            U384.init(1)
-        );
+        (points[0x04][0], points[0x04][1], points[0x04][2]) = (gx.copy(), gy.copy(), U384.init(1));
         /// 0b1000: 2G + 0H
         (points[0x08][0], points[0x08][1], points[0x08][2]) = _twiceProj(
             call,
@@ -402,11 +414,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             points[0x08][2]
         );
         /// 0b0001: 0G + 1H
-        (points[0x01][0], points[0x01][1], points[0x01][2]) = (
-            gh.hx.copy(),
-            gh.hy.copy(),
-            U384.init(1)
-        );
+        (points[0x01][0], points[0x01][1], points[0x01][2]) = (hx.copy(), hy.copy(), U384.init(1));
         /// 0b0010: 0G + 2H
         (points[0x02][0], points[0x02][1], points[0x02][2]) = _twiceProj(
             call,

@@ -196,7 +196,7 @@ library U384 {
         }
     }
 
-    function modadd(uint256 a_, uint256 b_, uint256 m_) internal view returns (uint256 r_) {
+    function modadd(uint256 a_, uint256 b_, uint256 m_) internal pure returns (uint256 r_) {
         unchecked {
             r_ = _allocate(SHORT_ALLOCATION);
 
@@ -210,7 +210,7 @@ library U384 {
         }
     }
 
-    function modaddAssign(uint256 a_, uint256 b_, uint256 m_) internal view {
+    function modaddAssign(uint256 a_, uint256 b_, uint256 m_) internal pure {
         unchecked {
             _addTo(a_, b_);
 
@@ -220,7 +220,7 @@ library U384 {
         }
     }
 
-    function modaddAssignTo(uint256 to_, uint256 a_, uint256 b_, uint256 m_) internal view {
+    function modaddAssignTo(uint256 to_, uint256 a_, uint256 b_, uint256 m_) internal pure {
         unchecked {
             _add(a_, b_, to_);
 
@@ -286,7 +286,7 @@ library U384 {
         }
     }
 
-    function modshl1(uint256 a_, uint256 m_) internal view returns (uint256 r_) {
+    function modshl1(uint256 a_, uint256 m_) internal pure returns (uint256 r_) {
         unchecked {
             r_ = _allocate(SHORT_ALLOCATION);
 
@@ -300,7 +300,7 @@ library U384 {
         }
     }
 
-    function modshl1Assign(uint256 a_, uint256 m_) internal view {
+    function modshl1Assign(uint256 a_, uint256 m_) internal pure {
         unchecked {
             _shl1To(a_);
 
@@ -310,7 +310,7 @@ library U384 {
         }
     }
 
-    function modshl1AssignTo(uint256 to_, uint256 a_, uint256 m_) internal view {
+    function modshl1AssignTo(uint256 to_, uint256 a_, uint256 m_) internal pure {
         unchecked {
             _shl1(a_, to_);
 
@@ -403,20 +403,18 @@ library U384 {
 
     function _shl1(uint256 a_, uint256 r_) internal pure {
         assembly {
-            let a0_ := mload(a_)
             let a1_ := mload(add(a_, 0x20))
 
-            mstore(r_, or(shl(1, a0_), shr(255, a1_)))
+            mstore(r_, or(shl(1, mload(a_)), shr(255, a1_)))
             mstore(add(r_, 0x20), shl(1, a1_))
         }
     }
 
     function _shl1To(uint256 a_) internal pure {
         assembly {
-            let a0_ := mload(a_)
             let a1_ := mload(add(a_, 0x20))
 
-            mstore(a_, or(shl(1, a0_), shr(255, a1_)))
+            mstore(a_, or(shl(1, mload(a_)), shr(255, a1_)))
             mstore(add(a_, 0x20), shl(1, a1_))
         }
     }
