@@ -9,6 +9,7 @@ bytes32 constant C_RSA_SHA2_4096 = keccak256("C_RSA_4096");
 bytes32 constant C_RSA_SHA2_2048 = keccak256("C_RSA_2048");
 
 bytes32 constant C_RSAPSS_SHA2_2048 = keccak256("C_RSAPSS_SHA2_2048");
+bytes32 constant C_RSAPSS_SHA2_2048_3 = keccak256("C_RSAPSS_SHA2_2048_3");
 bytes32 constant C_RSAPSS_SHA2_4096 = keccak256("C_RSAPSS_SHA2_4096");
 bytes32 constant C_RSAPSS_SHA512_2048 = keccak256("C_RSAPSS_SHA512_2048");
 bytes32 constant C_RSAPSS_SHA512_4096 = keccak256("C_RSAPSS_SHA512_4096");

@@ -34,7 +34,7 @@ export const deployCRSAPSSDispatcher = async (
   const signer = await deployRSAPSSSigner(deployer, hashFunc, exponent, keyLength);
 
   const dispatcher = await deployer.deploy(CRSADispatcher__factory, {
-    name: `CRSAPSSDispatcher ${hashFunc} ${keyLength}`,
+    name: `CRSAPSSDispatcher ${hashFunc} ${exponent} ${keyLength}`,
   });
 
   await dispatcher.__CRSADispatcher_init(await signer.getAddress(), keyLength, keyPrefix);

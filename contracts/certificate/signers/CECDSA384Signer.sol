@@ -38,12 +38,12 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
             lowSmax: hex"465c8f41519c369407aeb7bf287320ef8a97b884f6aa2b598f8b3736560212d3e79d5b57b5bfe1881dc41901748232b2"
         });
 
-    bool internal _isSecp;
-    bool internal _isSha2;
+    bool public isSecp;
+    bool public isSha2;
 
     function __CECDSASHA2Signer_init(bool isSecp_, bool isSha2_) external initializer {
-        _isSecp = isSecp_;
-        _isSha2 = isSha2_;
+        isSecp = isSecp_;
+        isSha2 = isSha2_;
     }
 
     function verifyICAOSignature(
@@ -54,13 +54,13 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
         ECDSA384.Parameters memory curveParams_;
         function(bytes memory) internal view returns (bytes memory) hasher_;
 
-        if (_isSecp) {
+        if (isSecp) {
             curveParams_ = _secp384r1CurveParams;
         } else {
             curveParams_ = _brainpoolP384r1CurveParams;
         }
 
-        if (_isSha2) {
+        if (isSha2) {
             hasher_ = _sha2;
         } else {
             hasher_ = SHA384.sha384;
