@@ -53,7 +53,7 @@
     "@iden3/contracts": "1.4.7",
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
-    "@solarity/solidity-lib": "2.7.6"
+    "@solarity/solidity-lib": "2.7.12"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",

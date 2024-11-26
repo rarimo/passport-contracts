@@ -42,14 +42,15 @@ export const deployCRSAPSSDispatcher = async (
 
 export const deployCECDSADispatcher = async (
   deployer: Deployer,
-  hashFunc: "SHA2",
+  curve: "SECP384" | "brainpoolP384r1",
+  hashFunc: "SHA2" | "SHA384",
   keyLength: "64",
   keyPrefix: string,
 ) => {
-  const signer = await deployECDSASigner(deployer, hashFunc, keyLength);
+  const signer = await deployECDSASigner(deployer, curve, hashFunc, keyLength);
 
   const dispatcher = await deployer.deploy(CECDSADispatcher__factory, {
-    name: `CECDSADispatcher ${hashFunc} ${keyLength}`,
+    name: `CECDSADispatcher ${curve} ${hashFunc} ${keyLength}`,
   });
 
   await dispatcher.__CECDSADispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
@@ -75,12 +76,12 @@ const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent
   return signer;
 };
 
-const deployECDSASigner = async (deployer: Deployer, hashfunc: string, keyLength: string) => {
+const deployECDSASigner = async (deployer: Deployer, curve: string, hashfunc: string, keyLength: string) => {
   const signer = await deployer.deploy(CECDSASHA2Signer__factory, {
-    name: `CESDCASigner ${hashfunc} ${keyLength}`,
+    name: `CESDCASigner ${curve} ${hashfunc} ${keyLength}`,
   });
 
-  await signer.__CECDSASHA2Signer_init();
+  await signer.__CECDSASHA2Signer_init(curve === "SECP384", hashfunc === "SHA2");
 
   return signer;
 };

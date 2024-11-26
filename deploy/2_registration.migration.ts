@@ -34,7 +34,10 @@ export = async (deployer: Deployer) => {
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "256", "0x0282010100");
   await deployCRSAPSSDispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
 
-  await deployCECDSADispatcher(deployer, "SHA2", "64", "0x03420004");
+  await deployCECDSADispatcher(deployer, "SECP384", "SHA2", "64", "0x03420004");
+  await deployCECDSADispatcher(deployer, "SECP384", "SHA384", "64", "0x03420004");
+  await deployCECDSADispatcher(deployer, "brainpoolP384r1", "SHA2", "64", "0x03420004");
+  await deployCECDSADispatcher(deployer, "brainpoolP384r1", "SHA384", "64", "0x03420004");
 
   await deployPRSASHA2688Dispatcher(deployer, "65537", "SHA1");
   await deployPRSASHA2688Dispatcher(deployer, "3", "SHA1");
