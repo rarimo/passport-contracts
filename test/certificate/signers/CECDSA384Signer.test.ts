@@ -2,19 +2,19 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { Reverter } from "@/test/helpers/";
 
-import { CECDSASHA2Signer } from "@ethers-v6";
+import { CECDSA384Signer } from "@ethers-v6";
 
-describe("CECDSASHA2Signer", () => {
+describe("CECDSA384Signer", () => {
   const reverter = new Reverter();
 
-  let signerSha2: CECDSASHA2Signer;
+  let signerSha2: CECDSA384Signer;
 
   before("setup", async () => {
-    const CECDSASHA2Signer = await ethers.getContractFactory("CECDSASHA2Signer");
+    const CECDSA384Signer = await ethers.getContractFactory("CECDSA384Signer");
 
-    signerSha2 = await CECDSASHA2Signer.deploy();
+    signerSha2 = await CECDSA384Signer.deploy();
 
-    await signerSha2.__CECDSASHA2Signer_init(true, true);
+    await signerSha2.__CECDSA384Signer_init(true, true);
 
     await reverter.snapshot();
   });

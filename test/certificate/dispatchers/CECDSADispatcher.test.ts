@@ -11,17 +11,17 @@ describe("CECDSADispatcher", () => {
   let dispatcher: CECDSADispatcher;
 
   before("setup", async () => {
-    const CECDSASHA2Signer = await ethers.getContractFactory("CECDSASHA2Signer");
+    const CECDSA384Signer = await ethers.getContractFactory("CECDSA384Signer");
     const CECDSADispatcher = await ethers.getContractFactory("CECDSADispatcher", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
       },
     });
 
-    const signerSha2 = await CECDSASHA2Signer.deploy();
+    const signerSha2 = await CECDSA384Signer.deploy();
     dispatcher = await CECDSADispatcher.deploy();
 
-    await signerSha2.__CECDSASHA2Signer_init(true, true);
+    await signerSha2.__CECDSA384Signer_init(true, true);
     await dispatcher.__CECDSADispatcher_init(await signerSha2.getAddress(), 64, "0x0103420004");
 
     await reverter.snapshot();

@@ -4,7 +4,7 @@ import {
   CRSAPSSSigner__factory,
   CRSADispatcher__factory,
   CRSASigner__factory,
-  CECDSASHA2Signer__factory,
+  CECDSA384Signer__factory,
   CECDSADispatcher__factory,
 } from "@ethers-v6";
 
@@ -77,11 +77,11 @@ const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent
 };
 
 const deployECDSASigner = async (deployer: Deployer, curve: string, hashfunc: string, keyLength: string) => {
-  const signer = await deployer.deploy(CECDSASHA2Signer__factory, {
+  const signer = await deployer.deploy(CECDSA384Signer__factory, {
     name: `CESDCASigner ${curve} ${hashfunc} ${keyLength}`,
   });
 
-  await signer.__CECDSASHA2Signer_init(curve === "SECP384", hashfunc === "SHA2");
+  await signer.__CECDSA384Signer_init(curve === "SECP384", hashfunc === "SHA2");
 
   return signer;
 };

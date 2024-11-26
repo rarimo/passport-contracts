@@ -12,7 +12,7 @@ import {SHA384} from "../../utils/SHA384.sol";
 /**
  * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
  */
-contract CECDSASHA2Signer is ICertificateSigner, Initializable {
+contract CECDSA384Signer is ICertificateSigner, Initializable {
     using ECDSA384 for *;
     using SHA384 for *;
 
@@ -41,7 +41,7 @@ contract CECDSASHA2Signer is ICertificateSigner, Initializable {
     bool public isSecp;
     bool public isSha2;
 
-    function __CECDSASHA2Signer_init(bool isSecp_, bool isSha2_) external initializer {
+    function __CECDSA384Signer_init(bool isSecp_, bool isSha2_) external initializer {
         isSecp = isSecp_;
         isSha2 = isSha2_;
     }
