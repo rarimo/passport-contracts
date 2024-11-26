@@ -9,7 +9,6 @@ bytes32 constant C_RSA_SHA2_4096 = keccak256("C_RSA_4096");
 bytes32 constant C_RSA_SHA2_2048 = keccak256("C_RSA_2048");
 
 bytes32 constant C_RSAPSS_SHA2_2048 = keccak256("C_RSAPSS_SHA2_2048");
-bytes32 constant C_RSAPSS_SHA2_2048_3 = keccak256("C_RSAPSS_SHA2_2048_3");
 bytes32 constant C_RSAPSS_SHA2_4096 = keccak256("C_RSAPSS_SHA2_4096");
 bytes32 constant C_RSAPSS_SHA512_2048 = keccak256("C_RSAPSS_SHA512_2048");
 bytes32 constant C_RSAPSS_SHA512_4096 = keccak256("C_RSAPSS_SHA512_4096");
@@ -64,6 +63,15 @@ bytes32 constant Z_PER_PASSPORT_1_256_3_4_336_232_1_1480_5_296 = keccak256(
 );
 bytes32 constant Z_PER_PASSPORT_1_256_3_4_600_248_1_1496_3_256 = keccak256(
     "Z_PER_PASSPORT_1_256_3_4_600_248_1_1496_3_256"
+);
+bytes32 constant Z_PER_PASSPORT_1_160_3_4_576_200_NA = keccak256(
+    "Z_PER_PASSPORT_1_160_3_4_576_200_NA"
+);
+bytes32 constant Z_PER_PASSPORT_21_256_3_3_336_232_NA = keccak256(
+    "Z_PER_PASSPORT_21_256_3_3_336_232_NA"
+);
+bytes32 constant Z_PER_PASSPORT_24_256_3_4_336_232_NA = keccak256(
+    "Z_PER_PASSPORT_24_256_3_4_336_232_NA"
 );
 
 bytes32 constant Z_UNIVERSAL_4096 = keccak256("Z_UNIVERSAL_4096");

@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.2]
+
+* Refactored `ECDSA384` signer to use `solarity` implementation
+    * Added support for `brainpoolP384r1` curve
+* Refactored `RSASSAPSS` signer to use `solarity` implementation
+* Added new algorithms:
+    1. **Certificate dispatchers**
+
+    ```solidity
+    C_ECDSA_SECP384R1_SHA384_512 = keccak256("C_ECDSA_SECP384R1_SHA384_512");
+    C_ECDSA_BRAINPOOLP384R1_SHA2_512 = keccak256("C_ECDSA_BRAINPOOLP384R1_SHA2_512");
+    C_ECDSA_BRAINPOOLP384R1_SHA384_512 = keccak256("C_ECDSA_BRAINPOOLP384R1_SHA384_512");
+    ```
+
+    2. **Passport verifiers**
+
+    ```solidity
+    Z_PER_PASSPORT_1_160_3_4_576_200_NA = keccak256("Z_PER_PASSPORT_1_160_3_4_576_200_NA");
+    Z_PER_PASSPORT_21_256_3_3_336_232_NA = keccak256("Z_PER_PASSPORT_21_256_3_3_336_232_NA");
+    Z_PER_PASSPORT_24_256_3_4_336_232_NA = keccak256("Z_PER_PASSPORT_24_256_3_4_336_232_NA");
+    ```
+
 ## [0.1.1]
 
 * A handful of new algorithms are now supported. New constants have been added:
