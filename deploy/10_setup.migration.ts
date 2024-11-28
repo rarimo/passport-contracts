@@ -21,6 +21,9 @@ import {
   PPerPassport_1_160_3_4_576_200_NAVerifier2__factory,
   PPerPassport_21_256_3_3_336_232_NAVerifier2__factory,
   PPerPassport_24_256_3_4_336_232_NAVerifier2__factory,
+  PPerPassport_1_160_3_3_576_200_NAVerifier2__factory,
+  PPerPassport_1_256_3_3_576_248_NAVerifier2__factory,
+  PPerPassport_20_256_3_3_336_224_NAVerifier2__factory,
   PUniversal2048Verifier2__factory,
   PUniversal2048V2Verifier2__factory,
   PUniversal4096Verifier2__factory,
@@ -67,6 +70,9 @@ import {
   Z_PER_PASSPORT_1_160_3_4_576_200_NA,
   Z_PER_PASSPORT_21_256_3_3_336_232_NA,
   Z_PER_PASSPORT_24_256_3_4_336_232_NA,
+  Z_PER_PASSPORT_1_160_3_3_576_200_NA,
+  Z_PER_PASSPORT_1_256_3_3_576_248_NA,
+  Z_PER_PASSPORT_20_256_3_3_336_224_NA,
   Z_UNIVERSAL_2048,
   Z_UNIVERSAL_2048_V2,
   Z_UNIVERSAL_4096,
@@ -183,6 +189,15 @@ export = async (deployer: Deployer) => {
   const pPerPassport_24_256_3_4_336_232_NAVerifier = await deployer.deployed(
     PPerPassport_24_256_3_4_336_232_NAVerifier2__factory,
   );
+  const pPerPassport_1_160_3_3_576_200_NAVerifier = await deployer.deployed(
+    PPerPassport_1_160_3_3_576_200_NAVerifier2__factory,
+  );
+  const pPerPassport_1_256_3_3_576_248_NAVerifier = await deployer.deployed(
+    PPerPassport_1_256_3_3_576_248_NAVerifier2__factory,
+  );
+  const pPerPassport_20_256_3_3_336_224_NAVerifier = await deployer.deployed(
+    PPerPassport_20_256_3_3_336_224_NAVerifier2__factory,
+  );
 
   const pUniversal2048Verifier = await deployer.deployed(PUniversal2048Verifier2__factory);
   const pUniversal2048V2Verifier = await deployer.deployed(PUniversal2048V2Verifier2__factory);
@@ -296,6 +311,18 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(
     Z_PER_PASSPORT_24_256_3_4_336_232_NA,
     await pPerPassport_24_256_3_4_336_232_NAVerifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_1_160_3_3_576_200_NA,
+    await pPerPassport_1_160_3_3_576_200_NAVerifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_1_256_3_3_576_248_NA,
+    await pPerPassport_1_256_3_3_576_248_NAVerifier.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_PER_PASSPORT_20_256_3_3_336_224_NA,
+    await pPerPassport_20_256_3_3_336_224_NAVerifier.getAddress(),
   );
 
   await registration.mockAddPassportVerifier(Z_UNIVERSAL_2048, await pUniversal2048Verifier.getAddress());

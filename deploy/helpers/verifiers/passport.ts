@@ -15,6 +15,9 @@ import {
   PPerPassport_1_160_3_4_576_200_NAVerifier2__factory,
   PPerPassport_21_256_3_3_336_232_NAVerifier2__factory,
   PPerPassport_24_256_3_4_336_232_NAVerifier2__factory,
+  PPerPassport_1_160_3_3_576_200_NAVerifier2__factory,
+  PPerPassport_1_256_3_3_576_248_NAVerifier2__factory,
+  PPerPassport_20_256_3_3_336_224_NAVerifier2__factory,
   PUniversal2048Verifier2__factory,
   PUniversal2048V2Verifier2__factory,
   PUniversal4096Verifier2__factory,
@@ -42,6 +45,9 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(PPerPassport_1_160_3_4_576_200_NAVerifier2__factory);
   await deployer.deploy(PPerPassport_21_256_3_3_336_232_NAVerifier2__factory);
   await deployer.deploy(PPerPassport_24_256_3_4_336_232_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_1_160_3_3_576_200_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_1_256_3_3_576_248_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_20_256_3_3_336_224_NAVerifier2__factory);
 
   await deployer.deploy(PUniversal2048Verifier2__factory);
   await deployer.deploy(PUniversal2048V2Verifier2__factory);

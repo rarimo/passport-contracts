@@ -73,6 +73,15 @@ bytes32 constant Z_PER_PASSPORT_21_256_3_3_336_232_NA = keccak256(
 bytes32 constant Z_PER_PASSPORT_24_256_3_4_336_232_NA = keccak256(
     "Z_PER_PASSPORT_24_256_3_4_336_232_NA"
 );
+bytes32 constant Z_PER_PASSPORT_1_160_3_3_576_200_NA = keccak256(
+    "Z_PER_PASSPORT_1_160_3_3_576_200_NA"
+);
+bytes32 constant Z_PER_PASSPORT_1_256_3_3_576_248_NA = keccak256(
+    "Z_PER_PASSPORT_1_256_3_3_576_248_NA"
+);
+bytes32 constant Z_PER_PASSPORT_20_256_3_3_336_224_NA = keccak256(
+    "Z_PER_PASSPORT_20_256_3_3_336_224_NA"
+);
 
 bytes32 constant Z_UNIVERSAL_4096 = keccak256("Z_UNIVERSAL_4096");
 bytes32 constant Z_UNIVERSAL_2048 = keccak256("Z_UNIVERSAL_2048");
