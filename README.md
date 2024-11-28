@@ -37,7 +37,7 @@ Upon issuance, every NFC passport is signed by an authorized (slave) entity that
 
 If all the checks succeed, we issue a `"hash of passport public key" <-> "identity public key"` bond and store it in the Sparse Merkle Tree (SMT). That enables us to prove the belonging of the identity to a certain user in the participation events.
 
-The stunning beauty of the aforementioned proccess is that **no** vital information is revealed during the registration. We are using advanced ZK techniques and Circom-based circuits to make it work.
+The stunning beauty of the aforementioned process is that **no** vital information is revealed during the registration. We are using advanced ZK techniques and Circom-based circuits to make it work.
 
 ## 🪛 How to use
 
