@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3]
+
+* Relaxed passport `no AA` dispatcher to allow non-empty public keys
+* Added new algorithms:
+    1. **Passport verifiers**
+
+    ```solidity
+    Z_PER_PASSPORT_10_256_3_3_576_248_1_1184_5_264 = keccak256("Z_PER_PASSPORT_10_256_3_3_576_248_1_1184_5_264");
+    Z_PER_PASSPORT_11_256_3_5_576_248_1_1808_4_256 = keccak256("Z_PER_PASSPORT_11_256_3_5_576_248_1_1808_4_256");
+    Z_PER_PASSPORT_21_256_3_3_576_232_NA = keccak256("Z_PER_PASSPORT_21_256_3_3_576_232_NA");
+    ```
+
 ## [0.1.2]
 
 * Refactored `ECDSA384` signer to use `solarity` implementation
