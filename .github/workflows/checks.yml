@@ -15,7 +15,15 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
+
       - name: Setup
         uses: ./.github/actions/setup
+
+      - name: Prepare circuits
+        run: npm run prepare-circuits
+
+      - name: Copy assets
+        run: cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
+
       - name: Run tests
         run: npm run test
