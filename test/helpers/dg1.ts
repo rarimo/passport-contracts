@@ -44,7 +44,7 @@ export function ensureLength(str: string, requiredLength: number, padChar = "\0"
 }
 
 /**
- * Creates a valid dg1 array of 744 bits from the given fields.
+ * Creates a valid dg1 array of 1024 bits from the given fields.
  * All fields must match the required lengths. If shorter, they are padded.
  * Date: 6 chars => 48 bits
  */
@@ -63,29 +63,22 @@ export function createDG1Data(fields: DG1Fields): bigint[] {
 
   // Offsets and sizes in bits
   const CITIZENSHIP_FIELD_SHIFT = 56;
-  const CITIZENSHIP_FIELD_SIZE = 24;
 
   const NAME_FIELD_SHIFT = 80;
   const NAME_FIELD_SIZE = 248; // 31 * 8
 
   const NAME_FIELD_RESIDUAL_SHIFT = NAME_FIELD_SHIFT + NAME_FIELD_SIZE; // 80 + 248 = 328
-  const NAME_FIELD_RESIDUAL_SIZE = 64; // 8 * 8
 
   const DOCUMENT_NUMBER_SHIFT = 392;
-  const DOCUMENT_NUMBER_SIZE = 72; // 9 * 8
 
   const NATIONALITY_FIELD_SHIFT = 472;
-  const NATIONALITY_FIELD_SIZE = 24; // 3 * 8
 
   const BIRTH_DATE_SHIFT = 496;
-  const BIRTH_DATE_SIZE = 48; // 6 * 8
 
   const SEX_POSITION = 69; // As given
   const SEX_FIELD_SHIFT = SEX_POSITION * 8; // 552
-  const SEX_FIELD_SIZE = 8; // 1 * 8
 
   const EXPIRATION_DATE_SHIFT = 560;
-  const EXPIRATION_DATE_SIZE = 48; // 6 * 8
 
   // Write fields
   writeASCIIString(dg1, fields.citizenship, CITIZENSHIP_FIELD_SHIFT);

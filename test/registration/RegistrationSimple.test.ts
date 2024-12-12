@@ -1,15 +1,17 @@
 import { zkit, ethers } from "hardhat";
 import { HDNodeWallet } from "ethers";
 
+import { Groth16Proof } from "@solarity/zkit";
+
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+
+import { createDG1Data } from "@/test/helpers/dg1";
 
 import { getPoseidon, Reverter, TSSMerkleTree, TSSSigner } from "@/test/helpers";
 
 import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, StateKeeperMock } from "@ethers-v6";
 
 import { PrivateRegisterIdentityLight256Groth16, RegisterIdentityLight256 } from "@/generated-types/zkit";
-import { createDG1Data } from "@/test/helpers/dg1";
-import { Groth16Proof } from "@solarity/zkit";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 const treeSize = 80;
