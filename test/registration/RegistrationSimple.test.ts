@@ -15,7 +15,6 @@ import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, 
 
 import { PrivateRegisterIdentityLight256Groth16, RegisterIdentityLight256 } from "@/generated-types/zkit";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
-import { ensureDir } from "fs-extra";
 
 const treeSize = 80;
 const chainName = "Tests";
@@ -24,7 +23,7 @@ const registrationName = "Registration";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-describe.only("RegistrationSimple", () => {
+describe("RegistrationSimple", () => {
   const reverter = new Reverter();
 
   let signHelper: TSSSigner;
@@ -44,12 +43,6 @@ describe.only("RegistrationSimple", () => {
   let registerLightVerifier: RegisterIdentityLight256Verifier;
 
   before(async () => {
-    await ensureDir("zkit/artifacts/circuits");
-    await ensureDir("assets");
-    await fs.copy("assets/registerIdentityLight256.dev", "zkit/artifacts/circuits/RegisterIdentityLight256.circom", {
-      overwrite: true,
-    });
-
     registerLight = await zkit.getCircuit("RegisterIdentityLight256");
 
     [OWNER] = await ethers.getSigners();
