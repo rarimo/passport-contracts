@@ -8,12 +8,8 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
-
-import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
 contract RegistrationSimple is Initializable, TSSUpgradeable {
     using ECDSA for bytes32;
