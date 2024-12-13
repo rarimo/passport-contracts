@@ -102,8 +102,6 @@ describe("RegistrationSimple", () => {
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registrationSimple.getAddress()]);
 
-    await registrationSimple.addOwners([OWNER.address]);
-
     await reverter.snapshot();
   });
 
@@ -129,7 +127,7 @@ describe("RegistrationSimple", () => {
     };
     const proof = await registerLight.generateProof(inputs);
     const passportData: RegistrationSimple.PassportStruct = {
-      dgCommit: proof.publicSignals.dg1Commitment,
+      dgCommit: ethers.toBeHex(proof.publicSignals.dg1Commitment, 32),
       dg1Hash: ethers.toBeHex(proof.publicSignals.dg1Hash, 32),
       publicKey: ethers.toBeHex(0n, 32),
       passportHash: ethers.toBeHex(proof.publicSignals.dg1Hash, 32),
@@ -164,7 +162,7 @@ describe("RegistrationSimple", () => {
         await registrationSimple.REGISTRATION_SIMPLE_PREFIX(),
         await registrationSimple.getAddress(),
         passportData.passportHash,
-        passportData.dg1Hash,
+        passportData.dgCommit,
         passportData.publicKey,
         passportData.verifier,
       ],

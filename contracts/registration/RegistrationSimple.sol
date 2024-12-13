@@ -6,7 +6,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
-import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
@@ -16,7 +15,7 @@ import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
+contract RegistrationSimple is Initializable, TSSUpgradeable {
     using ECDSA for bytes32;
     using VerifierHelper for address;
 
@@ -56,7 +55,6 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
-        __MultiOwnable_init();
         __TSSSigner_init(tssSigner_, chainName_);
 
         stateKeeper = StateKeeper(stateKeeper_);
