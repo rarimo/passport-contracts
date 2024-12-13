@@ -1,29 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
-
-import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
-
-import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
-
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {PoseidonSMT} from "../state/PoseidonSMT.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
+import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
+import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+
+import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+
+import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
+import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
 contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
     using ECDSA for bytes32;
-    using MerkleProof for bytes32[];
     using VerifierHelper for address;
+
+    using SetHelper for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     string public constant REGISTRATION_SIMPLE_PREFIX = "Registration simple prefix";
 
     uint256 internal constant _PROOF_SIGNALS_COUNT = 3;
+
+    enum MethodId {
+        None,
+        UpdateSignerList,
+        AddSigners,
+        RemoveSigners
+    }
 
     struct Passport {
         uint256 dgCommit;
@@ -34,6 +43,8 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
     }
 
     StateKeeper public stateKeeper;
+
+    EnumerableSet.AddressSet private _signers;
 
     constructor() {
         _disableInitializers();
@@ -56,12 +67,14 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
         bytes memory signature_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual {
-        require(identityKey_ > 0, "Registration: identity can not be zero");
+        require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
 
         bytes32 signedData_ = _buildSignedData(passport_);
         address dataSigner_ = ECDSA.recover(signedData_.toEthSignedMessageHash(), signature_);
 
-        require(isOwner(dataSigner_), "Registration: invalid signature");
+        _requireSigner(dataSigner_);
+
+        stateKeeper.useSignature(keccak256(signature_));
 
         _verifyZKProof(
             passport_.verifier,
@@ -79,6 +92,29 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
         );
     }
 
+    function updateSignerList(bytes calldata data_, bytes calldata proof_) external virtual {
+        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
+        bytes32 leaf_ = keccak256(abi.encodePacked(address(this), data_, chainName, nonce_));
+
+        _checkMerkleSignature(leaf_, proof_);
+        _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
+
+        (address[] memory signers_, uint8[] memory action_) = abi.decode(
+            data_,
+            (address[], uint8[])
+        );
+
+        for (uint256 i = 0; i < signers_.length; i++) {
+            if (MethodId(action_[i]) == MethodId.AddSigners) {
+                _signers.add(signers_[i]);
+            } else if (MethodId(action_[i]) == MethodId.RemoveSigners) {
+                _signers.remove(signers_[i]);
+            } else {
+                revert("RegistrationSimple: invalid methodId");
+            }
+        }
+    }
+
     function _buildSignedData(Passport memory passport_) internal view returns (bytes32) {
         return
             keccak256(
@@ -86,7 +122,11 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
                     REGISTRATION_SIMPLE_PREFIX,
                     address(this),
                     passport_.passportHash,
-                    passport_.dg1Hash,
+                    // Inside the DG1 commitment, we have the identity key; therefore,
+                    // if the identity is to be reissued, the key will also change,
+                    // as well as the backend signature.
+                    // The DG1 commitment is bound to the DG1 hash via a zk proof.
+                    passport_.dgCommit,
                     passport_.publicKey,
                     passport_.verifier
                 )
@@ -106,6 +146,13 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
         pubSignals_[1] = dg1Commitment_; // output
         pubSignals_[2] = pkIdentityHash_; // output
 
-        require(verifier_.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
+        require(
+            verifier_.verifyProof(pubSignals_, zkPoints_),
+            "RegistrationSimple: invalid zk proof"
+        );
+    }
+
+    function _requireSigner(address account_) private view {
+        require(_signers.contains(account_), "RegistrationSimple: caller is not the signer");
     }
 }

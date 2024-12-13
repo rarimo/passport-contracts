@@ -38,6 +38,7 @@ import {
   PMNEOptVerifier2__factory,
   PMNEOpt2Verifier2__factory,
   CECDSADispatcher__factory,
+  RegistrationSimple__factory,
 } from "@ethers-v6";
 
 import {
@@ -92,11 +93,13 @@ import {
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
+import { simpleRegistrationName } from "@/deploy/config/rarimo-mainnet";
 
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
   const registration = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
+  const registrationSimple = await deployer.deployed(RegistrationSimple__factory, "RegistrationSimple Proxy");
 
   // ------------------------ CERTIFICATE ------------------------
 
@@ -376,4 +379,5 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(Z_MNE_OPT_2, await pMneOpt2Verifier.getAddress());
 
   await stateKeeper.mockAddRegistrations([config.registrationName], [await registration.getAddress()]);
+  await stateKeeper.mockAddRegistrations([config.simpleRegistrationName], [await registrationSimple.getAddress()]);
 };
