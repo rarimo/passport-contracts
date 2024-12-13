@@ -15,6 +15,7 @@ import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, 
 
 import { PrivateRegisterIdentityLight256Groth16, RegisterIdentityLight256 } from "@/generated-types/zkit";
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
+import { ensureDir } from "fs-extra";
 
 const treeSize = 80;
 const chainName = "Tests";
@@ -43,6 +44,8 @@ describe.only("RegistrationSimple", () => {
   let registerLightVerifier: RegisterIdentityLight256Verifier;
 
   before(async () => {
+    await ensureDir("zkit/artifacts/circuits");
+    await ensureDir("assets");
     await fs.copy("assets/registerIdentityLight256.dev", "zkit/artifacts/circuits/RegisterIdentityLight256.circom", {
       overwrite: true,
     });
