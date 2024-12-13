@@ -19,8 +19,5 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Prepare circuits
-        run: npm run prepare-circuits
-
       - name: Run tests
         run: npm run test
