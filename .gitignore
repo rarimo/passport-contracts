@@ -8,8 +8,6 @@ artifacts
 coverage.json
 coverage
 
-!zkit/artifacts
-
 # Typechain generated files
 generated-types
 

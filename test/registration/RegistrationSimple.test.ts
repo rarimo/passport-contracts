@@ -1,5 +1,3 @@
-import * as fs from "fs-extra";
-
 import { zkit, ethers } from "hardhat";
 import { HDNodeWallet } from "ethers";
 

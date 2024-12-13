@@ -20,4 +20,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Run tests
-        run: npm run test
+        run: |
+          npm run prepare-circuits
+          ./scripts/replace-circuits-files.sh
+          npm run test
