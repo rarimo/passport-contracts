@@ -55,9 +55,7 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
 
         stateKeeper = StateKeeper(stateKeeper_);
 
-        for (uint256 i = 0; i < signers_.length; i++) {
-            _signers.add(signers_[i]);
-        }
+        _signers.add(signers_);
     }
 
     function registerSimple(
@@ -124,7 +122,7 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
                     // Inside the DG1 commitment, we have the identity key; therefore,
                     // if the identity is to be reissued, the key will also change,
                     // as well as the backend signature.
-                    // The DG1 commitment is bound to the DG1 hash via a zk proof.
+                    // The DG1 commitment is bound to the DG1 hash via a ZKP.
                     passport_.dgCommit,
                     passport_.publicKey,
                     passport_.verifier

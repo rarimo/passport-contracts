@@ -23,7 +23,7 @@ export = async (deployer: Deployer) => {
 
   // TODO: delete after mainnet deployment
   const registrationSimple = await deployProxy(deployer, RegistrationSimple__factory, "RegistrationSimple");
-  await registrationSimple.__RegistrationSimple_init(config.tssSigner, config.chainName, config.stateKeeper);
+  await registrationSimple.__RegistrationSimple_init(config.tssSigner, config.chainName, config.stateKeeper, []);
 
   Reporter.reportContracts(
     ["RegistrationSimple", `${await registrationSimple.getAddress()}`],
