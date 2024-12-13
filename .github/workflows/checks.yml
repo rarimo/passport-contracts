@@ -23,7 +23,9 @@ jobs:
         run: npm run prepare-circuits
 
       - name: Copy assets
-        run: cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
+        run: |
+          mkdir -p zkit/artifacts/circuits/RegisterIdentityLight256
+          cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256/
 
       - name: Run tests
         run: npm run test
