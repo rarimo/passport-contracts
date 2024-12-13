@@ -93,7 +93,6 @@ import {
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
-import { simpleRegistrationName } from "@/deploy/config/rarimo-mainnet";
 
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;

@@ -27,6 +27,7 @@ export = async (deployer: Deployer) => {
     config.tssSigner,
     config.chainName,
     await stateKeeper.getAddress(),
+    config.simpleRegistrationSigners,
   );
 
   await deployPVerifiers(deployer);
