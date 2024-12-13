@@ -53,12 +53,17 @@ contract RegistrationSimple is Initializable, MultiOwnable, TSSUpgradeable {
     function __RegistrationSimple_init(
         address tssSigner_,
         string calldata chainName_,
-        address stateKeeper_
+        address stateKeeper_,
+        address[] calldata signers_
     ) external initializer {
         __MultiOwnable_init();
         __TSSSigner_init(tssSigner_, chainName_);
 
         stateKeeper = StateKeeper(stateKeeper_);
+
+        for (uint256 i = 0; i < signers_.length; i++) {
+            _signers.add(signers_[i]);
+        }
     }
 
     function registerSimple(

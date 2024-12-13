@@ -93,7 +93,9 @@ describe("RegistrationSimple", () => {
       icaoMerkleRoot,
     );
 
-    await registrationSimple.__RegistrationSimple_init(SIGNER.address, chainName, await stateKeeper.getAddress());
+    await registrationSimple.__RegistrationSimple_init(SIGNER.address, chainName, await stateKeeper.getAddress(), [
+      OWNER.address,
+    ]);
 
     signHelper = new TSSSigner(SIGNER);
     merkleTree = new TSSMerkleTree(signHelper);

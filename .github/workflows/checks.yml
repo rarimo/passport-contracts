@@ -22,6 +22,5 @@ jobs:
       - name: Run tests
         run: |
           npm run prepare-circuits
-          ls -lah zkit/artifacts/circuits
-          cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256
+          cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
           npm run test
