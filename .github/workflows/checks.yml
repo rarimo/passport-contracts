@@ -20,7 +20,4 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Run tests
-        run: |
-          npm run prepare-circuits
-          cp -Rf assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
-          npm run test
+        run: npm run test
