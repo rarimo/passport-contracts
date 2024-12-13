@@ -96,15 +96,15 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
 
-        (address[] memory signers_, uint8[] memory action_) = abi.decode(
+        (address[] memory signers_, uint8[] memory actions_) = abi.decode(
             data_,
             (address[], uint8[])
         );
 
         for (uint256 i = 0; i < signers_.length; i++) {
-            if (MethodId(action_[i]) == MethodId.AddSigners) {
+            if (MethodId(actions_[i]) == MethodId.AddSigners) {
                 _signers.add(signers_[i]);
-            } else if (MethodId(action_[i]) == MethodId.RemoveSigners) {
+            } else if (MethodId(actions_[i]) == MethodId.RemoveSigners) {
                 _signers.remove(signers_[i]);
             } else {
                 revert("RegistrationSimple: invalid methodId");
