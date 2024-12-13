@@ -19,13 +19,8 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Prepare circuits
-        run: npm run prepare-circuits
-
-      - name: Copy assets
-        run: |
-          mkdir -p zkit/artifacts/circuits/RegisterIdentityLight256
-          cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256/
-
       - name: Run tests
-        run: npm run test
+        run: |
+          npm run prepare-circuits
+          cp -R assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256/
+          npm run test
