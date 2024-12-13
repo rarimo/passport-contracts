@@ -19,11 +19,8 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Prepare circuits
-        run: npm run prepare-circuits
-
-      - name: Overwrite circuit files
-        run: cp -Rf assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
-
       - name: Run tests
-        run: npm run test
+        run: |
+          npm run prepare-circuits
+          cp -Rf assets/registerIdentityLight256.dev/* zkit/artifacts/circuits/RegisterIdentityLight256.circom
+          npm run test
