@@ -294,11 +294,7 @@ library LibBytes {
                     // Note: the first check is always true,
                     // this could have been a do-while loop.
                     // solhint-disable-next-line no-empty-blocks
-                    for {
-
-                    } lt(source, sEnd) {
-
-                    } {
+                    for {} lt(source, sEnd) {} {
                         mstore(dest, mload(source))
                         source := add(source, 32)
                         dest := add(dest, 32)
@@ -329,11 +325,7 @@ library LibBytes {
                     // Note: the first check is always true,
                     // this could have been a do-while loop.
                     // solhint-disable-next-line no-empty-blocks
-                    for {
-
-                    } slt(dest, dEnd) {
-
-                    } {
+                    for {} slt(dest, dEnd) {} {
                         mstore(dEnd, mload(sEnd))
                         sEnd := sub(sEnd, 32)
                         dEnd := sub(dEnd, 32)
