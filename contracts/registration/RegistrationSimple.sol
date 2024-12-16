@@ -14,7 +14,6 @@ import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 contract RegistrationSimple is Initializable, TSSUpgradeable {
     using ECDSA for bytes32;
     using VerifierHelper for address;
-
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 
