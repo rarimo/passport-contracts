@@ -168,6 +168,6 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
     }
 
     function _requireSigner(address account_) private view {
-        require(_signers.contains(account_), "RegistrationSimple: caller is not the signer");
+        require(_signers.contains(account_), "RegistrationSimple: caller is not a signer");
     }
 }

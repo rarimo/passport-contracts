@@ -191,7 +191,7 @@ describe("RegistrationSimple", () => {
           signature,
           formatProof(proof.proof),
         ),
-      ).to.be.revertedWith("RegistrationSimple: caller is not the signer");
+      ).to.be.revertedWith("RegistrationSimple: caller is not a signer");
     });
 
     it("should revert if invalid proof is provided", async () => {
