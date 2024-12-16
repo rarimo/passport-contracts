@@ -24,9 +24,13 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
 
     enum MethodId {
         None,
-        UpdateSignerList,
-        AddSigners,
-        RemoveSigners
+        UpdateSignerList
+    }
+
+    enum OperationId {
+        None,
+        AddSigner,
+        RemoveSigner
     }
 
     struct Passport {
@@ -40,6 +44,8 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
     StateKeeper public stateKeeper;
 
     EnumerableSet.AddressSet private _signers;
+
+    event SignersListUpdated(address[] signers, uint8[] actions);
 
     constructor() {
         _disableInitializers();
@@ -63,7 +69,7 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         Passport memory passport_,
         bytes memory signature_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) external virtual {
+    ) external {
         require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
 
         bytes32 signedData_ = _buildSignedData(passport_);
@@ -89,9 +95,17 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         );
     }
 
-    function updateSignerList(bytes calldata data_, bytes calldata proof_) external virtual {
+    function updateSignerList(bytes calldata data_, bytes calldata proof_) external {
         uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
-        bytes32 leaf_ = keccak256(abi.encodePacked(address(this), data_, chainName, nonce_));
+        bytes32 leaf_ = keccak256(
+            abi.encodePacked(
+                address(this),
+                uint8(MethodId.UpdateSignerList),
+                data_,
+                chainName,
+                nonce_
+            )
+        );
 
         _checkMerkleSignature(leaf_, proof_);
         _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
@@ -101,15 +115,19 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
             (address[], uint8[])
         );
 
+        require(signers_.length == actions_.length, "RegistrationSimple: invalid input length");
+
         for (uint256 i = 0; i < signers_.length; i++) {
-            if (MethodId(actions_[i]) == MethodId.AddSigners) {
+            if (OperationId(actions_[i]) == OperationId.AddSigner) {
                 _signers.add(signers_[i]);
-            } else if (MethodId(actions_[i]) == MethodId.RemoveSigners) {
+            } else if (OperationId(actions_[i]) == OperationId.RemoveSigner) {
                 _signers.remove(signers_[i]);
             } else {
-                revert("RegistrationSimple: invalid methodId");
+                revert("RegistrationSimple: invalid operationId");
             }
         }
+
+        emit SignersListUpdated(signers_, actions_);
     }
 
     function _buildSignedData(Passport memory passport_) internal view returns (bytes32) {
