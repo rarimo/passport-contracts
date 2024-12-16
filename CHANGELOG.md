@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.4]
+
+* Added a new type of registration: `RegistrationSimple`
+* Added helper scripts for circuit testing
+
 ## [0.1.3]
 
 * Relaxed passport `no AA` dispatcher to allow non-empty public keys
