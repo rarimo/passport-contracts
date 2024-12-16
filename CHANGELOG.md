@@ -2,8 +2,8 @@
 
 ## [0.1.4]
 
-* Added new type of registration: `RegistrationSimple`
-* Added helper scripts for circuits testing
+* Added a new type of registration: `RegistrationSimple`
+* Added helper scripts for circuit testing
 
 ## [0.1.3]
 
