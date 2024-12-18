@@ -278,6 +278,10 @@ describe("RegistrationSimple", () => {
         ]),
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });
+
+    it("should retrieve all signers", async () => {
+      expect(await registrationSimple.getSigners()).to.be.deep.eq([OWNER.address]);
+    });
   });
 
   function formatProof(data: Groth16Proof): VerifierHelper.ProofPointsStruct {
