@@ -129,6 +129,10 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         emit SignersListUpdated(signers_, actions_);
     }
 
+    function getSigners() external view returns (address[] memory) {
+        return _signers.values();
+    }
+
     function _buildSignedData(Passport memory passport_) internal view returns (bytes32) {
         return
             keccak256(
