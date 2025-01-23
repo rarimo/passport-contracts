@@ -16,7 +16,7 @@ The ambitious idea has a set of challenges to overcome:
 - Verify that the user is not being impersonated
 - Prove that the user is a human being
 - Issue the user <-> identity bond
-- Reveal no or minimal information about user's credentials
+- Reveal no or minimal information about the user's credentials
 
 ### 1. Identify the user
 
@@ -24,18 +24,18 @@ We are anchoring to NFC-integrated passports to solve the first problem. Each pa
 
 ### 2. Verify the user is not impersonated
 
-The second problem is solved through utilizing "active authentication (AA)" mechanism built into the NFC passports. We ask the user to sign the public key of their identity via AA and then verify this signature on-chain.
+The second problem is solved by utilizing "active authentication (AA)" mechanism built into the NFC passports. We ask the user to sign the public key of their identity via AA and then verify this signature on-chain.
 
 ### 3. Prove the user is a human
 
-Upon issuance, every NFC passport is signed by an authorized (slave) entity that is in turn signed by a member of ICAO Master List. We can extract these signatures from passports and check that the master signature resolves to a member of ICAO. The extraction is a two step process:
+Upon issuance, every NFC passport is signed by an authorized (slave) entity that is in turn signed by a member of ICAO Master List. We can extract these signatures from passports and check that the master signature resolves to a member of ICAO. The extraction is a two-step process:
 
 1. Extract a slave X509 certificate and check its validity against the master signature
 2. Extract a slave signature and check a passport's validity against a valid X509 certificate
 
 ### 4. Issue decentralized identity
 
-If all the checks succeed, we issue a `"hash of passport public key" <-> "identity public key"` bond and store it in the Sparse Merkle Tree (SMT). That enables us to prove the belonging of the identity to a certain user in the participation events.
+If all the checks succeed, we issue a `"hash of passport public key" <-> "identity public key"` bond and store it in the Sparse Merkle Tree (SMT). That enables us to prove that the identity belongs to a certain user in the participation events.
 
 The stunning beauty of the aforementioned process is that **no** vital information is revealed during the registration. We are using advanced ZK techniques and Circom-based circuits to make it work.
 
@@ -50,7 +50,7 @@ npm install @rarimo/passport-contracts
 Afterwards, you will be able to use the application by calling the `Registration` entrypoint smart contract.
 
 > [!NOTE]
-> This is experimental, state of the art software. Behold and use at your own risk.
+> This is experimental, state of the art software. Please be sure to keep and use at your own risk.
 
 ## License
 
