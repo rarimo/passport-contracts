@@ -34,6 +34,9 @@ import {
   PInternalOptVerifier2__factory,
   PMNEOptVerifier2__factory,
   PMNEOpt2Verifier2__factory,
+  PPerPassport_11_256_3_3_576_240_1_864_5_264__factory,
+  PPerPassport_11_256_3_5_576_248_1_1808_5_296__factory,
+  PPerPassport_21_256_3_4_576_232_NA__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -60,6 +63,9 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(PPerPassport_2_256_3_6_336_264_1_2448_3_256Verifier2__factory);
   await deployer.deploy(PPerPassport_3_160_3_3_336_200_NAVerifier2__factory);
   await deployer.deploy(PPerPassport_3_160_3_4_576_216_1_1512_3_256Verifier2__factory);
+  await deployer.deploy(PPerPassport_11_256_3_3_576_240_1_864_5_264__factory);
+  await deployer.deploy(PPerPassport_11_256_3_5_576_248_1_1808_5_296__factory);
+  await deployer.deploy(PPerPassport_21_256_3_4_576_232_NA__factory);
 
   await deployer.deploy(PUniversal2048Verifier2__factory);
   await deployer.deploy(PUniversal2048V2Verifier2__factory);
