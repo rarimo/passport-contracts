@@ -6,7 +6,13 @@ import { MerkleTree } from "merkletreejs";
 import { TSSSigner } from "./TSSSigner";
 
 import { TSSOperation } from "@/test/helpers/types";
-import { TSSUpgradeableId, StateKeeperMethodId, RegistrationMethodId } from "@/test/helpers/constants";
+import {
+  TSSUpgradeableId,
+  StateKeeperMethodId,
+  RegistrationMethodId,
+  RegistrationSimpleOperationId,
+  RegistrationSimpleMethodId,
+} from "@/test/helpers/constants";
 
 export class TSSMerkleTree {
   public tree: MerkleTree;
@@ -165,6 +171,31 @@ export class TSSMerkleTree {
     );
 
     return this.getProof(hash, true, anotherSigner);
+  }
+
+  public updateSignersListOperation(
+    signers: string[],
+    actions: RegistrationSimpleOperationId[],
+    chainName: string,
+    nonce: BigNumberish,
+    contractAddress: string,
+    anotherSigner: HDNodeWallet | undefined = undefined,
+  ): TSSOperation {
+    const encoder = new ethers.AbiCoder();
+    const data = encoder.encode(["address[]", "uint8[]"], [signers, actions]);
+
+    const hash = this.getArbitraryDataSignHash(
+      RegistrationSimpleMethodId.UpdateSignerList,
+      data,
+      chainName,
+      nonce,
+      contractAddress,
+    );
+
+    return {
+      data,
+      proof: this.getProof(hash, true, anotherSigner),
+    };
   }
 
   public getArbitraryDataSignHash(

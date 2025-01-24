@@ -2,13 +2,18 @@
   "extends": "solhint:recommended",
   "plugins": ["prettier"],
   "rules": {
+    "reentrancy": "error",
     "prettier/prettier": "warn",
-    "reentrancy": "off",
     "modifier-name-mixedcase": "off",
-    "no-empty-blocks": "off",
-    "func-visibility": "off",
-    "max-states-count": "off",
+    "func-name-mixedcase": "off",
+    "no-empty-blocks": "warn",
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "max-states-count": "warn",
     "not-rely-on-time": "off",
-    "compiler-version": "off"
+    "var-name-mixedcase": "off",
+    "gas-custom-errors": "off",
+    "reason-string": "off",
+    "no-inline-assembly": "off",
+    "explicit-types": "off"
   }
 }

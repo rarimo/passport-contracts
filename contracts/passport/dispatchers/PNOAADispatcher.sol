@@ -14,9 +14,9 @@ contract PNOAADispatcher is IPassportDispatcher, Initializable {
     function authenticate(
         bytes memory,
         bytes memory passportSignature_,
-        bytes memory passportPublicKey_
+        bytes memory
     ) external pure returns (bool) {
-        return passportSignature_.length == 0 && passportPublicKey_.length == 0;
+        return passportSignature_.length == 0;
     }
 
     /**
