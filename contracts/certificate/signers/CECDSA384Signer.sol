@@ -9,9 +9,6 @@ import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.so
 
 import {SHA384} from "../../utils/SHA384.sol";
 
-/**
- * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
- */
 contract CECDSA384Signer is ICertificateSigner, Initializable {
     using ECDSA384 for *;
     using SHA384 for *;

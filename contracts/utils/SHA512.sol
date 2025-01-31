@@ -10,26 +10,36 @@ library SHA512 {
     // @return padded message bytes
     function preprocess(bytes memory message) internal pure returns (bytes memory) {
         uint256 padding = 128 - (message.length % 128);
+
+        if (padding < 17) {
+            padding += 128;
+        }
+
         bytes memory result = new bytes(message.length + padding);
 
         for (uint256 i = 0; i < message.length; i++) {
             result[i] = message[i];
         }
+
         result[message.length] = 0x80;
 
         uint128 bitSize = uint128(message.length * 8);
         bytes memory bitlength = abi.encodePacked(bitSize);
+
         for (uint256 index = 0; index < bitlength.length; index++) {
             result[result.length - 1 - index] = bitlength[bitlength.length - 1 - index];
         }
+
         return result;
     }
 
     function bytesToBytes8(bytes memory b, uint256 offset) internal pure returns (bytes8) {
         bytes8 out;
+
         for (uint256 i = 0; i < 8; i++) {
             out |= bytes8(b[offset + i] & 0xFF) >> (i * 8);
         }
+
         return out;
     }
 
@@ -38,9 +48,11 @@ library SHA512 {
         uint256 blockIndex
     ) internal pure returns (uint64[16] memory) {
         uint64[16] memory result;
+
         for (uint8 r = 0; r < result.length; r++) {
             result[r] = uint64(bytesToBytes8(data, blockIndex * 128 + r * 8));
         }
+
         return result;
     }
 
@@ -52,7 +64,7 @@ library SHA512 {
     // @param n num of positions to circular shift
     // @return uint64
     function ROTR(uint64 x, uint256 n) internal pure returns (uint64) {
-        return (x << (64 - n)) + (x >> n);
+        return (x << uint64(64 - n)) + (x >> n);
     }
 
     // @notice: The right shift operation SHR n(x), where x is a w-bit word and n is an integer with 0 <= n < w, is defined by SHR(x, n) = x >> n.

@@ -11,7 +11,7 @@ import {X509} from "../../../utils/X509.sol";
 abstract contract AbstractCDispatcher is ICertificateDispatcher, Initializable {
     using X509 for bytes;
 
-    uint256 public keyByteLength;
+    uint256 public keyByteLength; // slave certificate key length in bytes
     bytes public keyCheckPrefix;
 
     address public signer;
