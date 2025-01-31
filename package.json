@@ -36,7 +36,6 @@
     "deploy-rarimo-mainnet": "npx hardhat migrate --network rarimo-mainnet --verify",
     "deploy-q-testnet": "npx hardhat migrate --network q-testnet --verify",
     "deploy-chapel": "npx hardhat migrate --network chapel --verify",
-    "deploy-mumbai": "npx hardhat migrate --network mumbai --verify",
     "deploy-fuji": "npx hardhat migrate --network fuji --verify",
     "deploy-ethereum": "npx hardhat migrate --network ethereum --verify",
     "deploy-bsc": "npx hardhat migrate --network bsc --verify",
@@ -55,7 +54,7 @@
     "@iden3/contracts": "1.4.7",
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
-    "@solarity/solidity-lib": "2.7.12"
+    "@solarity/solidity-lib": "2.7.17"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",
@@ -66,7 +65,7 @@
     "@solarity/hardhat-gobind": "^1.2.2",
     "@solarity/hardhat-markup": "^1.0.7",
     "@solarity/hardhat-migrate": "^2.1.11",
-    "@solarity/hardhat-zkit": "^0.5.3",
+    "@solarity/hardhat-zkit": "^0.5.11",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.14",
