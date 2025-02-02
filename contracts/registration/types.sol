@@ -19,6 +19,9 @@ bytes32 constant C_ECDSA_BRAINPOOLP384R1_SHA2_512 = keccak256("C_ECDSA_BRAINPOOL
 bytes32 constant C_ECDSA_BRAINPOOLP384R1_SHA384_512 = keccak256(
     "C_ECDSA_BRAINPOOLP384R1_SHA384_512"
 );
+bytes32 constant C_ECDSA_BRAINPOOLP512R1_SHA512_1024 = keccak256(
+    "C_ECDSA_BRAINPOOLP512R1_SHA512_1024"
+);
 
 // -------------------------- PASSPORT --------------------------
 
