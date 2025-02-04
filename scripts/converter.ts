@@ -57,6 +57,6 @@ const convertPublicKeyToHex = () => {
   return `${ethers.toBeHex(PublicKey.X)}${ethers.toBeHex(PublicKey.Y).replace("0x", "")}`;
 };
 
-console.log(convertProofToHex());
-console.log(convertSignalsToHex());
-console.log(convertPublicKeyToHex());
+// console.log(convertProofToHex());
+// console.log(convertSignalsToHex());
+// console.log(convertPublicKeyToHex());

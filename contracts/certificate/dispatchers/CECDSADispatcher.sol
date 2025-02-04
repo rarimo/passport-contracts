@@ -18,7 +18,10 @@ contract CECDSADispatcher is AbstractCDispatcher {
 
     function getCertificateKey(
         bytes memory certificatePublicKey_
-    ) external pure override returns (uint256 keyHash_) {
-        return certificatePublicKey_.hash512();
+    ) external view override returns (uint256 keyHash_) {
+        return
+            keyByteLength >= 128
+                ? certificatePublicKey_.hash1024()
+                : certificatePublicKey_.hash512();
     }
 }
