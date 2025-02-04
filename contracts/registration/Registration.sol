@@ -13,12 +13,11 @@ import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-import {P_NO_AA} from "./types.sol";
-
 contract Registration is Initializable, TSSUpgradeable {
     using MerkleProof for bytes32[];
     using VerifierHelper for address;
 
+    bytes32 public constant P_NO_AA = keccak256("P_NO_AA");
     uint256 internal constant _PROOF_SIGNALS_COUNT = 5;
 
     enum MethodId {
