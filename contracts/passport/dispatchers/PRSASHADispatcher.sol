@@ -50,6 +50,6 @@ contract PRSASHADispatcher is IPassportDispatcher, Initializable {
      * @notice Get the RSASHA1 passport public key internal representation.
      */
     function getPassportKey(bytes memory passportPublicKey_) external pure returns (uint256) {
-        return passportPublicKey_.hash1024();
+        return passportPublicKey_.hash1024Strict();
     }
 }

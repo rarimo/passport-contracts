@@ -8,7 +8,7 @@ import { getConfig } from "./config/config";
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
 
-  await deployPoseidons(deployer, [1, 2, 3, 5]);
+  await deployPoseidons(deployer, [1, 2, 3, 4, 5]);
 
   const registrationSmt = await deploySMTProxy(deployer, "RegistrationSMT");
   const certificatesSmt = await deploySMTProxy(deployer, "CertificatesSMT");

@@ -15,6 +15,7 @@ describe("CECDSADispatcher", () => {
     const CECDSADispatcher = await ethers.getContractFactory("CECDSADispatcher", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit4L: await (await getPoseidon(4)).getAddress(),
       },
     });
 

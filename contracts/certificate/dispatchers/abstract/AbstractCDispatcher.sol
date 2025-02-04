@@ -63,11 +63,11 @@ abstract contract AbstractCDispatcher is ICertificateDispatcher, Initializable {
     }
 
     /**
-     * @notice Poseidon5 hash of the `x509KeyByteLength` long RSA X509 key.
+     * @notice Poseidon hash of the `x509KeyByteLength` long RSA | ECDSA X509 key.
      *
      * See X509 library for more information
      */
     function getCertificateKey(
         bytes memory certificatePublicKey_
-    ) external pure virtual override returns (uint256 keyHash_);
+    ) external view virtual override returns (uint256 keyHash_);
 }

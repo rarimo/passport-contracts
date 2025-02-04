@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit2L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit2L, PoseidonUnit4L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
 
 library Bytes2Poseidon {
     /**
@@ -24,9 +24,32 @@ library Bytes2Poseidon {
     }
 
     /**
-     * @notice Apply poseidon5 to [25, 25, 25, 25, 28] bytes long integers
+     * @notice Apply poseidon4 to [32, 32, 32, 32] bytes long integers mod 2 ** 248
      */
     function hash1024(bytes memory byteArray_) internal pure returns (uint256) {
+        assert(byteArray_.length >= 128);
+
+        uint256[4] memory decomposed_;
+
+        assembly {
+            mstore(decomposed_, mload(add(byteArray_, 32))) // skip length and read first 32 bytes
+            mstore(add(decomposed_, 32), mload(add(byteArray_, 64))) // skip length and read second 32 bytes
+            mstore(add(decomposed_, 64), mload(add(byteArray_, 96))) // skip length and read third 32 bytes
+            mstore(add(decomposed_, 96), mload(add(byteArray_, 128))) // skip length and read fourth 32 bytes
+        }
+
+        decomposed_[0] %= 2 ** 248;
+        decomposed_[1] %= 2 ** 248;
+        decomposed_[2] %= 2 ** 248;
+        decomposed_[3] %= 2 ** 248;
+
+        return PoseidonUnit4L.poseidon(decomposed_);
+    }
+
+    /**
+     * @notice Apply poseidon5 to [25, 25, 25, 25, 28] bytes long integers
+     */
+    function hash1024Strict(bytes memory byteArray_) internal pure returns (uint256) {
         assert(byteArray_.length >= 128);
 
         uint256[5] memory decomposed_;
