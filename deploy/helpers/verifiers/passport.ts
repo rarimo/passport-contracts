@@ -37,6 +37,15 @@ import {
   PPerPassport_11_256_3_3_576_240_1_864_5_264__factory,
   PPerPassport_11_256_3_5_576_248_1_1808_5_296__factory,
   PPerPassport_21_256_3_4_576_232_NA__factory,
+  PPerPassport_11_256_3_3_336_248_NAVerifier2__factory,
+  PPerPassport_14_256_3_4_336_64_1_1480_5_296Verifier2__factory,
+  PPerPassport_15_512_3_3_336_248_NAVerifier2__factory,
+  PPerPassport_1_256_3_6_336_248_1_2744_4_256Verifier2__factory,
+  PPerPassport_1_256_3_6_336_560_1_2744_4_256Verifier2__factory,
+  PPerPassport_20_160_3_3_736_200_NAVerifier2__factory,
+  PPerPassport_20_256_3_5_336_72_NAVerifier2__factory,
+  PPerPassport_21_256_3_5_576_232_NAVerifier2__factory,
+  PPerPassport_4_160_3_3_336_216_1_1296_3_256Verifier2__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -66,6 +75,15 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(PPerPassport_11_256_3_3_576_240_1_864_5_264__factory);
   await deployer.deploy(PPerPassport_11_256_3_5_576_248_1_1808_5_296__factory);
   await deployer.deploy(PPerPassport_21_256_3_4_576_232_NA__factory);
+  await deployer.deploy(PPerPassport_11_256_3_3_336_248_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_14_256_3_4_336_64_1_1480_5_296Verifier2__factory);
+  await deployer.deploy(PPerPassport_15_512_3_3_336_248_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_1_256_3_6_336_248_1_2744_4_256Verifier2__factory);
+  await deployer.deploy(PPerPassport_1_256_3_6_336_560_1_2744_4_256Verifier2__factory);
+  await deployer.deploy(PPerPassport_20_160_3_3_736_200_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_20_256_3_5_336_72_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_21_256_3_5_576_232_NAVerifier2__factory);
+  await deployer.deploy(PPerPassport_4_160_3_3_336_216_1_1296_3_256Verifier2__factory);
 
   await deployer.deploy(PUniversal2048Verifier2__factory);
   await deployer.deploy(PUniversal2048V2Verifier2__factory);
