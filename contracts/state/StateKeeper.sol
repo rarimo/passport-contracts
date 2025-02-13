@@ -54,6 +54,8 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     mapping(string => address) internal _registrations;
     mapping(address => bool) internal _registrationExists;
 
+    address public owner;
+
     event CertificateAdded(bytes32 certificateKey, uint256 expirationTimestamp);
     event CertificateRemoved(bytes32 certificateKey);
     event BondAdded(bytes32 passportKey, bytes32 identityKey);
@@ -82,6 +84,16 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         certificatesSmt = PoseidonSMT(certificatesSmt_);
 
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
+    }
+
+    function __StateKeeper_upgrade_1(address owner_) external reinitializer(2) {
+        owner = owner_;
+    }
+
+    function transferOwnership(address newOwner_) external {
+        _onlyOwner();
+
+        owner = newOwner_;
     }
 
     /**
@@ -250,12 +262,16 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     function changeICAOMasterTreeRoot(
         bytes32 newRoot_,
         uint256 timestamp,
-        bytes memory proof_
+        bytes calldata proof_
     ) external virtual {
-        bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
+        if (proof_.length == 0) {
+            _onlyOwner();
+        } else {
+            bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
 
-        _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
-        _checkMerkleSignature(leaf_, proof_);
+            _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
+            _checkMerkleSignature(leaf_, proof_);
+        }
 
         icaoMasterTreeMerkleRoot = newRoot_;
     }
@@ -271,13 +287,17 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         bytes calldata data_,
         bytes calldata proof_
     ) external virtual {
-        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-        );
+        if (proof_.length == 0) {
+            _onlyOwner();
+        } else {
+            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+            bytes32 leaf_ = keccak256(
+                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
+            );
 
-        _checkMerkleSignature(leaf_, proof_);
-        _useNonce(uint8(methodId_), nonce_);
+            _checkMerkleSignature(leaf_, proof_);
+            _useNonce(uint8(methodId_), nonce_);
+        }
 
         if (methodId_ == MethodId.AddRegistrations) {
             (string[] memory keys_, address[] memory values_) = abi.decode(
@@ -366,7 +386,15 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         return _registrationExists[registration_];
     }
 
+    function _authorizeUpgrade(address) internal view virtual override {
+        _onlyOwner();
+    }
+
     function _onlyRegistration() internal view {
         require(_registrationExists[msg.sender], "StateKeeper: not a registration");
+    }
+
+    function _onlyOwner() internal view {
+        require(msg.sender == owner, "StateKeeper: not an owner");
     }
 }
