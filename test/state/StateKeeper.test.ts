@@ -82,6 +82,17 @@ describe("StateKeeper", () => {
   afterEach(reverter.revert);
 
   describe("access", () => {
+    it("should initialize after upgrade", async () => {
+      expect(await stateKeeper.owner()).to.be.equal(ZeroAddress);
+
+      await stateKeeper.__StateKeeper_upgrade_1(ADDRESS1);
+      await expect(stateKeeper.__StateKeeper_upgrade_1(ADDRESS1)).to.be.revertedWith(
+        "Initializable: contract is already initialized",
+      );
+
+      expect(await stateKeeper.owner()).to.be.equal(ADDRESS1);
+    });
+
     it("should not be called by non-registrations", async () => {
       await expect(stateKeeper.addCertificate(ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
       await expect(stateKeeper.removeCertificate(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
@@ -93,6 +104,15 @@ describe("StateKeeper", () => {
         "StateKeeper: not a registration",
       );
       await expect(stateKeeper.useSignature(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
+    });
+
+    it("should not be called by non-owner", async () => {
+      await stateKeeper.__StateKeeper_upgrade_1(ADDRESS1);
+
+      await stateKeeper.transferOwnership(ADDRESS2);
+      await expect(stateKeeper.transferOwnership(ADDRESS2)).to.be.revertedWith("StateKeeper: not an owner");
+
+      expect(await stateKeeper.owner()).to.be.equal(ADDRESS2);
     });
   });
 
