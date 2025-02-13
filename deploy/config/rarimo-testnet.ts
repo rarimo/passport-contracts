@@ -1,6 +1,7 @@
 export const treeSize = 80;
 export const chainName = "Rarimo-testnet";
 export const tssSigner = "0x038D006846a3e203738cF80A02418e124203beb2";
+export const owner = "0x53638975BC11de3029E46DF193d64879EAeA94eB";
 export const icaoMasterTreeMerkleRoot = "0x0eef24f25513eb3d3e13856805319553013158c347209287d090d3100e33c55b";
 export const registrationName = "SecondRegistration";
 export const registration2 = "0x1b0F076c8800c457CE734BA85aC8569284DD640A";

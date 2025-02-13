@@ -36,6 +36,7 @@ export = async (deployer: Deployer) => {
     await certificatesSmt.getAddress(),
     config.icaoMasterTreeMerkleRoot,
   );
+  await stateKeeper.__StateKeeper_upgrade_1(config.owner);
 
   Reporter.reportContracts(
     ["StateKeeper", `${await stateKeeper.getAddress()}`],
