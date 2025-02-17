@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -18,5 +18,5 @@ contract Registration2Mock is Registration2 {
         _addDependency(passportVerifiers, verifierType_, verifier_);
     }
 
-    function _authorizeUpgrade(address) internal pure virtual override {}
+    //    function _authorizeUpgrade(address) internal pure virtual override {}
 }

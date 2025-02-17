@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
-import {PoseidonUnit2L, PoseidonUnit4L, PoseidonUnit5L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit2L, PoseidonUnit4L, PoseidonUnit5L} from "../libraries/Poseidon.sol";
 
 library Bytes2Poseidon {
     /**

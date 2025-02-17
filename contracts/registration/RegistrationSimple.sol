@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -9,9 +9,8 @@ import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
-import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 
-contract RegistrationSimple is Initializable, TSSUpgradeable {
+contract RegistrationSimple is Initializable {
     using ECDSA for bytes32;
     using VerifierHelper for address;
     using SetHelper for EnumerableSet.AddressSet;
@@ -56,8 +55,6 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
-        __TSSSigner_init(tssSigner_, chainName_);
-
         stateKeeper = StateKeeper(stateKeeper_);
 
         _signers.add(signers_);
@@ -94,40 +91,40 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         );
     }
 
-    function updateSignerList(bytes calldata data_, bytes calldata proof_) external {
-        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(
-                address(this),
-                uint8(MethodId.UpdateSignerList),
-                data_,
-                chainName,
-                nonce_
-            )
-        );
-
-        _checkMerkleSignature(leaf_, proof_);
-        _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
-
-        (address[] memory signers_, uint8[] memory actions_) = abi.decode(
-            data_,
-            (address[], uint8[])
-        );
-
-        require(signers_.length == actions_.length, "RegistrationSimple: invalid input length");
-
-        for (uint256 i = 0; i < signers_.length; i++) {
-            if (OperationId(actions_[i]) == OperationId.AddSigner) {
-                _signers.add(signers_[i]);
-            } else if (OperationId(actions_[i]) == OperationId.RemoveSigner) {
-                _signers.remove(signers_[i]);
-            } else {
-                revert("RegistrationSimple: invalid operationId");
-            }
-        }
-
-        emit SignersListUpdated(signers_, actions_);
-    }
+    //    function updateSignerList(bytes calldata data_, bytes calldata proof_) external {
+    //        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
+    //        bytes32 leaf_ = keccak256(
+    //            abi.encodePacked(
+    //                address(this),
+    //                uint8(MethodId.UpdateSignerList),
+    //                data_,
+    //                chainName,
+    //                nonce_
+    //            )
+    //        );
+    //
+    //        _checkMerkleSignature(leaf_, proof_);
+    //        _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
+    //
+    //        (address[] memory signers_, uint8[] memory actions_) = abi.decode(
+    //            data_,
+    //            (address[], uint8[])
+    //        );
+    //
+    //        require(signers_.length == actions_.length, "RegistrationSimple: invalid input length");
+    //
+    //        for (uint256 i = 0; i < signers_.length; i++) {
+    //            if (OperationId(actions_[i]) == OperationId.AddSigner) {
+    //                _signers.add(signers_[i]);
+    //            } else if (OperationId(actions_[i]) == OperationId.RemoveSigner) {
+    //                _signers.remove(signers_[i]);
+    //            } else {
+    //                revert("RegistrationSimple: invalid operationId");
+    //            }
+    //        }
+    //
+    //        emit SignersListUpdated(signers_, actions_);
+    //    }
 
     function getSigners() external view returns (address[] memory) {
         return _signers.values();

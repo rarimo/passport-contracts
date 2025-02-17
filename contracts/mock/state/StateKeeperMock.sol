@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
@@ -28,5 +28,5 @@ contract StateKeeperMock is StateKeeper {
         _identityInfos[identityKey_].activePassport = mockPassportKey_;
     }
 
-    function _authorizeUpgrade(address) internal pure virtual override {}
+    //    function _authorizeUpgrade(address) internal pure virtual override {}
 }

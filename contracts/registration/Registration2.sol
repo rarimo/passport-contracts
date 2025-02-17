@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract Registration2 is Initializable, TSSUpgradeable {
+contract Registration2 is Initializable {
     using MerkleProof for bytes32[];
     using VerifierHelper for address;
 
@@ -65,8 +64,6 @@ contract Registration2 is Initializable, TSSUpgradeable {
         string calldata chainName_,
         address stateKeeper_
     ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
-
         stateKeeper = StateKeeper(stateKeeper_);
     }
 
@@ -219,48 +216,48 @@ contract Registration2 is Initializable, TSSUpgradeable {
         stateKeeper.reissueBondIdentity(bytes32(passportKey_), bytes32(identityKey_), dgCommit_);
     }
 
-    /**
-     * @notice Adds or removes a dispatcher via Rarimo TSS
-     * @param methodId_ the method id
-     * (AddCertificateDispatcher, AddPassportDispatcher or RemoveCertificateDispatcher, RemovePassportDispatcher)
-     * @param data_ an ABI encoded data for the method
-     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
-     * - `dispatcherType` of bytes32 for RemoveDispatcher
-     * @param proof_ the Rarimo TSS signature with MTP
-     */
-    function updateDependency(
-        MethodId methodId_,
-        bytes calldata data_,
-        bytes calldata proof_
-    ) external virtual {
-        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-        );
-
-        _checkMerkleSignature(leaf_, proof_);
-        _useNonce(uint8(methodId_), nonce_);
-
-        if (
-            methodId_ == MethodId.AddCertificateDispatcher ||
-            methodId_ == MethodId.AddPassportDispatcher ||
-            methodId_ == MethodId.AddPassportVerifier
-        ) {
-            (bytes32 dependencyType_, address dependency_) = abi.decode(data_, (bytes32, address));
-
-            _addDependency(_getDependency(methodId_), dependencyType_, dependency_);
-        } else if (
-            methodId_ == MethodId.RemoveCertificateDispatcher ||
-            methodId_ == MethodId.RemovePassportDispatcher ||
-            methodId_ == MethodId.RemovePassportVerifier
-        ) {
-            bytes32 dependencyType_ = abi.decode(data_, (bytes32));
-
-            _removeDependency(_getDependency(methodId_), dependencyType_);
-        } else {
-            revert("Registration: invalid methodId");
-        }
-    }
+    //    /**
+    //     * @notice Adds or removes a dispatcher via Rarimo TSS
+    //     * @param methodId_ the method id
+    //     * (AddCertificateDispatcher, AddPassportDispatcher or RemoveCertificateDispatcher, RemovePassportDispatcher)
+    //     * @param data_ an ABI encoded data for the method
+    //     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
+    //     * - `dispatcherType` of bytes32 for RemoveDispatcher
+    //     * @param proof_ the Rarimo TSS signature with MTP
+    //     */
+    //    function updateDependency(
+    //        MethodId methodId_,
+    //        bytes calldata data_,
+    //        bytes calldata proof_
+    //    ) external virtual {
+    //        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+    //        bytes32 leaf_ = keccak256(
+    //            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
+    //        );
+    //
+    //        _checkMerkleSignature(leaf_, proof_);
+    //        _useNonce(uint8(methodId_), nonce_);
+    //
+    //        if (
+    //            methodId_ == MethodId.AddCertificateDispatcher ||
+    //            methodId_ == MethodId.AddPassportDispatcher ||
+    //            methodId_ == MethodId.AddPassportVerifier
+    //        ) {
+    //            (bytes32 dependencyType_, address dependency_) = abi.decode(data_, (bytes32, address));
+    //
+    //            _addDependency(_getDependency(methodId_), dependencyType_, dependency_);
+    //        } else if (
+    //            methodId_ == MethodId.RemoveCertificateDispatcher ||
+    //            methodId_ == MethodId.RemovePassportDispatcher ||
+    //            methodId_ == MethodId.RemovePassportVerifier
+    //        ) {
+    //            bytes32 dependencyType_ = abi.decode(data_, (bytes32));
+    //
+    //            _removeDependency(_getDependency(methodId_), dependencyType_);
+    //        } else {
+    //            revert("Registration: invalid methodId");
+    //        }
+    //    }
 
     function _addDependency(
         mapping(bytes32 => address) storage dependencies,

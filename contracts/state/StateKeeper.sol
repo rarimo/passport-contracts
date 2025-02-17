@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
-import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract StateKeeper is Initializable, TSSUpgradeable {
+contract StateKeeper is Initializable {
     using DynamicSet for DynamicSet.StringSet;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
@@ -76,8 +75,6 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
-
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);
 
@@ -241,67 +238,67 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         usedSignatures[sigHash_] = true;
     }
 
-    /**
-     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
-     * @param newRoot_ the new ICAO root
-     * @param timestamp the "nonce"
-     * @param proof_ the Rarimo TSS Merkle proof
-     */
-    function changeICAOMasterTreeRoot(
-        bytes32 newRoot_,
-        uint256 timestamp,
-        bytes memory proof_
-    ) external virtual {
-        bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
-
-        _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
-        _checkMerkleSignature(leaf_, proof_);
-
-        icaoMasterTreeMerkleRoot = newRoot_;
-    }
-
-    /**
-     * @notice Add or Remove registrations via Rarimo TSS
-     * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
-     * @param data_ An ABI encoded arrays of string keys addresses to add or remove
-     * @param proof_ the Rarimo TSS signature with MTP
-     */
-    function updateRegistrationSet(
-        MethodId methodId_,
-        bytes calldata data_,
-        bytes calldata proof_
-    ) external virtual {
-        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-        );
-
-        _checkMerkleSignature(leaf_, proof_);
-        _useNonce(uint8(methodId_), nonce_);
-
-        if (methodId_ == MethodId.AddRegistrations) {
-            (string[] memory keys_, address[] memory values_) = abi.decode(
-                data_,
-                (string[], address[])
-            );
-
-            for (uint256 i = 0; i < keys_.length; i++) {
-                require(_registrationKeys.add(keys_[i]), "StateKeeper: duplicate registration");
-                _registrations[keys_[i]] = values_[i];
-                _registrationExists[values_[i]] = true;
-            }
-        } else if (methodId_ == MethodId.RemoveRegistrations) {
-            string[] memory keys_ = abi.decode(data_, (string[]));
-
-            for (uint256 i = 0; i < keys_.length; i++) {
-                delete _registrationExists[_registrations[keys_[i]]];
-                delete _registrations[keys_[i]];
-                _registrationKeys.remove(keys_[i]);
-            }
-        } else {
-            revert("StateKeeper: Invalid method");
-        }
-    }
+    //    /**
+    //     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
+    //     * @param newRoot_ the new ICAO root
+    //     * @param timestamp the "nonce"
+    //     * @param proof_ the Rarimo TSS Merkle proof
+    //     */
+    //    function changeICAOMasterTreeRoot(
+    //        bytes32 newRoot_,
+    //        uint256 timestamp,
+    //        bytes memory proof_
+    //    ) external virtual {
+    //        bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
+    //
+    //        _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
+    //        _checkMerkleSignature(leaf_, proof_);
+    //
+    //        icaoMasterTreeMerkleRoot = newRoot_;
+    //    }
+    //
+    //    /**
+    //     * @notice Add or Remove registrations via Rarimo TSS
+    //     * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
+    //     * @param data_ An ABI encoded arrays of string keys addresses to add or remove
+    //     * @param proof_ the Rarimo TSS signature with MTP
+    //     */
+    //    function updateRegistrationSet(
+    //        MethodId methodId_,
+    //        bytes calldata data_,
+    //        bytes calldata proof_
+    //    ) external virtual {
+    //        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+    //        bytes32 leaf_ = keccak256(
+    //            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
+    //        );
+    //
+    //        _checkMerkleSignature(leaf_, proof_);
+    //        _useNonce(uint8(methodId_), nonce_);
+    //
+    //        if (methodId_ == MethodId.AddRegistrations) {
+    //            (string[] memory keys_, address[] memory values_) = abi.decode(
+    //                data_,
+    //                (string[], address[])
+    //            );
+    //
+    //            for (uint256 i = 0; i < keys_.length; i++) {
+    //                require(_registrationKeys.add(keys_[i]), "StateKeeper: duplicate registration");
+    //                _registrations[keys_[i]] = values_[i];
+    //                _registrationExists[values_[i]] = true;
+    //            }
+    //        } else if (methodId_ == MethodId.RemoveRegistrations) {
+    //            string[] memory keys_ = abi.decode(data_, (string[]));
+    //
+    //            for (uint256 i = 0; i < keys_.length; i++) {
+    //                delete _registrationExists[_registrations[keys_[i]]];
+    //                delete _registrations[keys_[i]];
+    //                _registrationKeys.remove(keys_[i]);
+    //            }
+    //        } else {
+    //            revert("StateKeeper: Invalid method");
+    //        }
+    //    }
 
     /**
      * @notice Get info about the registered X509 certificate

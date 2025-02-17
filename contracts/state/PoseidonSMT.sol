@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
-import {PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
-import {TSSUpgradeable} from "./TSSUpgradeable.sol";
-
-contract PoseidonSMT is Initializable, TSSUpgradeable {
+contract PoseidonSMT is Initializable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
@@ -43,8 +41,6 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
         address stateKeeper_,
         uint256 treeHeight_
     ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
-
         _bytes32Tree.initialize(uint32(treeHeight_));
         _bytes32Tree.setHashers(_hash2, _hash3);
 
