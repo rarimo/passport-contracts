@@ -16,7 +16,7 @@ export async function deployPoseidons(deployer: Deployer, poseidonSizeParams: nu
     await deployer.deploy({
       abi,
       bytecode,
-      contractName: `@iden3/contracts/lib/Poseidon.sol:PoseidonUnit${size}L`,
+      contractName: `contracts/libraries/Poseidon.sol:PoseidonUnit${size}L`,
     });
   };
 
