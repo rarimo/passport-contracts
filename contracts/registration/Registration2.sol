@@ -230,13 +230,17 @@ contract Registration2 is Initializable {
     //        bytes calldata data_,
     //        bytes calldata proof_
     //    ) external virtual {
-    //        uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-    //        bytes32 leaf_ = keccak256(
-    //            abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-    //        );
+    //        if (proof_.length == 0) {
+    //            _onlyOwner();
+    //        } else {
+    //            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
+    //            bytes32 leaf_ = keccak256(
+    //                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
+    //            );
     //
-    //        _checkMerkleSignature(leaf_, proof_);
-    //        _useNonce(uint8(methodId_), nonce_);
+    //            _checkMerkleSignature(leaf_, proof_);
+    //            _useNonce(uint8(methodId_), nonce_);
+    //        }
     //
     //        if (
     //            methodId_ == MethodId.AddCertificateDispatcher ||
@@ -291,6 +295,10 @@ contract Registration2 is Initializable {
 
         stateKeeper.useSignature(sigHash_);
     }
+
+    //    function _authorizeUpgrade(address) internal view virtual override {
+    //        _onlyOwner();
+    //    }
 
     function _verifyICAOSignature(
         ICertificateDispatcher dispatcher_,
@@ -393,5 +401,9 @@ contract Registration2 is Initializable {
         } else {
             revert("Registration: unknown dependency");
         }
+    }
+
+    function _onlyOwner() internal view {
+        require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
     }
 }
