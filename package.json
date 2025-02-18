@@ -53,6 +53,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "@rarimo/evidence-registry": "^0.1.1",
     "@solarity/solidity-lib": "2.7.17"
   },
   "devDependencies": {
