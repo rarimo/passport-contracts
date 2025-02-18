@@ -14,6 +14,6 @@ export = async (deployer: Deployer) => {
   let stateKeeperImpl = await deployer.deploy(StateKeeper__factory);
   let registrationImpl = await deployer.deploy(Registration2__factory);
 
-  await stateKeeper.upgradeTo(await stateKeeperImpl.getAddress());
-  await registration.upgradeTo(await registrationImpl.getAddress());
+  await stateKeeper.upgradeToAndCall(await stateKeeperImpl.getAddress(), "0x");
+  await registration.upgradeToAndCall(await registrationImpl.getAddress(), "0x");
 };

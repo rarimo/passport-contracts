@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { ERC1967Proxy__factory, PoseidonSMT } from "@ethers-v6";
 
-import { getPoseidon, Reverter, TSSMerkleTree, TSSSigner } from "@/test/helpers";
+import { getPoseidon, Reverter, MerkleTreeHelper } from "@/test/helpers";
 
 const treeSize = 80;
 const chainName = "Tests";
@@ -14,8 +14,7 @@ const chainName = "Tests";
 describe("PoseidonSMT", () => {
   const reverter = new Reverter();
 
-  let signHelper: TSSSigner;
-  let merkleTree: TSSMerkleTree;
+  let merkleTree: MerkleTreeHelper;
 
   let SIGNER: HDNodeWallet;
   let STATEKEEPER: SignerWithAddress;
@@ -41,10 +40,9 @@ describe("PoseidonSMT", () => {
 
     const proxy = await Proxy.deploy(await tree.getAddress(), "0x");
     tree = tree.attach(await proxy.getAddress()) as PoseidonSMT;
-    await tree.__PoseidonSMT_init(SIGNER.address, chainName, STATEKEEPER.address, treeSize);
+    await tree.__PoseidonSMT_init(STATEKEEPER.address, ethers.ZeroAddress, treeSize);
 
-    signHelper = new TSSSigner(SIGNER);
-    merkleTree = new TSSMerkleTree(signHelper);
+    merkleTree = new MerkleTreeHelper();
 
     await reverter.snapshot();
   });
@@ -66,7 +64,7 @@ describe("PoseidonSMT", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(tree.__PoseidonSMT_init(SIGNER.address, chainName, STATEKEEPER.address, treeSize)).to.be.revertedWith(
+        expect(tree.__PoseidonSMT_init(STATEKEEPER.address, ethers.ZeroAddress, treeSize)).to.be.revertedWith(
           "Initializable: contract is already initialized",
         );
       });
