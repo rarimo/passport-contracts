@@ -119,14 +119,15 @@ contract PoseidonSMT is Initializable {
     }
 
     function _saveRoot() internal {
-        bytes32 root_ = _bytes32Tree.getRoot();
-
-        _roots[root_] = block.timestamp;
-        IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
+        _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
 
     function _notifyRoot() internal {
-        emit RootUpdated(_bytes32Tree.getRoot());
+        bytes32 root_ = _bytes32Tree.getRoot();
+
+        IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
+
+        emit RootUpdated(root_);
     }
 
     function _onlyStateKeeper() internal view {

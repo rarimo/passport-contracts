@@ -4,11 +4,14 @@ import { ZeroAddress, ZeroHash } from "ethers";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import { StateKeeperMock, PoseidonSMTMock } from "@ethers-v6";
+import { Poseidon } from "@iden3/js-crypto";
+
+import { StateKeeperMock, PoseidonSMTMock, EvidenceDB } from "@ethers-v6";
 
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import { StateKeeperMethodId } from "@/test/helpers/constants";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 const treeSize = 80;
 
@@ -23,6 +26,8 @@ describe("StateKeeper", () => {
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let stateKeeper: StateKeeperMock;
+
+  let evidenceDB: EvidenceDB;
 
   before("setup", async () => {
     [ADDRESS1, ADDRESS2] = await ethers.getSigners();
@@ -55,7 +60,7 @@ describe("StateKeeper", () => {
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
 
-    const evidenceDB = await ethers.deployContract("EvidenceDB", {
+    evidenceDB = await ethers.deployContract("EvidenceDB", {
       libraries: {
         PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
@@ -137,16 +142,31 @@ describe("StateKeeper", () => {
       });
     });
 
+    describe("#EvidenceRegistry integration", () => {
+      beforeEach(async () => {
+        await addRegistrations(["First Registration"], [ADDRESS1.address]);
+      });
+
+      it("should update the root and store it in the registry", async () => {
+        await stateKeeper.addBond(ZeroHash, ZeroHash, ZeroHash, 0);
+
+        const registrationRoot = await registrationSmt.getRoot();
+        const expectedKey = Poseidon.hash([BigInt(await registrationSmt.getAddress()), BigInt(registrationRoot)]);
+
+        expect(BigInt(await evidenceDB.getValue(ethers.toBeHex(expectedKey)))).to.equal(await time.latest());
+      });
+    });
+
+    const addRegistrations = async (registrationKeys: string[], registrations: string[]) => {
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(["string[]", "address[]"], [registrationKeys, registrations]);
+
+      await stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data);
+    };
+
     describe("#addRegistrations, #removeRegistrations", () => {
       const REG1 = "ONE";
       const REG2 = "TWO";
-
-      const addRegistrations = async (registrationKeys: string[], registrations: string[]) => {
-        const encoder = new ethers.AbiCoder();
-        const data = encoder.encode(["string[]", "address[]"], [registrationKeys, registrations]);
-
-        await stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data);
-      };
 
       const removeRegistrations = async (registrationKeys: string[]) => {
         const encoder = new ethers.AbiCoder();
