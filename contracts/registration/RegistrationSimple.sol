@@ -2,8 +2,9 @@
 pragma solidity ^0.8.21;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
@@ -69,7 +70,10 @@ contract RegistrationSimple is Initializable {
         require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
 
         bytes32 signedData_ = _buildSignedData(passport_);
-        address dataSigner_ = ECDSA.recover(signedData_.toEthSignedMessageHash(), signature_);
+        address dataSigner_ = ECDSA.recover(
+            MessageHashUtils.toEthSignedMessageHash(signedData_),
+            signature_
+        );
 
         _requireSigner(dataSigner_);
 

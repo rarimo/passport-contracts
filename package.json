@@ -51,8 +51,8 @@
     "publish-to-npm": "npm run lint-fix && bash ./scripts/publish.sh --public"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "4.9.6",
-    "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "@openzeppelin/contracts": "5.2.0",
+    "@openzeppelin/contracts-upgradeable": "5.2.0",
     "@rarimo/evidence-registry": "^0.1.1",
     "@solarity/solidity-lib": "2.7.17"
   },
