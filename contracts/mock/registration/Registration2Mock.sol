@@ -18,5 +18,5 @@ contract Registration2Mock is Registration2 {
         _addDependency(passportVerifiers, verifierType_, verifier_);
     }
 
-    //    function _authorizeUpgrade(address) internal pure virtual override {}
+    function _authorizeUpgrade(address) internal pure virtual override {}
 }

@@ -28,5 +28,5 @@ contract StateKeeperMock is StateKeeper {
         _identityInfos[identityKey_].activePassport = mockPassportKey_;
     }
 
-    //    function _authorizeUpgrade(address) internal pure virtual override {}
+    function _authorizeUpgrade(address) internal pure virtual override {}
 }
