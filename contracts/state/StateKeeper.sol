@@ -3,13 +3,16 @@ pragma solidity ^0.8.21;
 
 import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract StateKeeper is Initializable {
+contract StateKeeper is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     using DynamicSet for DynamicSet.StringSet;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
@@ -53,8 +56,6 @@ contract StateKeeper is Initializable {
     mapping(string => address) internal _registrations;
     mapping(address => bool) internal _registrationExists;
 
-    address public owner;
-
     event CertificateAdded(bytes32 certificateKey, uint256 expirationTimestamp);
     event CertificateRemoved(bytes32 certificateKey);
     event BondAdded(bytes32 passportKey, bytes32 identityKey);
@@ -71,26 +72,17 @@ contract StateKeeper is Initializable {
     }
 
     function __StateKeeper_init(
-        address signer_,
-        string calldata chainName_,
+        address initialOwner_,
         address registrationSmt_,
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
+        __Ownable_init(initialOwner_);
+
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);
 
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
-    }
-
-    function __StateKeeper_upgrade_1(address owner_) external reinitializer(2) {
-        owner = owner_;
-    }
-
-    function transferOwnership(address newOwner_) external {
-        _onlyOwner();
-
-        owner = newOwner_;
     }
 
     /**
@@ -250,75 +242,46 @@ contract StateKeeper is Initializable {
         usedSignatures[sigHash_] = true;
     }
 
-    //    /**
-    //     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
-    //     * @param newRoot_ the new ICAO root
-    //     * @param timestamp the "nonce"
-    //     * @param proof_ the Rarimo TSS Merkle proof
-    //     */
-    //    function changeICAOMasterTreeRoot(
-    //        bytes32 newRoot_,
-    //        uint256 timestamp,
-    //        bytes calldata proof_
-    //    ) external virtual {
-    //        if (proof_.length == 0) {
-    //            _onlyOwner();
-    //        } else {
-    //            bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
-    //
-    //            _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
-    //            _checkMerkleSignature(leaf_, proof_);
-    //        }
-    //
-    //        icaoMasterTreeMerkleRoot = newRoot_;
-    //    }
-    //
-    //    /**
-    //     * @notice Add or Remove registrations via Rarimo TSS
-    //     * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
-    //     * @param data_ An ABI encoded arrays of string keys addresses to add or remove
-    //     * @param proof_ the Rarimo TSS signature with MTP
-    //     */
-    //    function updateRegistrationSet(
-    //        MethodId methodId_,
-    //        bytes calldata data_,
-    //        bytes calldata proof_
-    //    ) external virtual {
-    //        if (proof_.length == 0) {
-    //            _onlyOwner();
-    //        } else {
-    //            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-    //            bytes32 leaf_ = keccak256(
-    //                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-    //            );
-    //
-    //            _checkMerkleSignature(leaf_, proof_);
-    //            _useNonce(uint8(methodId_), nonce_);
-    //        }
-    //
-    //        if (methodId_ == MethodId.AddRegistrations) {
-    //            (string[] memory keys_, address[] memory values_) = abi.decode(
-    //                data_,
-    //                (string[], address[])
-    //            );
-    //
-    //            for (uint256 i = 0; i < keys_.length; i++) {
-    //                require(_registrationKeys.add(keys_[i]), "StateKeeper: duplicate registration");
-    //                _registrations[keys_[i]] = values_[i];
-    //                _registrationExists[values_[i]] = true;
-    //            }
-    //        } else if (methodId_ == MethodId.RemoveRegistrations) {
-    //            string[] memory keys_ = abi.decode(data_, (string[]));
-    //
-    //            for (uint256 i = 0; i < keys_.length; i++) {
-    //                delete _registrationExists[_registrations[keys_[i]]];
-    //                delete _registrations[keys_[i]];
-    //                _registrationKeys.remove(keys_[i]);
-    //            }
-    //        } else {
-    //            revert("StateKeeper: Invalid method");
-    //        }
-    //    }
+    /**
+     * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
+     * @param newRoot_ the new ICAO root
+     */
+    function changeICAOMasterTreeRoot(bytes32 newRoot_) external virtual onlyOwner {
+        icaoMasterTreeMerkleRoot = newRoot_;
+    }
+
+    /**
+     * @notice Add or Remove registrations via Rarimo TSS
+     * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
+     * @param data_ An ABI encoded arrays of string keys addresses to add or remove
+     */
+    function updateRegistrationSet(
+        MethodId methodId_,
+        bytes calldata data_
+    ) external virtual onlyOwner {
+        if (methodId_ == MethodId.AddRegistrations) {
+            (string[] memory keys_, address[] memory values_) = abi.decode(
+                data_,
+                (string[], address[])
+            );
+
+            for (uint256 i = 0; i < keys_.length; i++) {
+                require(_registrationKeys.add(keys_[i]), "StateKeeper: duplicate registration");
+                _registrations[keys_[i]] = values_[i];
+                _registrationExists[values_[i]] = true;
+            }
+        } else if (methodId_ == MethodId.RemoveRegistrations) {
+            string[] memory keys_ = abi.decode(data_, (string[]));
+
+            for (uint256 i = 0; i < keys_.length; i++) {
+                delete _registrationExists[_registrations[keys_[i]]];
+                delete _registrations[keys_[i]];
+                _registrationKeys.remove(keys_[i]);
+            }
+        } else {
+            revert("StateKeeper: Invalid method");
+        }
+    }
 
     /**
      * @notice Get info about the registered X509 certificate
@@ -383,15 +346,14 @@ contract StateKeeper is Initializable {
         return _registrationExists[registration_];
     }
 
-    //    function _authorizeUpgrade(address) internal view virtual override {
-    //        _onlyOwner();
-    //    }
-
     function _onlyRegistration() internal view {
         require(_registrationExists[msg.sender], "StateKeeper: not a registration");
     }
 
-    function _onlyOwner() internal view {
-        require(msg.sender == owner, "StateKeeper: not an owner");
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

@@ -6,6 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IPassportDispatcher} from "../../interfaces/dispatchers/IPassportDispatcher.sol";
 
 contract PNOAADispatcher is IPassportDispatcher, Initializable {
+    // solhint-disable-next-line no-empty-blocks
     function __PNOAADispatcher_init() external initializer {}
 
     /**
@@ -22,6 +23,7 @@ contract PNOAADispatcher is IPassportDispatcher, Initializable {
     /**
      * @notice Passports without AA omit the challenge
      */
+    // solhint-disable-next-line no-empty-blocks
     function getPassportChallenge(uint256 identityKey_) external pure returns (bytes memory) {}
 
     /**

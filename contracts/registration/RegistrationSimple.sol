@@ -96,7 +96,7 @@ contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         );
     }
 
-    function updateSignerList(bytes calldata data_, bytes calldata proof_) external onlyOwner {
+    function updateSignerList(bytes calldata data_) external onlyOwner {
         (address[] memory signers_, uint8[] memory actions_) = abi.decode(
             data_,
             (address[], uint8[])

@@ -222,12 +222,10 @@ contract Registration2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param data_ an ABI encoded data for the method
      * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
      * - `dispatcherType` of bytes32 for RemoveDispatcher
-     * @param proof_ the Rarimo TSS signature with MTP
      */
     function updateDependency(
         MethodId methodId_,
-        bytes calldata data_,
-        bytes calldata proof_
+        bytes calldata data_
     ) external virtual onlyOwner {
         if (
             methodId_ == MethodId.AddCertificateDispatcher ||

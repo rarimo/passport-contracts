@@ -35,12 +35,7 @@ contract PoseidonSMT is Initializable {
         _disableInitializers();
     }
 
-    function __PoseidonSMT_init(
-        address signer_,
-        string calldata chainName_,
-        address stateKeeper_,
-        uint256 treeHeight_
-    ) external initializer {
+    function __PoseidonSMT_init(address stateKeeper_, uint256 treeHeight_) external initializer {
         _bytes32Tree.initialize(uint32(treeHeight_));
         _bytes32Tree.setHashers(_hash2, _hash3);
 
