@@ -238,7 +238,7 @@ describe.skip("Registration", () => {
       icaoMerkleRoot,
     );
 
-    await registration.__Registration_init(OWNER.address, await stateKeeper.getAddress());
+    await registration.__Registration_init(await stateKeeper.getAddress());
 
     merkleTree = new MerkleTreeHelper();
 
@@ -279,7 +279,7 @@ describe.skip("Registration", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(registration.__Registration_init(OWNER.address, ethers.ZeroAddress)).to.be.revertedWith(
+        expect(registration.__Registration_init(ethers.ZeroAddress)).to.be.revertedWith(
           "Initializable: contract is already initialized",
         );
       });

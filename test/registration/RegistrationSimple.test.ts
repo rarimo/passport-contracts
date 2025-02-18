@@ -115,7 +115,7 @@ describe("RegistrationSimple", () => {
       icaoMerkleRoot,
     );
 
-    await registrationSimple.__RegistrationSimple_init(OWNER.address, await stateKeeper.getAddress(), [OWNER.address]);
+    await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]);
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registrationSimple.getAddress()]);
 
@@ -272,9 +272,7 @@ describe("RegistrationSimple", () => {
   describe("$Contract Management", () => {
     it("should revert if trying to initialize the contract twice", async () => {
       await expect(
-        registrationSimple.__RegistrationSimple_init(ethers.ZeroAddress, await stateKeeper.getAddress(), [
-          OWNER.address,
-        ]),
+        registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]),
       ).to.be.revertedWithCustomError(registrationSimple, "InvalidInitialization");
     });
 

@@ -5,7 +5,6 @@ import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.s
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
@@ -15,7 +14,7 @@ import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract Registration is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract Registration is Initializable, UUPSUpgradeable {
     using MerkleProof for bytes32[];
     using VerifierHelper for address;
 
@@ -61,12 +60,7 @@ contract Registration is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function __Registration_init(
-        address initialOwner_,
-        address stateKeeper_
-    ) external initializer {
-        __Ownable_init(initialOwner_);
-
+    function __Registration_init(address stateKeeper_) external initializer {
         stateKeeper = StateKeeper(stateKeeper_);
     }
 
@@ -222,7 +216,9 @@ contract Registration is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
      * - `dispatcherType` of bytes32 for RemoveDispatcher
      */
-    function updateDependency(MethodId methodId_, bytes calldata data_) external onlyOwner {
+    function updateDependency(MethodId methodId_, bytes calldata data_) external {
+        _onlyOwner();
+
         if (
             methodId_ == MethodId.AddCertificateDispatcher ||
             methodId_ == MethodId.AddPassportDispatcher ||
@@ -386,8 +382,13 @@ contract Registration is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
     }
 
-    // solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+    function _onlyOwner() internal view {
+        require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
 
     function implementation() external view returns (address) {
         return ERC1967Utils.getImplementation();

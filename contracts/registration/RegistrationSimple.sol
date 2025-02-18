@@ -7,14 +7,13 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
 
-contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract RegistrationSimple is Initializable, UUPSUpgradeable {
     using ECDSA for bytes32;
     using VerifierHelper for address;
     using SetHelper for EnumerableSet.AddressSet;
@@ -54,12 +53,9 @@ contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     }
 
     function __RegistrationSimple_init(
-        address initialOwner_,
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
-        __Ownable_init(initialOwner_);
-
         stateKeeper = StateKeeper(stateKeeper_);
 
         _signers.add(signers_);
@@ -99,7 +95,9 @@ contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         );
     }
 
-    function updateSignerList(bytes calldata data_) external onlyOwner {
+    function updateSignerList(bytes calldata data_) external {
+        _onlyOwner();
+
         (address[] memory signers_, uint8[] memory actions_) = abi.decode(
             data_,
             (address[], uint8[])
@@ -165,8 +163,13 @@ contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         require(_signers.contains(account_), "RegistrationSimple: caller is not a signer");
     }
 
-    // solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+    function _onlyOwner() internal view {
+        require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
 
     function implementation() external view returns (address) {
         return ERC1967Utils.getImplementation();

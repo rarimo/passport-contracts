@@ -3,13 +3,16 @@ pragma solidity ^0.8.21;
 
 import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
 import {IEvidenceRegistry} from "@rarimo/evidence-registry/interfaces/IEvidenceRegistry.sol";
+import {StateKeeper} from "./StateKeeper.sol";
 
-contract PoseidonSMT is Initializable {
+contract PoseidonSMT is Initializable, UUPSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
@@ -149,5 +152,17 @@ contract PoseidonSMT is Initializable {
                     [uint256(element1_), uint256(element2_), uint256(element3_)]
                 )
             );
+    }
+
+    function _onlyOwner() internal view {
+        require(msg.sender == StateKeeper(stateKeeper).owner(), "Registration: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

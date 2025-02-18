@@ -23,11 +23,7 @@ export = async (deployer: Deployer) => {
   await registration.__Registration_init(await stateKeeper.getAddress());
 
   const registrationSimple = await deployProxy(deployer, RegistrationSimple__factory, "RegistrationSimple");
-  await registrationSimple.__RegistrationSimple_init(
-    config.owner,
-    await stateKeeper.getAddress(),
-    config.simpleRegistrationSigners,
-  );
+  await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), config.simpleRegistrationSigners);
 
   await deployPVerifiers(deployer);
 
