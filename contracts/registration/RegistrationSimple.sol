@@ -2,16 +2,19 @@
 pragma solidity ^0.8.21;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
 
-contract RegistrationSimple is Initializable {
+contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     using ECDSA for bytes32;
     using VerifierHelper for address;
     using SetHelper for EnumerableSet.AddressSet;
@@ -51,8 +54,6 @@ contract RegistrationSimple is Initializable {
     }
 
     function __RegistrationSimple_init(
-        address tssSigner_,
-        string calldata chainName_,
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
@@ -95,40 +96,26 @@ contract RegistrationSimple is Initializable {
         );
     }
 
-    //    function updateSignerList(bytes calldata data_, bytes calldata proof_) external {
-    //        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
-    //        bytes32 leaf_ = keccak256(
-    //            abi.encodePacked(
-    //                address(this),
-    //                uint8(MethodId.UpdateSignerList),
-    //                data_,
-    //                chainName,
-    //                nonce_
-    //            )
-    //        );
-    //
-    //        _checkMerkleSignature(leaf_, proof_);
-    //        _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
-    //
-    //        (address[] memory signers_, uint8[] memory actions_) = abi.decode(
-    //            data_,
-    //            (address[], uint8[])
-    //        );
-    //
-    //        require(signers_.length == actions_.length, "RegistrationSimple: invalid input length");
-    //
-    //        for (uint256 i = 0; i < signers_.length; i++) {
-    //            if (OperationId(actions_[i]) == OperationId.AddSigner) {
-    //                _signers.add(signers_[i]);
-    //            } else if (OperationId(actions_[i]) == OperationId.RemoveSigner) {
-    //                _signers.remove(signers_[i]);
-    //            } else {
-    //                revert("RegistrationSimple: invalid operationId");
-    //            }
-    //        }
-    //
-    //        emit SignersListUpdated(signers_, actions_);
-    //    }
+    function updateSignerList(bytes calldata data_, bytes calldata proof_) external onlyOwner {
+        (address[] memory signers_, uint8[] memory actions_) = abi.decode(
+            data_,
+            (address[], uint8[])
+        );
+
+        require(signers_.length == actions_.length, "RegistrationSimple: invalid input length");
+
+        for (uint256 i = 0; i < signers_.length; i++) {
+            if (OperationId(actions_[i]) == OperationId.AddSigner) {
+                _signers.add(signers_[i]);
+            } else if (OperationId(actions_[i]) == OperationId.RemoveSigner) {
+                _signers.remove(signers_[i]);
+            } else {
+                revert("RegistrationSimple: invalid operationId");
+            }
+        }
+
+        emit SignersListUpdated(signers_, actions_);
+    }
 
     function getSigners() external view returns (address[] memory) {
         return _signers.values();
@@ -173,5 +160,12 @@ contract RegistrationSimple is Initializable {
 
     function _requireSigner(address account_) private view {
         require(_signers.contains(account_), "RegistrationSimple: caller is not a signer");
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

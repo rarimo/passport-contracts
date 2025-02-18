@@ -61,13 +61,7 @@ contract Registration is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function __Registration_init(
-        address signer_,
-        string calldata chainName_,
-        address stateKeeper_
-    ) external initializer {
-        //        __TSSSigner_init(signer_, chainName_);
-
+    function __Registration_init(address stateKeeper_) external initializer {
         stateKeeper = StateKeeper(stateKeeper_);
     }
 

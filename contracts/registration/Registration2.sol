@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
@@ -12,7 +15,7 @@ import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract Registration2 is Initializable {
+contract Registration2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     using MerkleProof for bytes32[];
     using VerifierHelper for address;
 
@@ -59,11 +62,7 @@ contract Registration2 is Initializable {
         _disableInitializers();
     }
 
-    function __Registration_init(
-        address signer_,
-        string calldata chainName_,
-        address stateKeeper_
-    ) external initializer {
+    function __Registration_init(address stateKeeper_) external initializer {
         stateKeeper = StateKeeper(stateKeeper_);
     }
 
@@ -216,52 +215,40 @@ contract Registration2 is Initializable {
         stateKeeper.reissueBondIdentity(bytes32(passportKey_), bytes32(identityKey_), dgCommit_);
     }
 
-    //    /**
-    //     * @notice Adds or removes a dispatcher via Rarimo TSS
-    //     * @param methodId_ the method id
-    //     * (AddCertificateDispatcher, AddPassportDispatcher or RemoveCertificateDispatcher, RemovePassportDispatcher)
-    //     * @param data_ an ABI encoded data for the method
-    //     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
-    //     * - `dispatcherType` of bytes32 for RemoveDispatcher
-    //     * @param proof_ the Rarimo TSS signature with MTP
-    //     */
-    //    function updateDependency(
-    //        MethodId methodId_,
-    //        bytes calldata data_,
-    //        bytes calldata proof_
-    //    ) external virtual {
-    //        if (proof_.length == 0) {
-    //            _onlyOwner();
-    //        } else {
-    //            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-    //            bytes32 leaf_ = keccak256(
-    //                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-    //            );
-    //
-    //            _checkMerkleSignature(leaf_, proof_);
-    //            _useNonce(uint8(methodId_), nonce_);
-    //        }
-    //
-    //        if (
-    //            methodId_ == MethodId.AddCertificateDispatcher ||
-    //            methodId_ == MethodId.AddPassportDispatcher ||
-    //            methodId_ == MethodId.AddPassportVerifier
-    //        ) {
-    //            (bytes32 dependencyType_, address dependency_) = abi.decode(data_, (bytes32, address));
-    //
-    //            _addDependency(_getDependency(methodId_), dependencyType_, dependency_);
-    //        } else if (
-    //            methodId_ == MethodId.RemoveCertificateDispatcher ||
-    //            methodId_ == MethodId.RemovePassportDispatcher ||
-    //            methodId_ == MethodId.RemovePassportVerifier
-    //        ) {
-    //            bytes32 dependencyType_ = abi.decode(data_, (bytes32));
-    //
-    //            _removeDependency(_getDependency(methodId_), dependencyType_);
-    //        } else {
-    //            revert("Registration: invalid methodId");
-    //        }
-    //    }
+    /**
+     * @notice Adds or removes a dispatcher via Rarimo TSS
+     * @param methodId_ the method id
+     * (AddCertificateDispatcher, AddPassportDispatcher or RemoveCertificateDispatcher, RemovePassportDispatcher)
+     * @param data_ an ABI encoded data for the method
+     * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
+     * - `dispatcherType` of bytes32 for RemoveDispatcher
+     * @param proof_ the Rarimo TSS signature with MTP
+     */
+    function updateDependency(
+        MethodId methodId_,
+        bytes calldata data_,
+        bytes calldata proof_
+    ) external virtual onlyOwner {
+        if (
+            methodId_ == MethodId.AddCertificateDispatcher ||
+            methodId_ == MethodId.AddPassportDispatcher ||
+            methodId_ == MethodId.AddPassportVerifier
+        ) {
+            (bytes32 dependencyType_, address dependency_) = abi.decode(data_, (bytes32, address));
+
+            _addDependency(_getDependency(methodId_), dependencyType_, dependency_);
+        } else if (
+            methodId_ == MethodId.RemoveCertificateDispatcher ||
+            methodId_ == MethodId.RemovePassportDispatcher ||
+            methodId_ == MethodId.RemovePassportVerifier
+        ) {
+            bytes32 dependencyType_ = abi.decode(data_, (bytes32));
+
+            _removeDependency(_getDependency(methodId_), dependencyType_);
+        } else {
+            revert("Registration: invalid methodId");
+        }
+    }
 
     function _addDependency(
         mapping(bytes32 => address) storage dependencies,
@@ -295,10 +282,6 @@ contract Registration2 is Initializable {
 
         stateKeeper.useSignature(sigHash_);
     }
-
-    //    function _authorizeUpgrade(address) internal view virtual override {
-    //        _onlyOwner();
-    //    }
 
     function _verifyICAOSignature(
         ICertificateDispatcher dispatcher_,
@@ -405,5 +388,12 @@ contract Registration2 is Initializable {
 
     function _onlyOwner() internal view {
         require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }
