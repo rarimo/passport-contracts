@@ -7,12 +7,15 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
+import {IEvidenceRegistry} from "@rarimo/evidence-registry/interfaces/IEvidenceRegistry.sol";
+
 contract PoseidonSMT is Initializable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
 
     address public stateKeeper;
+    address public evidenceRegistry;
 
     mapping(bytes32 => uint256) internal _roots;
 
@@ -35,11 +38,16 @@ contract PoseidonSMT is Initializable {
         _disableInitializers();
     }
 
-    function __PoseidonSMT_init(address stateKeeper_, uint256 treeHeight_) external initializer {
+    function __PoseidonSMT_init(
+        address stateKeeper_,
+        address evidenceRegistry_,
+        uint256 treeHeight_
+    ) external initializer {
         _bytes32Tree.initialize(uint32(treeHeight_));
         _bytes32Tree.setHashers(_hash2, _hash3);
 
         stateKeeper = stateKeeper_;
+        evidenceRegistry = evidenceRegistry_;
     }
 
     /**
@@ -111,7 +119,10 @@ contract PoseidonSMT is Initializable {
     }
 
     function _saveRoot() internal {
-        _roots[_bytes32Tree.getRoot()] = block.timestamp;
+        bytes32 root_ = _bytes32Tree.getRoot();
+
+        _roots[root_] = block.timestamp;
+        IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
     }
 
     function _notifyRoot() internal {
