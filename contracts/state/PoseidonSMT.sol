@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
-
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -10,7 +8,10 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
 import {IEvidenceRegistry} from "@rarimo/evidence-registry/interfaces/IEvidenceRegistry.sol";
+
 import {StateKeeper} from "./StateKeeper.sol";
+
+import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
 contract PoseidonSMT is Initializable, UUPSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
