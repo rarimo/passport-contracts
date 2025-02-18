@@ -1,6 +1,5 @@
 import { expect } from "chai";
 import { zkit, ethers } from "hardhat";
-import { HDNodeWallet } from "ethers";
 
 import { Groth16Proof } from "@solarity/zkit";
 
@@ -8,8 +7,8 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { createDG1Data } from "@/test/helpers/dg1";
 
-import { getPoseidon, Reverter, MerkleTreeHelper } from "@/test/helpers";
-import { RegistrationSimpleMethodId, RegistrationSimpleOperationId } from "@/test/helpers/constants";
+import { getPoseidon, Reverter } from "@/test/helpers";
+import { RegistrationSimpleOperationId } from "@/test/helpers/constants";
 
 import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, StateKeeperMock } from "@ethers-v6";
 
@@ -21,7 +20,6 @@ import {
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 const treeSize = 80;
-const chainName = "Tests";
 
 const registrationName = "Registration";
 
@@ -30,11 +28,8 @@ const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1
 describe("RegistrationSimple", () => {
   const reverter = new Reverter();
 
-  let merkleTree: MerkleTreeHelper;
-
   let OWNER: SignerWithAddress;
   let FIRST: SignerWithAddress;
-  let SIGNER: HDNodeWallet;
 
   let registerLight: RegisterIdentityLight256;
 
@@ -50,7 +45,6 @@ describe("RegistrationSimple", () => {
     registerLight = await zkit.getCircuit("RegisterIdentityLight256");
 
     [OWNER, FIRST] = await ethers.getSigners();
-    SIGNER = ethers.Wallet.createRandom();
 
     const StateKeeper = await ethers.getContractFactory("StateKeeperMock", {
       libraries: {
@@ -115,15 +109,13 @@ describe("RegistrationSimple", () => {
     );
 
     await stateKeeper.__StateKeeper_init(
-      SIGNER.address,
+      OWNER.address,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
 
-    await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]);
-
-    merkleTree = new MerkleTreeHelper();
+    await registrationSimple.__RegistrationSimple_init(OWNER.address, await stateKeeper.getAddress(), [OWNER.address]);
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registrationSimple.getAddress()]);
 
@@ -240,7 +232,7 @@ describe("RegistrationSimple", () => {
         ],
       );
 
-      await expect(registrationSimple.updateSignerList(data))
+      await expect(registrationSimple.connect(OWNER).updateSignerList(data))
         .to.emit(registrationSimple, "SignersListUpdated")
         .withArgs(
           [FIRST.address, OWNER.address],
@@ -280,8 +272,10 @@ describe("RegistrationSimple", () => {
   describe("$Contract Management", () => {
     it("should revert if trying to initialize the contract twice", async () => {
       await expect(
-        registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]),
-      ).to.be.revertedWith("Initializable: contract is already initialized");
+        registrationSimple.__RegistrationSimple_init(ethers.ZeroAddress, await stateKeeper.getAddress(), [
+          OWNER.address,
+        ]),
+      ).to.be.revertedWithCustomError(registrationSimple, "InvalidInitialization");
     });
 
     it("should retrieve all signers", async () => {

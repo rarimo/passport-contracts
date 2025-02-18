@@ -54,9 +54,12 @@ contract RegistrationSimple is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     }
 
     function __RegistrationSimple_init(
+        address initialOwner_,
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
+        __Ownable_init(initialOwner_);
+
         stateKeeper = StateKeeper(stateKeeper_);
 
         _signers.add(signers_);

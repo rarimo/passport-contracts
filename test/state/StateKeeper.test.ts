@@ -1,29 +1,24 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { HDNodeWallet, ZeroAddress, ZeroHash } from "ethers";
+import { ZeroAddress, ZeroHash } from "ethers";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { StateKeeperMock, PoseidonSMTMock } from "@ethers-v6";
 
-import { MerkleTreeHelper } from "@/test/helpers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import { StateKeeperMethodId } from "@/test/helpers/constants";
 
 const treeSize = 80;
-const chainName = "Tests";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 describe("StateKeeper", () => {
   const reverter = new Reverter();
 
-  let merkleTree: MerkleTreeHelper;
-
   let ADDRESS1: SignerWithAddress;
   let ADDRESS2: SignerWithAddress;
-  let SIGNER: HDNodeWallet;
 
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
@@ -31,7 +26,6 @@ describe("StateKeeper", () => {
 
   before("setup", async () => {
     [ADDRESS1, ADDRESS2] = await ethers.getSigners();
-    SIGNER = ethers.Wallet.createRandom();
 
     const StateKeeper = await ethers.getContractFactory("StateKeeperMock", {
       libraries: {
@@ -94,8 +88,6 @@ describe("StateKeeper", () => {
       icaoMerkleRoot,
     );
 
-    merkleTree = new MerkleTreeHelper();
-
     await reverter.snapshot();
   });
 
@@ -117,16 +109,18 @@ describe("StateKeeper", () => {
 
     it("should not be called by non-owner", async () => {
       await stateKeeper.transferOwnership(ADDRESS2);
-      await expect(stateKeeper.transferOwnership(ADDRESS2)).to.be.revertedWith("StateKeeper: not an owner");
+      await expect(stateKeeper.transferOwnership(ADDRESS2)).to.be.revertedWithCustomError(
+        stateKeeper,
+        "OwnableUnauthorizedAccount",
+      );
 
       expect(await stateKeeper.owner()).to.be.equal(ADDRESS2);
     });
   });
 
-  describe("$TSS flow", () => {
+  describe("$Contract management", () => {
     describe("#changeICAOMasterTreeRoot", () => {
       const newIcaoMerkleRoot = "0x3c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
-      const timestamp = "123456";
 
       it("should change the root", async () => {
         expect(await stateKeeper.icaoMasterTreeMerkleRoot()).to.equal(icaoMerkleRoot);
@@ -189,11 +183,11 @@ describe("StateKeeper", () => {
 
         await expect(
           stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+        ).to.be.revertedWithCustomError(stateKeeper, "OwnableUnauthorizedAccount");
 
         await expect(
           stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.RemoveRegistrations, data),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+        ).to.be.revertedWithCustomError(stateKeeper, "OwnableUnauthorizedAccount");
       });
 
       it("should revert if invalid operation was signed", async () => {
