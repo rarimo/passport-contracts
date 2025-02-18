@@ -18,7 +18,7 @@ contract PECDSASHA1Authenticator {
         0x8BD2AEB9CB7E57CB2C4B482FFC81B7AFB9DE27E1E3BD23C23A4453BD9ACE3262;
     uint256 private constant GY =
         0x547EF835C3DAC4FD97F8461A14611DC9C27745132DED8E545C1D54C72F046997;
-    uint256 private constant P =
+    uint256 private constant _P =
         0xA9FB57DBA1EEA9BC3E660A909D838D726E3BF623D52620282013481D1F6E5377;
     uint256 private constant N =
         0xA9FB57DBA1EEA9BC3E660A909D838D718C397AA3B561A6F7901E0E82974856A7;
@@ -64,8 +64,8 @@ contract PECDSASHA1Authenticator {
             return false;
         }
 
-        uint256 Px = _inverseMod(P[2], P);
-        Px = mulmod(P[0], mulmod(Px, Px, P), P);
+        uint256 Px = _inverseMod(P[2], _P);
+        Px = mulmod(P[0], mulmod(Px, Px, _P), _P);
 
         return Px % N == r;
     }
@@ -164,35 +164,35 @@ contract PECDSASHA1Authenticator {
             return _zeroProj();
         }
 
-        u = mulmod(y0, z0, P);
-        u = mulmod(u, 2, P);
+        u = mulmod(y0, z0, _P);
+        u = mulmod(u, 2, _P);
 
-        v = mulmod(u, x0, P);
-        v = mulmod(v, y0, P);
-        v = mulmod(v, 2, P);
+        v = mulmod(u, x0, _P);
+        v = mulmod(v, y0, _P);
+        v = mulmod(v, 2, _P);
 
-        x0 = mulmod(x0, x0, P);
-        t = mulmod(x0, 3, P);
+        x0 = mulmod(x0, x0, _P);
+        t = mulmod(x0, 3, _P);
 
-        z0 = mulmod(z0, z0, P);
-        z0 = mulmod(z0, A, P);
-        t = addmod(t, z0, P);
+        z0 = mulmod(z0, z0, _P);
+        z0 = mulmod(z0, A, _P);
+        t = addmod(t, z0, _P);
 
-        w = mulmod(t, t, P);
-        x0 = mulmod(2, v, P);
-        w = addmod(w, P - x0, P);
+        w = mulmod(t, t, _P);
+        x0 = mulmod(2, v, _P);
+        w = addmod(w, _P - x0, _P);
 
-        x0 = addmod(v, P - w, P);
-        x0 = mulmod(t, x0, P);
-        y0 = mulmod(y0, u, P);
-        y0 = mulmod(y0, y0, P);
-        y0 = mulmod(2, y0, P);
-        y1 = addmod(x0, P - y0, P);
+        x0 = addmod(v, _P - w, _P);
+        x0 = mulmod(t, x0, _P);
+        y0 = mulmod(y0, u, _P);
+        y0 = mulmod(y0, y0, _P);
+        y0 = mulmod(2, y0, _P);
+        y1 = addmod(x0, _P - y0, _P);
 
-        x1 = mulmod(u, w, P);
+        x1 = mulmod(u, w, _P);
 
-        z1 = mulmod(u, u, P);
-        z1 = mulmod(z1, u, P);
+        z1 = mulmod(u, u, _P);
+        z1 = mulmod(z1, u, _P);
     }
 
     /**
@@ -218,11 +218,11 @@ contract PECDSASHA1Authenticator {
             return (x0, y0, z0);
         }
 
-        t0 = mulmod(y0, z1, P);
-        t1 = mulmod(y1, z0, P);
+        t0 = mulmod(y0, z1, _P);
+        t1 = mulmod(y1, z0, _P);
 
-        u0 = mulmod(x0, z1, P);
-        u1 = mulmod(x1, z0, P);
+        u0 = mulmod(x0, z1, _P);
+        u1 = mulmod(x1, z0, _P);
 
         if (u0 == u1) {
             if (t0 == t1) {
@@ -232,7 +232,7 @@ contract PECDSASHA1Authenticator {
             }
         }
 
-        (x2, y2, z2) = _addProj2(mulmod(z0, z1, P), u0, u1, t1, t0);
+        (x2, y2, z2) = _addProj2(mulmod(z0, z1, _P), u0, u1, t1, t0);
     }
 
     /**
@@ -252,27 +252,27 @@ contract PECDSASHA1Authenticator {
         uint256 t;
 
         unchecked {
-            t = addmod(t0, P - t1, P);
-            u = addmod(u0, P - u1, P);
-            u2 = mulmod(u, u, P);
+            t = addmod(t0, _P - t1, _P);
+            u = addmod(u0, _P - u1, _P);
+            u2 = mulmod(u, u, _P);
 
-            w = mulmod(t, t, P);
-            w = mulmod(w, v, P);
-            u1 = addmod(u1, u0, P);
-            u1 = mulmod(u1, u2, P);
-            w = addmod(w, P - u1, P);
+            w = mulmod(t, t, _P);
+            w = mulmod(w, v, _P);
+            u1 = addmod(u1, u0, _P);
+            u1 = mulmod(u1, u2, _P);
+            w = addmod(w, _P - u1, _P);
 
-            x2 = mulmod(u, w, P);
+            x2 = mulmod(u, w, _P);
 
-            u3 = mulmod(u2, u, P);
-            u0 = mulmod(u0, u2, P);
-            u0 = addmod(u0, P - w, P);
-            t = mulmod(t, u0, P);
-            t0 = mulmod(t0, u3, P);
+            u3 = mulmod(u2, u, _P);
+            u0 = mulmod(u0, u2, _P);
+            u0 = addmod(u0, _P - w, _P);
+            t = mulmod(t, u0, _P);
+            t0 = mulmod(t0, u3, _P);
 
-            y2 = addmod(t, P - t0, P);
+            y2 = addmod(t, _P - t0, _P);
 
-            z2 = mulmod(u3, v, P);
+            z2 = mulmod(u3, v, _P);
         }
     }
 
@@ -348,28 +348,28 @@ contract PECDSASHA1Authenticator {
     ) internal pure returns (uint256 x1, uint256 y1) {
         uint256 z0Inv;
 
-        z0Inv = _inverseMod(z0, P);
-        x1 = mulmod(x0, z0Inv, P);
-        y1 = mulmod(y0, z0Inv, P);
+        z0Inv = _inverseMod(z0, _P);
+        x1 = mulmod(x0, z0Inv, _P);
+        y1 = mulmod(y0, z0Inv, _P);
     }
 
     /**
      * @dev Check if a point in affine coordinates is on the curve.
      */
     function _isOnCurve(uint256 x, uint256 y) internal pure returns (bool) {
-        if (0 == x || x == P || 0 == y || y == P) {
+        if (0 == x || x == _P || 0 == y || y == _P) {
             return false;
         }
 
-        uint256 LHS = mulmod(y, y, P); // y^2
-        uint256 RHS = mulmod(mulmod(x, x, P), x, P); // x^3
+        uint256 LHS = mulmod(y, y, _P); // y^2
+        uint256 RHS = mulmod(mulmod(x, x, _P), x, _P); // x^3
 
         if (A != 0) {
-            RHS = addmod(RHS, mulmod(x, A, P), P); // x^3 + a*x
+            RHS = addmod(RHS, mulmod(x, A, _P), _P); // x^3 + a*x
         }
 
         if (B != 0) {
-            RHS = addmod(RHS, B, P); // x^3 + a*x + b
+            RHS = addmod(RHS, B, _P); // x^3 + a*x + b
         }
 
         return LHS == RHS;
@@ -382,9 +382,9 @@ contract PECDSASHA1Authenticator {
         uint256 x0,
         uint256 y0
     ) internal pure returns (uint256[3] memory P) {
-        P[2] = addmod(0, 1, P);
-        P[0] = mulmod(x0, P[2], P);
-        P[1] = mulmod(y0, P[2], P);
+        P[2] = addmod(0, 1, _P);
+        P[0] = mulmod(x0, P[2], _P);
+        P[1] = mulmod(y0, P[2], _P);
     }
 
     /**
