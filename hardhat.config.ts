@@ -26,6 +26,7 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       url: "http://127.0.0.1:8545",
+      accounts: privateKey(),
       gasMultiplier: 1.2,
     },
     sepolia: {

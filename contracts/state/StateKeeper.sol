@@ -246,7 +246,11 @@ contract StateKeeper is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
      * @param newRoot_ the new ICAO root
      */
-    function changeICAOMasterTreeRoot(bytes32 newRoot_) external virtual onlyOwner {
+    function changeICAOMasterTreeRoot(
+        bytes32 newRoot_,
+        uint256 timestamp,
+        bytes calldata proof_
+    ) external virtual {
         icaoMasterTreeMerkleRoot = newRoot_;
     }
 

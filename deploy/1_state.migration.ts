@@ -4,8 +4,12 @@ import { deployPoseidons, deployProxy, deploySMTProxy } from "./helpers";
 import { StateKeeperMock__factory } from "@ethers-v6";
 
 import { getConfig } from "./config/config";
+import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
+import { ethers } from "ethers";
 
 export = async (deployer: Deployer) => {
+  await setBalance(await (await deployer.getSigner()).getAddress(), ethers.parseEther("10000"));
+
   const config = (await getConfig())!;
 
   await deployPoseidons(deployer, [1, 2, 3, 4, 5]);
