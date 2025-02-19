@@ -11,6 +11,7 @@ import {
   Registration2Mock__factory,
   RegistrationSimple,
   RegistrationSimple__factory,
+  StateKeeperMock__factory,
 } from "@ethers-v6";
 
 import {
@@ -63,6 +64,7 @@ export = async (deployer: Deployer) => {
     certificates: CertificateDataWithBlockNumber[];
   } = await processRegistration2();
 
+  const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
   const registration2 = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
   const allCertificates: CertificateData[] = registrationData.certificates
@@ -70,12 +72,9 @@ export = async (deployer: Deployer) => {
     .sort((a, b) => a.blockNumber - b.blockNumber)
     .map((certificate) => certificate.data);
 
+  const registration2Address = await registration2.getAddress();
   for (const certificate of allCertificates) {
-    await registration2.registerCertificate(
-      certificate.certificate_,
-      certificate.icaoMember_,
-      certificate.icaoMerkleProof_,
-    );
+    await stateKeeper.mockAddCertificate(certificate.certificate_, registration2Address);
   }
 
   for (const user of Object.values(registrationData2.users)) {
