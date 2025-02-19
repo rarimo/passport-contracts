@@ -7,6 +7,8 @@ import {
   RegisterIdentityLight256Verifier__factory,
   RegisterIdentityLight384Verifier__factory,
   RegisterIdentityLight512Verifier__factory,
+  Registration2Mock__factory,
+  RegistrationSimple__factory,
   StateKeeperMock__factory,
 } from "@ethers-v6";
 
@@ -14,10 +16,9 @@ export = async (deployer: Deployer) => {
   const registrationSmt = await deployer.deployed(PoseidonSMT__factory, "RegistrationSMT");
   const certificatesSmt = await deployer.deployed(PoseidonSMT__factory, "CertificatesSMT");
 
-  const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper");
-
-  const registration = await deployer.deployed(StateKeeperMock__factory, "Registration2");
-  const registrationSimple = await deployer.deployed(StateKeeperMock__factory, "RegistrationSimple");
+  const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
+  const registration = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
+  const registrationSimple = await deployer.deployed(RegistrationSimple__factory, "RegistrationSimple Proxy");
 
   const identityLight160Verifier = await deployer.deployed(RegisterIdentityLight160Verifier__factory);
   const identityLight224Verifier = await deployer.deployed(RegisterIdentityLight224Verifier__factory);

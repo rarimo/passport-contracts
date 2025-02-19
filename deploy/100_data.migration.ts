@@ -8,10 +8,9 @@ import {
   RegisterIdentityLight256Verifier__factory,
   RegisterIdentityLight384Verifier__factory,
   RegisterIdentityLight512Verifier__factory,
-  Registration2__factory,
+  Registration2Mock__factory,
   RegistrationSimple,
   RegistrationSimple__factory,
-  StateKeeper__factory,
 } from "@ethers-v6";
 
 import {
@@ -21,6 +20,7 @@ import {
 } from "@/scripts/migration/process-transactions";
 import {
   CertificateData,
+  CertificateDataWithBlockNumber,
   RegistrationData_R1,
   RegistrationData_R2,
   RegistrationData_R3,
@@ -53,16 +53,24 @@ async function getCorrectVerifier(deployer: Deployer, address: AddressLike) {
 export = async (deployer: Deployer) => {
   const signer = await deployer.getSigner();
 
-  // const simpleRegistrationData: RegistrationData_R3[] = await processSimpleRegistration();
-  // const registrationData: { users: Record<string, RegistrationData_R1>; certificates: CertificateData[] } =
-  //   await processRegistration();
-  const registrationData2: { users: Record<string, RegistrationData_R2>; certificates: CertificateData[] } =
-    await processRegistration2();
+  const simpleRegistrationData: RegistrationData_R3[] = await processSimpleRegistration();
+  const registrationData: {
+    users: Record<string, RegistrationData_R1>;
+    certificates: CertificateDataWithBlockNumber[];
+  } = await processRegistration();
+  const registrationData2: {
+    users: Record<string, RegistrationData_R2>;
+    certificates: CertificateDataWithBlockNumber[];
+  } = await processRegistration2();
 
-  const registration2 = await deployer.deployed(Registration2__factory, "Registration2");
+  const registration2 = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
-  for (const certificate of registrationData2.certificates) {
-    console.log("Registering certificate", certificate.certificate_);
+  const allCertificates: CertificateData[] = registrationData.certificates
+    .concat(registrationData2.certificates)
+    .sort((a, b) => a.blockNumber - b.blockNumber)
+    .map((certificate) => certificate.data);
+
+  for (const certificate of allCertificates) {
     await registration2.registerCertificate(
       certificate.certificate_,
       certificate.icaoMember_,
@@ -70,19 +78,36 @@ export = async (deployer: Deployer) => {
     );
   }
 
-  // const simpleRegistration = await deployer.deployed(
-  //   RegistrationSimple__factory,
-  //   "RegistrationSimple",
-  // );
-  //
-  // for (const data of simpleRegistrationData) {
-  //   const verifier = await getCorrectVerifier(deployer, data.passport_.verifier);
-  //   data.passport_.verifier = await verifier.getAddress();
-  //
-  //   const signature = await getSimpleSignature(signer as any, data.passport_, simpleRegistration);
-  //
-  //   await simpleRegistration.registerSimple(data.identityKey_, data.passport_, signature, data.zkPoints_);
-  // }
+  for (const user of Object.values(registrationData2.users)) {
+    await registration2.register(
+      user.certificatesRoot_,
+      user.identityKey_,
+      user.dgCommit_,
+      user.passport_,
+      user.zkPoints_,
+    );
+  }
+
+  for (const user of Object.values(registrationData.users)) {
+    await registration2.registerDep(user.certificatesRoot_, user.identityKey_, user.dgCommit_, {
+      dataType: user.passport_.dataType,
+      zkType: user.passport_.zkType,
+      signature: user.passport_.signature,
+      publicKey: user.passport_.publicKey,
+      passportHash: ethers.ZeroHash,
+    });
+  }
+
+  const registrationSimple = await deployer.deployed(RegistrationSimple__factory, "RegistrationSimple Proxy");
+
+  for (const data of simpleRegistrationData) {
+    const verifier = await getCorrectVerifier(deployer, data.passport_.verifier);
+    data.passport_.verifier = await verifier.getAddress();
+
+    const signature = await getSimpleSignature(signer as any, data.passport_, registrationSimple);
+
+    await registrationSimple.registerSimple(data.identityKey_, data.passport_, signature, data.zkPoints_);
+  }
 };
 
 async function getSimpleSignature(

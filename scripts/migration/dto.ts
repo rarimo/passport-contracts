@@ -147,6 +147,11 @@ export type CertificateData = {
   icaoMerkleProof_: string[];
 };
 
+export type CertificateDataWithBlockNumber = {
+  data: CertificateData;
+  blockNumber: number;
+};
+
 export function parseCertificate(result: any[]): CertificateData {
   const [certificateArr, icaoMemberArr, icaoMerkleProofArr] = result;
 
