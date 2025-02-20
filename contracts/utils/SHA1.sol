@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 /**
  * @notice Forked from https://github.com/ensdomains/solsha1/blob/master/contracts/SHA1.sol

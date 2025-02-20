@@ -20,15 +20,10 @@ export = async (deployer: Deployer) => {
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
 
   const registration = await deployProxy(deployer, Registration2Mock__factory, "Registration2");
-  await registration.__Registration_init(config.tssSigner, config.chainName, await stateKeeper.getAddress());
+  await registration.__Registration_init(await stateKeeper.getAddress());
 
   const registrationSimple = await deployProxy(deployer, RegistrationSimple__factory, "RegistrationSimple");
-  await registrationSimple.__RegistrationSimple_init(
-    config.tssSigner,
-    config.chainName,
-    await stateKeeper.getAddress(),
-    config.simpleRegistrationSigners,
-  );
+  await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), config.simpleRegistrationSigners);
 
   await deployPVerifiers(deployer);
 

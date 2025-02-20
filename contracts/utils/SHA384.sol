@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 /**
  * @notice Forked from https://github.com/yangfh2004/SolSha2Ext/blob/main/contracts/lib/Sha2Ext.sol
