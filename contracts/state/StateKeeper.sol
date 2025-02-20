@@ -8,11 +8,15 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
+import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
+
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract StateKeeper is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+contract StateKeeper is Initializable, MultiOwnable, UUPSUpgradeable {
+    using TypeCaster for address;
     using DynamicSet for DynamicSet.StringSet;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
@@ -77,12 +81,14 @@ contract StateKeeper is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
-        __Ownable_init(initialOwner_);
+        __MultiOwnable_init();
 
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);
 
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
+
+        addOwners(initialOwner_.asSingletonArray());
     }
 
     /**

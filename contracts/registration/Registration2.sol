@@ -383,7 +383,7 @@ contract Registration2 is Initializable, UUPSUpgradeable {
     }
 
     function _onlyOwner() internal view {
-        require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
+        require(stateKeeper.isOwner(msg.sender), "Registration: not an owner");
     }
 
     function _authorizeUpgrade(address) internal virtual override {
