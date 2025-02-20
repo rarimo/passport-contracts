@@ -113,13 +113,11 @@ describe("StateKeeper", () => {
     });
 
     it("should not be called by non-owner", async () => {
-      await stateKeeper.transferOwnership(ADDRESS2);
-      await expect(stateKeeper.transferOwnership(ADDRESS2)).to.be.revertedWithCustomError(
-        stateKeeper,
-        "OwnableUnauthorizedAccount",
-      );
+      await stateKeeper.addOwners([ADDRESS2]);
+      await stateKeeper.removeOwners([ADDRESS1]);
+      await expect(stateKeeper.addOwners([ADDRESS2])).to.be.revertedWith("MultiOwnable: caller is not the owner");
 
-      expect(await stateKeeper.owner()).to.be.equal(ADDRESS2);
+      expect(await stateKeeper.isOwner(ADDRESS2)).to.be.true;
     });
   });
 
@@ -203,11 +201,11 @@ describe("StateKeeper", () => {
 
         await expect(
           stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data),
-        ).to.be.revertedWithCustomError(stateKeeper, "OwnableUnauthorizedAccount");
+        ).to.be.revertedWith("MultiOwnable: caller is not the owner");
 
         await expect(
           stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.RemoveRegistrations, data),
-        ).to.be.revertedWithCustomError(stateKeeper, "OwnableUnauthorizedAccount");
+        ).to.be.revertedWith("MultiOwnable: caller is not the owner");
       });
 
       it("should revert if invalid operation was signed", async () => {
