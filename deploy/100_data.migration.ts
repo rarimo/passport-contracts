@@ -10,7 +10,7 @@ import {
   RegisterIdentityLight512Verifier__factory,
   Registration2Mock__factory,
   RegistrationSimple,
-  RegistrationSimple__factory,
+  RegistrationSimpleMock__factory,
   StateKeeperMock__factory,
 } from "@ethers-v6";
 
@@ -51,6 +51,30 @@ async function getCorrectVerifier(deployer: Deployer, address: AddressLike) {
   throw new Error("Unknown verifier address");
 }
 
+function printStats(
+  simpleRegistrationData: RegistrationData_R3[],
+  registrationData: {
+    users: Record<string, RegistrationData_R1>;
+    certificates: CertificateDataWithBlockNumber[];
+  },
+  registrationData2: {
+    users: Record<string, RegistrationData_R2>;
+    certificates: CertificateDataWithBlockNumber[];
+  },
+) {
+  console.log(`Simple registration: ${simpleRegistrationData.length}`);
+  console.log(`Registration 1 -- Users: ${Object.keys(registrationData.users).length}`);
+  console.log(`Registration 2 -- Users: ${Object.keys(registrationData2.users).length}`);
+
+  console.log(`Registration 1 -- Certificates: ${registrationData.certificates.length}`);
+  console.log(`Registration 2 -- Certificates: ${registrationData2.certificates.length}`);
+
+  console.log(
+    `Total users: ${Object.keys(registrationData.users).length + Object.keys(registrationData2.users).length + simpleRegistrationData.length}`,
+  );
+  console.log(`Total certificates: ${registrationData.certificates.length + registrationData2.certificates.length}`);
+}
+
 export = async (deployer: Deployer) => {
   const signer = await deployer.getSigner();
 
@@ -64,6 +88,14 @@ export = async (deployer: Deployer) => {
     certificates: CertificateDataWithBlockNumber[];
   } = await processRegistration2();
 
+  printStats(simpleRegistrationData, registrationData, registrationData2);
+
+  for (const user of Object.values(registrationData2.users)) {
+    if (registrationData.users[user.passport_.publicKey]) {
+      delete registrationData.users[user.passport_.publicKey];
+    }
+  }
+
   const stateKeeper = await deployer.deployed(StateKeeperMock__factory, "StateKeeper Proxy");
   const registration2 = await deployer.deployed(Registration2Mock__factory, "Registration2 Proxy");
 
@@ -74,17 +106,13 @@ export = async (deployer: Deployer) => {
 
   const registration2Address = await registration2.getAddress();
   for (const certificate of allCertificates) {
-    await stateKeeper.mockAddCertificate(certificate.certificate_, registration2Address);
+    try {
+      await stateKeeper.mockAddCertificate(certificate.certificate_, registration2Address);
+    } catch {}
   }
 
   for (const user of Object.values(registrationData2.users)) {
-    await registration2.register(
-      user.certificatesRoot_,
-      user.identityKey_,
-      user.dgCommit_,
-      user.passport_,
-      user.zkPoints_,
-    );
+    await registration2.registerNew(user.certificatesRoot_, user.identityKey_, user.dgCommit_, user.passport_);
   }
 
   for (const user of Object.values(registrationData.users)) {
@@ -97,15 +125,12 @@ export = async (deployer: Deployer) => {
     });
   }
 
-  const registrationSimple = await deployer.deployed(RegistrationSimple__factory, "RegistrationSimple Proxy");
+  const registrationSimple = await deployer.deployed(RegistrationSimpleMock__factory, "RegistrationSimple Proxy");
 
   for (const data of simpleRegistrationData) {
-    const verifier = await getCorrectVerifier(deployer, data.passport_.verifier);
-    data.passport_.verifier = await verifier.getAddress();
-
     const signature = await getSimpleSignature(signer as any, data.passport_, registrationSimple);
 
-    await registrationSimple.registerSimple(data.identityKey_, data.passport_, signature, data.zkPoints_);
+    await registrationSimple.registerSimpleMock(data.identityKey_, data.passport_, signature);
   }
 };
 

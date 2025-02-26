@@ -11,7 +11,7 @@ import {
   deployCECDSADispatcher,
 } from "./helpers";
 
-import { Registration2Mock__factory, RegistrationSimple__factory, StateKeeperMock__factory } from "@ethers-v6";
+import { Registration2Mock__factory, RegistrationSimpleMock__factory, StateKeeperMock__factory } from "@ethers-v6";
 
 import { getConfig } from "./config/config";
 
@@ -22,7 +22,7 @@ export = async (deployer: Deployer) => {
   const registration = await deployProxy(deployer, Registration2Mock__factory, "Registration2");
   await registration.__Registration_init(await stateKeeper.getAddress());
 
-  const registrationSimple = await deployProxy(deployer, RegistrationSimple__factory, "RegistrationSimple");
+  const registrationSimple = await deployProxy(deployer, RegistrationSimpleMock__factory, "RegistrationSimple");
   await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), config.simpleRegistrationSigners);
 
   await deployPVerifiers(deployer);
