@@ -156,7 +156,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
     }
 
     function _onlyOwner() internal view {
-        require(msg.sender == StateKeeper(stateKeeper).owner(), "Registration: not an owner");
+        require(StateKeeper(stateKeeper).isOwner(msg.sender), "Registration: not an owner");
     }
 
     function _authorizeUpgrade(address) internal virtual override {

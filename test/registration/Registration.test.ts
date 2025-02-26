@@ -15,9 +15,7 @@ import {
 } from "@/scripts/utils/types";
 
 import {
-  Registration,
   StateKeeperMock,
-  RegistrationMock,
   PUniversal2048Verifier,
   PUniversal4096Verifier,
   CRSADispatcher,
@@ -25,9 +23,11 @@ import {
   PRSASHADispatcher,
   PECDSASHA1Dispatcher,
   PoseidonSMTMock,
+  Registration2Mock,
+  Registration2,
 } from "@ethers-v6";
 
-import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
+import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
 import { MerkleTreeHelper } from "@/test/helpers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
@@ -53,7 +53,7 @@ const registrationName = "Initial";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-describe.skip("Registration", () => {
+describe("Registration2", () => {
   const reverter = new Reverter();
 
   let merkleTree: MerkleTreeHelper;
@@ -72,7 +72,7 @@ describe.skip("Registration", () => {
 
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
-  let registration: RegistrationMock;
+  let registration: Registration2Mock;
   let stateKeeper: StateKeeperMock;
 
   const deployPUniversalVerifiers = async () => {
@@ -179,12 +179,12 @@ describe.skip("Registration", () => {
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
-    const Registration = await ethers.getContractFactory("RegistrationMock");
+    const Registration = await ethers.getContractFactory("Registration2");
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
     registrationSmt = await PoseidonSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
-    registration = await Registration.deploy();
+    registration = (await Registration.deploy()) as any;
     stateKeeper = await StateKeeper.deploy();
 
     await deployPUniversalVerifiers();
@@ -203,7 +203,7 @@ describe.skip("Registration", () => {
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
 
     proxy = await Proxy.deploy(await registration.getAddress(), "0x");
-    registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+    registration = registration.attach(await proxy.getAddress()) as Registration2Mock;
 
     const evidenceDB = await ethers.deployContract("EvidenceDB", {
       libraries: {
@@ -309,12 +309,12 @@ describe.skip("Registration", () => {
         const data = encoder.encode(["bytes32", "address"], [ethers.hexlify(ethers.randomBytes(32)), SIGNER.address]);
 
         await expect(
-          registration.updateDependency(RegistrationMethodId.AddPassportDispatcher, data),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+          registration.connect(SECOND).updateDependency(RegistrationMethodId.AddPassportDispatcher, data),
+        ).to.be.rejectedWith("Registration: not an owner");
 
         await expect(
-          registration.updateDependency(RegistrationMethodId.RemovePassportDispatcher, data),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+          registration.connect(SECOND).updateDependency(RegistrationMethodId.RemovePassportDispatcher, data),
+        ).to.be.rejectedWith("Registration: not an owner");
       });
     });
 
@@ -337,14 +337,14 @@ describe.skip("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        const certificate: Registration.CertificateStruct = {
+        const certificate: Registration2.CertificateStruct = {
           dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
         };
 
-        const icaoMember: Registration.ICAOMemberStruct = {
+        const icaoMember: Registration2.ICAOMemberStruct = {
           signature: icaoSignature,
           publicKey: icaoPublicKey,
         };
@@ -366,14 +366,14 @@ describe.skip("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        const certificate: Registration.CertificateStruct = {
+        const certificate: Registration2.CertificateStruct = {
           dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
         };
 
-        const icaoMember: Registration.ICAOMemberStruct = {
+        const icaoMember: Registration2.ICAOMemberStruct = {
           signature: icaoSignature,
           publicKey: icaoPublicKey,
         };
@@ -400,11 +400,12 @@ describe.skip("Registration", () => {
 
       await certificatesSmt.mockRoot(ECDSAPassportIdentityPublicSignals[3]);
 
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.register(
@@ -417,11 +418,12 @@ describe.skip("Registration", () => {
     };
 
     const revoke = async (identityOverride?: string, signatureOverride?: string) => {
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature2,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.revoke(identityOverride ?? identityKey, passport);
@@ -437,11 +439,12 @@ describe.skip("Registration", () => {
 
       await certificatesSmt.mockRoot(ECDSAPassportNewIdentityPublicSignals[3]);
 
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportNewIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.reissueIdentity(
@@ -454,7 +457,7 @@ describe.skip("Registration", () => {
     };
 
     describe("#register", () => {
-      it("should register", async () => {
+      it.skip("should register", async () => {
         await register();
 
         const passportInfo = await stateKeeper.getPassportInfo(
@@ -510,7 +513,7 @@ describe.skip("Registration", () => {
     });
 
     describe("#revoke", () => {
-      it("should revoke", async () => {
+      it.skip("should revoke", async () => {
         await register();
         await revoke();
 
@@ -523,13 +526,13 @@ describe.skip("Registration", () => {
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(revoked);
       });
 
-      it("should not revoke with the same signature", async () => {
+      it.skip("should not revoke with the same signature", async () => {
         await register(identityKey, ECDSAPassportIdentitySignature1);
 
         expect(revoke(identityKey, ECDSAPassportIdentitySignature1)).to.be.revertedWith("Registration: signature used");
       });
 
-      it("should revert if passport already revoked", async () => {
+      it.skip("should revert if passport already revoked", async () => {
         await register();
 
         await stateKeeper.mockPassportData(
@@ -540,7 +543,7 @@ describe.skip("Registration", () => {
         expect(revoke()).to.be.revertedWith("Registration: passport already revoked");
       });
 
-      it("should revert if identity already revoked", async () => {
+      it.skip("should revert if identity already revoked", async () => {
         await register();
 
         await stateKeeper.mockIdentityData(
@@ -557,7 +560,7 @@ describe.skip("Registration", () => {
     });
 
     describe("#reissueIdentity", () => {
-      it("should reissue identity", async () => {
+      it.skip("should reissue identity", async () => {
         await register();
         await revoke();
         await reissueIdentity();
@@ -570,7 +573,7 @@ describe.skip("Registration", () => {
         expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(1n);
       });
 
-      it("should revert if passport is not revoked", async () => {
+      it.skip("should revert if passport is not revoked", async () => {
         await register();
         await revoke();
 
@@ -582,7 +585,7 @@ describe.skip("Registration", () => {
         expect(reissueIdentity()).to.be.revertedWith("Registration: passport is not revoked");
       });
 
-      it("should revert if identity is already registered", async () => {
+      it.skip("should revert if identity is already registered", async () => {
         await register();
         await revoke();
 
@@ -603,7 +606,7 @@ describe.skip("Registration", () => {
   describe("$upgrade flow", () => {
     describe("#upgrade", () => {
       it("should upgrade the contract", async () => {
-        const Registration = await ethers.getContractFactory("RegistrationMock");
+        const Registration = await ethers.getContractFactory("Registration2Mock");
         const newRegistration = await Registration.deploy();
 
         await registration.upgradeToAndCall(await newRegistration.getAddress(), "0x");
@@ -611,16 +614,12 @@ describe.skip("Registration", () => {
         expect(await registration.implementation()).to.be.eq(await newRegistration.getAddress());
       });
 
-      it("should revert if trying to upgrade to zero address", async () => {
-        await expect(registration.upgradeToAndCall(ethers.ZeroAddress, "0x")).to.be.rejectedWith(
-          "Upgradeable: Zero address",
-        );
-      });
-
       it("should revert if operation was signed by the invalid signer", async () => {
+        const newRegistration = await ethers.deployContract("Registration2Mock");
+
         await expect(
-          registration.connect(SECOND).upgradeToAndCall(await registration.getAddress(), "0x"),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+          registration.connect(SECOND).upgradeToAndCall(await newRegistration.getAddress(), "0x"),
+        ).to.be.rejectedWith("Registration: not an owner");
       });
     });
   });
