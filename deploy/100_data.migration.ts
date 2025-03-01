@@ -78,7 +78,7 @@ function printStats(
 export = async (deployer: Deployer) => {
   const signer = await deployer.getSigner();
 
-  const simpleRegistrationData: RegistrationData_R3[] = await processSimpleRegistration();
+  const simpleRegistrationData: RegistrationData_R3[] = (await processSimpleRegistration()).users;
   const registrationData: {
     users: Record<string, RegistrationData_R1>;
     certificates: CertificateDataWithBlockNumber[];
