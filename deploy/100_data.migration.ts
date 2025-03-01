@@ -51,6 +51,30 @@ async function getCorrectVerifier(deployer: Deployer, address: AddressLike) {
   throw new Error("Unknown verifier address");
 }
 
+function printStats(
+  simpleRegistrationData: RegistrationData_R3[],
+  registrationData: {
+    users: Record<string, RegistrationData_R1>;
+    certificates: CertificateDataWithBlockNumber[];
+  },
+  registrationData2: {
+    users: Record<string, RegistrationData_R2>;
+    certificates: CertificateDataWithBlockNumber[];
+  },
+) {
+  console.log(`Simple registration: ${simpleRegistrationData.length}`);
+  console.log(`Registration 1 -- Users: ${Object.keys(registrationData.users).length}`);
+  console.log(`Registration 2 -- Users: ${Object.keys(registrationData2.users).length}`);
+
+  console.log(`Registration 1 -- Certificates: ${registrationData.certificates.length}`);
+  console.log(`Registration 2 -- Certificates: ${registrationData2.certificates.length}`);
+
+  console.log(
+    `Total users: ${Object.keys(registrationData.users).length + Object.keys(registrationData2.users).length + simpleRegistrationData.length}`,
+  );
+  console.log(`Total certificates: ${registrationData.certificates.length + registrationData2.certificates.length}`);
+}
+
 export = async (deployer: Deployer) => {
   const signer = await deployer.getSigner();
 
@@ -71,6 +95,14 @@ export = async (deployer: Deployer) => {
     .concat(registrationData2.certificates)
     .sort((a, b) => a.blockNumber - b.blockNumber)
     .map((certificate) => certificate.data);
+
+  printStats(simpleRegistrationData, registrationData, registrationData2);
+
+  for (const user of Object.values(registrationData2.users)) {
+    if (registrationData.users[user.passport_.publicKey]) {
+      delete registrationData.users[user.passport_.publicKey];
+    }
+  }
 
   const registration2Address = await registration2.getAddress();
   for (const certificate of allCertificates) {

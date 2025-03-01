@@ -1,4 +1,5 @@
 import "@nomicfoundation/hardhat-ethers";
+import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@solarity/hardhat-migrate";
 import "@solarity/hardhat-gobind";
@@ -82,6 +83,11 @@ const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       timeout: 60000,
     },
+    "rarimo-l2": {
+      url: "https://l2.rarimo.com",
+      accounts: privateKey(),
+      gasMultiplier: 1.2,
+    },
   },
   solidity: {
     version: "0.8.28",
@@ -105,8 +111,17 @@ const config: HardhatUserConfig = {
       polygon: `${process.env.POLYGONSCAN_KEY}`,
       avalancheFujiTestnet: `${process.env.AVALANCHE_KEY}`,
       avalanche: `${process.env.AVALANCHE_KEY}`,
+      "rarimo-l2": `abc`,
     },
     customChains: [
+      {
+        network: "rarimo-l2",
+        chainId: 7368,
+        urls: {
+          apiURL: "https://evmscan.l2.rarimo.com/api",
+          browserURL: "https://newscan.l2.rarimo.com/",
+        },
+      },
       {
         network: "rarimo-testnet",
         chainId: 42,
