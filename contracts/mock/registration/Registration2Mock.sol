@@ -17,7 +17,12 @@ contract Registration2Mock is Registration2 {
         IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
         uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
 
-        stateKeeper.addBond(bytes32(passportKey_), bytes32(0), bytes32(identityKey_), dgCommit_);
+        stateKeeper.addBond(
+            bytes32(passportKey_),
+            passport_.passportHash,
+            bytes32(identityKey_),
+            dgCommit_
+        );
     }
 
     function registerDep(

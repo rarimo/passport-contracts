@@ -91,8 +91,10 @@ export = async (deployer: Deployer) => {
   printStats(simpleRegistrationData, registrationData, registrationData2);
 
   for (const user of Object.values(registrationData2.users)) {
-    if (registrationData.users[user.passport_.publicKey]) {
-      delete registrationData.users[user.passport_.publicKey];
+    if (
+      registrationData.users[user.passport_.publicKey === "0x" ? user.passport_.passportHash : user.passport_.publicKey]
+    ) {
+      delete registrationData.users[user.passport_.passportHash];
     }
   }
 
