@@ -11,6 +11,7 @@ export const simpleRegistrationName = "SimpleRegistration";
 export const simpleRegistrationSigners = [
   "0xc1a3e440CE8B6fD764c111efC39D12EcE6898a9f",
   "0xc7257a6D02b9b46586fF6e7E27A74Ad05df64b9F",
+  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 ];
 
 export const registration2 = "0x0000000000000000000000000000000000000000";

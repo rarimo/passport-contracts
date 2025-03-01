@@ -231,7 +231,17 @@ export async function processRegistration2(): Promise<{
         console.log("User already exists", tx.blockNumber);
       }
 
-      users[String(data.passport_.passportHash)] = data;
+      if (data.passport_.passportHash === "0x2989c74964687401c5f62188f10d40b02be65ab88e093c8c0986f332bc6248f3") {
+        if (data.identityKey_ === BigInt("0x29cf6a5f0d1b7969691c1e4df3d6e37e87f0a0a0efe7d7d813286b2154d42950")) {
+          users[String(data.passport_.passportHash)] = data;
+
+          console.log(`hit`);
+        }
+
+        console.log(`hit --`);
+      } else {
+        users[String(data.passport_.passportHash)] = data;
+      }
 
       if (!allData["register"]) {
         allData["register"] = { count: 0, blockNumbers: [] };
@@ -291,7 +301,17 @@ export async function processRegistration2(): Promise<{
         registrationInterface.decodeFunctionData("reissueIdentity", tx.data),
       );
 
-      users[data.passport_.passportHash] = data;
+      if (data.passport_.passportHash === "0x2989c74964687401c5f62188f10d40b02be65ab88e093c8c0986f332bc6248f3") {
+        if (data.identityKey_ === BigInt("0x29cf6a5f0d1b7969691c1e4df3d6e37e87f0a0a0efe7d7d813286b2154d42950")) {
+          users[String(data.passport_.passportHash)] = data;
+
+          console.log(`hit`);
+        }
+
+        console.log(`hit --`);
+      } else {
+        users[String(data.passport_.passportHash)] = data;
+      }
 
       if (!allData["reissueIdentity"]) {
         allData["reissueIdentity"] = { count: 0, blockNumbers: [] };

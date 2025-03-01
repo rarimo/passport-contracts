@@ -131,6 +131,8 @@ export = async (deployer: Deployer) => {
 
   const registrationSimple = await deployer.deployed(RegistrationSimple__factory, "RegistrationSimple Proxy");
 
+  console.log(await registrationSimple.getSigners());
+
   for (const data of simpleRegistrationData) {
     const verifier = await getCorrectVerifier(deployer, data.passport_.verifier);
     data.passport_.verifier = await verifier.getAddress();
