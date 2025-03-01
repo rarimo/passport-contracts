@@ -112,17 +112,25 @@ export = async (deployer: Deployer) => {
   }
 
   for (const user of Object.values(registrationData2.users)) {
-    await registration2.registerNew(user.certificatesRoot_, user.identityKey_, user.dgCommit_, user.passport_);
+    await registration2.registerNew(user.certificatesRoot_, user.identityKey_, user.dgCommit_, user.passport_, {
+      gasLimit: 5000000,
+    });
   }
 
   for (const user of Object.values(registrationData.users)) {
-    await registration2.registerDep(user.certificatesRoot_, user.identityKey_, user.dgCommit_, {
-      dataType: user.passport_.dataType,
-      zkType: user.passport_.zkType,
-      signature: user.passport_.signature,
-      publicKey: user.passport_.publicKey,
-      passportHash: ethers.ZeroHash,
-    });
+    await registration2.registerDep(
+      user.certificatesRoot_,
+      user.identityKey_,
+      user.dgCommit_,
+      {
+        dataType: user.passport_.dataType,
+        zkType: user.passport_.zkType,
+        signature: user.passport_.signature,
+        publicKey: user.passport_.publicKey,
+        passportHash: ethers.ZeroHash,
+      },
+      { gasLimit: 5000000 },
+    );
   }
 
   const registrationSimple = await deployer.deployed(RegistrationSimpleMock__factory, "RegistrationSimple Proxy");
@@ -130,7 +138,7 @@ export = async (deployer: Deployer) => {
   for (const data of simpleRegistrationData) {
     const signature = await getSimpleSignature(signer as any, data.passport_, registrationSimple);
 
-    await registrationSimple.registerSimpleMock(data.identityKey_, data.passport_, signature);
+    await registrationSimple.registerSimpleMock(data.identityKey_, data.passport_, signature, { gasLimit: 5000000 });
   }
 };
 

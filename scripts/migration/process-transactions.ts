@@ -26,6 +26,8 @@ export async function processSimpleRegistration(): Promise<RegistrationData_R3[]
 
   let txData = await getRegistrationTransactionInfos(REGISTRATION_SIMPLE_ADDRESS);
 
+  txData.sort((a, b) => a.blockNumber - b.blockNumber);
+
   let users: RegistrationData_R3[] = [];
 
   txData.forEach((tx) => {
@@ -54,6 +56,8 @@ export async function processRegistration(): Promise<{
   const registrationInterface = Registration__factory.createInterface();
 
   let txData = await getRegistrationTransactionInfos(REGISTRATION_ADDRESS);
+
+  txData.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let users: Record<string, RegistrationData_R1> = {};
   let certificates: CertificateDataWithBlockNumber[] = [];
@@ -97,6 +101,8 @@ export async function processRegistration2(): Promise<{
 
   let txData = await getRegistrationTransactionInfos(REGISTRATION_2_ADDRESS);
 
+  txData.sort((a, b) => a.blockNumber - b.blockNumber);
+
   let users: Record<string, RegistrationData_R2> = {};
   let certificates: CertificateDataWithBlockNumber[] = [];
 
@@ -104,7 +110,7 @@ export async function processRegistration2(): Promise<{
     try {
       let data: RegistrationData_R2 = parseResultR2(registrationInterface.decodeFunctionData("register", tx.data));
 
-      users[data.passport_.publicKey] = data;
+      users[data.passport_.passportHash] = data;
     } catch (e) {}
 
     try {
@@ -112,9 +118,9 @@ export async function processRegistration2(): Promise<{
         registrationInterface.decodeFunctionData("reissueIdentity", tx.data),
       );
 
-      assert(users[data.passport_.publicKey], "User not found");
+      assert(users[data.passport_.passportHash], "User not found");
 
-      users[data.passport_.publicKey] = data;
+      users[data.passport_.passportHash] = data;
     } catch {}
 
     try {

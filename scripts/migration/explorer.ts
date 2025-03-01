@@ -16,7 +16,7 @@ export async function getRegistrationTransactionInfos(address: string): Promise<
           };
         });
 
-        resolve(userTransactions);
+        resolve(userTransactions.reverse());
       })
       .catch(reject);
   });
