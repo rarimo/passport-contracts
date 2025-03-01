@@ -78,7 +78,7 @@ function printStats(
 export = async (deployer: Deployer) => {
   const signer = await deployer.getSigner();
 
-  const simpleRegistrationData: RegistrationData_R3[] = await processSimpleRegistration();
+  const simpleRegistrationData: RegistrationData_R3[] = (await processSimpleRegistration()).users;
   const registrationData: {
     users: Record<string, RegistrationData_R1>;
     certificates: CertificateDataWithBlockNumber[];
@@ -103,6 +103,14 @@ export = async (deployer: Deployer) => {
     .concat(registrationData2.certificates)
     .sort((a, b) => a.blockNumber - b.blockNumber)
     .map((certificate) => certificate.data);
+
+  printStats(simpleRegistrationData, registrationData, registrationData2);
+
+  for (const user of Object.values(registrationData2.users)) {
+    if (registrationData.users[user.passport_.publicKey]) {
+      delete registrationData.users[user.passport_.publicKey];
+    }
+  }
 
   const registration2Address = await registration2.getAddress();
   for (const certificate of allCertificates) {

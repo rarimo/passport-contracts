@@ -1,3 +1,7 @@
+import { ethers } from "ethers";
+
+import assert from "node:assert";
+
 import { Registration2__factory, Registration__factory, RegistrationSimple__factory } from "@ethers-v6";
 
 import {
@@ -18,10 +22,11 @@ import {
   RegistrationData_R2,
   RegistrationData_R3,
 } from "@/scripts/migration/dto";
-import assert from "node:assert";
-import { ethers } from "ethers";
 
-export async function processSimpleRegistration(): Promise<RegistrationData_R3[]> {
+export async function processSimpleRegistration(): Promise<{
+  users: RegistrationData_R3[];
+  allData: Record<string, { count: number; blockNumbers: number[] }>;
+}> {
   const registrationInterface = RegistrationSimple__factory.createInterface();
 
   let txData = await getRegistrationTransactionInfos(REGISTRATION_SIMPLE_ADDRESS);
@@ -29,18 +34,35 @@ export async function processSimpleRegistration(): Promise<RegistrationData_R3[]
   txData.sort((a, b) => a.blockNumber - b.blockNumber);
 
   let users: RegistrationData_R3[] = [];
+  let allData: Record<string, { count: number; blockNumbers: number[] }> = {};
 
   txData.forEach((tx) => {
     try {
       let data = parseResultR3(registrationInterface.decodeFunctionData("registerSimple", tx.data));
 
       users.push(data);
+
+      if (!allData["registerSimple"]) {
+        allData["registerSimple"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["registerSimple"].count++;
+      allData["registerSimple"].blockNumbers.push(tx.blockNumber);
     } catch {
       tryParseUpdateSignerList(registrationInterface, tx.data);
+
+      const selector = tx.data.slice(2, 10);
+
+      if (!allData[selector]) {
+        allData[selector] = { count: 0, blockNumbers: [] };
+      }
+
+      allData[selector].count++;
+      allData[selector].blockNumbers.push(tx.blockNumber);
     }
   });
 
-  return users;
+  return { users, allData };
 }
 
 function tryParseUpdateSignerList(registrationInterface: RegistrationSimpleInterface, data: string) {
@@ -52,6 +74,7 @@ function tryParseUpdateSignerList(registrationInterface: RegistrationSimpleInter
 export async function processRegistration(): Promise<{
   users: Record<string, RegistrationData_R1>;
   certificates: CertificateDataWithBlockNumber[];
+  allData: Record<string, { count: number; blockNumbers: number[] }>;
 }> {
   const registrationInterface = Registration__factory.createInterface();
 
@@ -61,12 +84,35 @@ export async function processRegistration(): Promise<{
 
   let users: Record<string, RegistrationData_R1> = {};
   let certificates: CertificateDataWithBlockNumber[] = [];
+  let allData: Record<string, { count: number; blockNumbers: number[] }> = {};
 
-  txData.forEach((tx) => {
+  for (const tx of txData) {
     try {
       let data: RegistrationData_R1 = parseResultR1(registrationInterface.decodeFunctionData("register", tx.data));
 
       users[ethers.hexlify(data.passport_.publicKey)] = data;
+
+      if (!allData["register"]) {
+        allData["register"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["register"].count++;
+      allData["register"].blockNumbers.push(tx.blockNumber);
+
+      continue;
+    } catch {}
+
+    try {
+      registrationInterface.decodeFunctionData("revoke", tx.data);
+
+      if (!allData["revoke"]) {
+        allData["revoke"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["revoke"].count++;
+      allData["revoke"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch {}
 
     try {
@@ -75,27 +121,97 @@ export async function processRegistration(): Promise<{
       assert(users[ethers.hexlify(data.passport_.publicKey)], "User not found");
 
       users[ethers.hexlify(data.passport_.publicKey)] = data;
+
+      if (!allData["reissueIdentity"]) {
+        allData["reissueIdentity"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["reissueIdentity"].count++;
+      allData["reissueIdentity"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch {}
 
     try {
       registrationInterface.decodeFunctionData("revokeCertificate", tx.data);
 
       console.log(`Found certificate revocation: ${tx.blockNumber}`);
+
+      if (!allData["revokeCertificate"]) {
+        allData["revokeCertificate"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["revokeCertificate"].count++;
+      allData["revokeCertificate"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch {}
 
     try {
       let data = parseCertificate(registrationInterface.decodeFunctionData("registerCertificate", tx.data));
 
       certificates.push({ data, blockNumber: tx.blockNumber });
-    } catch {}
-  });
 
-  return { users, certificates };
+      if (!allData["registerCertificate"]) {
+        allData["registerCertificate"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["registerCertificate"].count++;
+      allData["registerCertificate"].blockNumbers.push(tx.blockNumber);
+    } catch {
+      const selector = tx.data.slice(2, 10);
+
+      if (selector === "f4e78604") {
+        if (!allData["updateDep"]) {
+          allData["updateDep"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["updateDep"].count++;
+        allData["updateDep"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      // upgradeToWithProof
+      if (selector === "628543ab") {
+        if (!allData["upgradeToWithProof"]) {
+          allData["upgradeToWithProof"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["upgradeToWithProof"].count++;
+        allData["upgradeToWithProof"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      // upgradeTo
+      if (selector === "3659cfe6") {
+        if (!allData["upgradeTo"]) {
+          allData["upgradeTo"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["upgradeTo"].count++;
+        allData["upgradeTo"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      if (!allData[selector]) {
+        allData[selector] = { count: 0, blockNumbers: [] };
+      }
+
+      allData[selector].count++;
+      allData[selector].blockNumbers.push(tx.blockNumber);
+    }
+  }
+
+  return { users, certificates, allData };
 }
 
 export async function processRegistration2(): Promise<{
   users: Record<string, RegistrationData_R2>;
   certificates: CertificateDataWithBlockNumber[];
+  allData: Record<string, { count: number; blockNumbers: number[] }>;
 }> {
   const registrationInterface = Registration2__factory.createInterface();
 
@@ -105,36 +221,130 @@ export async function processRegistration2(): Promise<{
 
   let users: Record<string, RegistrationData_R2> = {};
   let certificates: CertificateDataWithBlockNumber[] = [];
+  let allData: Record<string, { count: number; blockNumbers: number[] }> = {};
 
-  txData.forEach((tx) => {
+  for (const tx of txData) {
     try {
       let data: RegistrationData_R2 = parseResultR2(registrationInterface.decodeFunctionData("register", tx.data));
 
-      users[data.passport_.passportHash] = data;
+      if (users[String(data.passport_.passportHash)]) {
+        console.log("User already exists", tx.blockNumber);
+      }
+
+      users[String(data.passport_.passportHash)] = data;
+
+      if (!allData["register"]) {
+        allData["register"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["register"].count++;
+      allData["register"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch (e) {}
 
     try {
-      let data: RegistrationData_R2 = parseResultR2(
-        registrationInterface.decodeFunctionData("reissueIdentity", tx.data),
-      );
+      registrationInterface.decodeFunctionData("revoke", tx.data);
 
-      assert(users[data.passport_.passportHash], "User not found");
+      if (!allData["revoke"]) {
+        allData["revoke"] = { count: 0, blockNumbers: [] };
+      }
 
-      users[data.passport_.passportHash] = data;
+      allData["revoke"].count++;
+      allData["revoke"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch {}
 
     try {
       registrationInterface.decodeFunctionData("revokeCertificate", tx.data);
 
       console.log(`Found certificate revocation: ${tx.blockNumber}`);
+
+      if (!allData["revokeCertificate"]) {
+        allData["revokeCertificate"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["revokeCertificate"].count++;
+      allData["revokeCertificate"].blockNumbers.push(tx.blockNumber);
+
+      continue;
     } catch {}
 
     try {
       let data = parseCertificate(registrationInterface.decodeFunctionData("registerCertificate", tx.data));
 
       certificates.push({ data, blockNumber: tx.blockNumber });
-    } catch {}
-  });
 
-  return { users, certificates };
+      if (!allData["registerCertificate"]) {
+        allData["registerCertificate"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["registerCertificate"].count++;
+      allData["registerCertificate"].blockNumbers.push(tx.blockNumber);
+
+      continue;
+    } catch {}
+
+    try {
+      let data: RegistrationData_R2 = parseResultR2(
+        registrationInterface.decodeFunctionData("reissueIdentity", tx.data),
+      );
+
+      users[data.passport_.passportHash] = data;
+
+      if (!allData["reissueIdentity"]) {
+        allData["reissueIdentity"] = { count: 0, blockNumbers: [] };
+      }
+
+      allData["reissueIdentity"].count++;
+      allData["reissueIdentity"].blockNumbers.push(tx.blockNumber);
+    } catch {
+      const selector = tx.data.slice(2, 10);
+
+      if (selector === "f4e78604") {
+        if (!allData["updateDep"]) {
+          allData["updateDep"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["updateDep"].count++;
+        allData["updateDep"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      // upgradeToWithProof
+      if (selector === "628543ab") {
+        if (!allData["upgradeToWithProof"]) {
+          allData["upgradeToWithProof"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["upgradeToWithProof"].count++;
+        allData["upgradeToWithProof"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      // upgradeTo
+      if (selector === "3659cfe6") {
+        if (!allData["upgradeTo"]) {
+          allData["upgradeTo"] = { count: 0, blockNumbers: [] };
+        }
+
+        allData["upgradeTo"].count++;
+        allData["upgradeTo"].blockNumbers.push(tx.blockNumber);
+
+        continue;
+      }
+
+      if (!allData[selector]) {
+        allData[selector] = { count: 0, blockNumbers: [] };
+      }
+
+      allData[selector].count++;
+      allData[selector].blockNumbers.push(tx.blockNumber);
+    }
+  }
+
+  return { users, certificates, allData };
 }
