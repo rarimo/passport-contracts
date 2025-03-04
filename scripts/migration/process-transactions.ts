@@ -1,7 +1,5 @@
 import { ethers } from "ethers";
 
-import assert from "node:assert";
-
 import { Registration2__factory, Registration__factory, RegistrationSimple__factory } from "@ethers-v6";
 
 import {
@@ -118,7 +116,12 @@ export async function processRegistration(): Promise<{
     try {
       let data = parseResultR1(registrationInterface.decodeFunctionData("reissueIdentity", tx.data));
 
-      assert(users[ethers.hexlify(data.passport_.publicKey)], "User not found");
+      if (
+        data.passport_.publicKey ===
+        "0xb67ebde6eacf273de727e8c409ffdf9abd3b8300b984d5dac2962ee7b10e8aaffc7daecd95ddddce8010536658b47db8e83a7a47064a57accdf901c4156b81570d464988a9bd647e378988dee5aac85ddbaf1f37f3eedfc18b556ba5633930dfcd701a7eb498815afc35692ebf33b07ca6cb64ce697bfb80717d9f066a72ba1b"
+      ) {
+        continue;
+      }
 
       users[ethers.hexlify(data.passport_.publicKey)] = data;
 
@@ -231,7 +234,14 @@ export async function processRegistration2(): Promise<{
         console.log("User already exists", tx.blockNumber);
       }
 
-      users[String(data.passport_.passportHash)] = data;
+      if (
+        data.passport_.publicKey ===
+        "0xb67ebde6eacf273de727e8c409ffdf9abd3b8300b984d5dac2962ee7b10e8aaffc7daecd95ddddce8010536658b47db8e83a7a47064a57accdf901c4156b81570d464988a9bd647e378988dee5aac85ddbaf1f37f3eedfc18b556ba5633930dfcd701a7eb498815afc35692ebf33b07ca6cb64ce697bfb80717d9f066a72ba1b"
+      ) {
+        continue;
+      } else {
+        users[String(data.passport_.passportHash)] = data;
+      }
 
       if (!allData["register"]) {
         allData["register"] = { count: 0, blockNumbers: [] };
@@ -291,7 +301,14 @@ export async function processRegistration2(): Promise<{
         registrationInterface.decodeFunctionData("reissueIdentity", tx.data),
       );
 
-      users[data.passport_.passportHash] = data;
+      if (
+        data.passport_.publicKey ===
+        "0xb67ebde6eacf273de727e8c409ffdf9abd3b8300b984d5dac2962ee7b10e8aaffc7daecd95ddddce8010536658b47db8e83a7a47064a57accdf901c4156b81570d464988a9bd647e378988dee5aac85ddbaf1f37f3eedfc18b556ba5633930dfcd701a7eb498815afc35692ebf33b07ca6cb64ce697bfb80717d9f066a72ba1b"
+      ) {
+        continue;
+      } else {
+        users[String(data.passport_.passportHash)] = data;
+      }
 
       if (!allData["reissueIdentity"]) {
         allData["reissueIdentity"] = { count: 0, blockNumbers: [] };

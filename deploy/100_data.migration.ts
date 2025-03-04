@@ -110,7 +110,13 @@ export = async (deployer: Deployer) => {
 
   for (const user of Object.values(registrationData2.users)) {
     if (registrationData.users[user.passport_.publicKey]) {
-      delete registrationData.users[user.passport_.publicKey];
+      if (
+        registrationData.users[
+          user.passport_.publicKey === "0x" ? user.passport_.passportHash : user.passport_.publicKey
+        ]
+      ) {
+        delete registrationData.users[user.passport_.passportHash];
+      }
     }
   }
 
@@ -144,6 +150,8 @@ export = async (deployer: Deployer) => {
   }
 
   const registrationSimple = await deployer.deployed(RegistrationSimpleMock__factory, "RegistrationSimple Proxy");
+
+  console.log(await registrationSimple.getSigners());
 
   for (const data of simpleRegistrationData) {
     const signature = await getSimpleSignature(signer as any, data.passport_, registrationSimple);
