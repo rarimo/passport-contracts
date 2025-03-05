@@ -86,6 +86,7 @@ const config: HardhatUserConfig = {
       url: "https://l2.rarimo.com",
       accounts: privateKey(),
       gasMultiplier: 1.2,
+      gasPrice: 300000000,
     },
   },
   solidity: {

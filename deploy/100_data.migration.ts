@@ -96,19 +96,14 @@ export = async (deployer: Deployer) => {
     .sort((a, b) => a.blockNumber - b.blockNumber)
     .map((certificate) => certificate.data);
 
-  printStats(simpleRegistrationData, registrationData, registrationData2);
-
   for (const user of Object.values(registrationData2.users)) {
     if (registrationData.users[user.passport_.publicKey]) {
-      if (
-        registrationData.users[
-          user.passport_.publicKey === "0x" ? user.passport_.passportHash : user.passport_.publicKey
-        ]
-      ) {
-        delete registrationData.users[user.passport_.passportHash];
-      }
+      console.log(`Duplicate user. ${user.passport_.publicKey}`);
+      delete registrationData.users[user.passport_.publicKey];
     }
   }
+
+  printStats(simpleRegistrationData, registrationData, registrationData2);
 
   const registration2Address = await registration2.getAddress();
   for (const certificate of allCertificates) {
