@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
-import {PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
-
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/SparseMerkleTree.sol";
 
-import {TSSUpgradeable} from "./TSSUpgradeable.sol";
+import {IEvidenceRegistry} from "@rarimo/evidence-registry/interfaces/IEvidenceRegistry.sol";
 
-contract PoseidonSMT is Initializable, TSSUpgradeable {
+import {StateKeeper} from "./StateKeeper.sol";
+
+import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
+
+contract PoseidonSMT is Initializable, UUPSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
     uint256 public constant ROOT_VALIDITY = 1 hours;
 
     address public stateKeeper;
+    address public evidenceRegistry;
 
     mapping(bytes32 => uint256) internal _roots;
 
@@ -30,7 +35,7 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     modifier withRootUpdate() {
         _saveRoot();
         _;
-        _notifyRoot();
+        _commitRoot();
     }
 
     constructor() {
@@ -38,17 +43,15 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
     }
 
     function __PoseidonSMT_init(
-        address signer_,
-        string calldata chainName_,
         address stateKeeper_,
+        address evidenceRegistry_,
         uint256 treeHeight_
     ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
-
         _bytes32Tree.initialize(uint32(treeHeight_));
         _bytes32Tree.setHashers(_hash2, _hash3);
 
         stateKeeper = stateKeeper_;
+        evidenceRegistry = evidenceRegistry_;
     }
 
     /**
@@ -123,8 +126,12 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
 
-    function _notifyRoot() internal {
-        emit RootUpdated(_bytes32Tree.getRoot());
+    function _commitRoot() internal {
+        bytes32 root_ = _bytes32Tree.getRoot();
+
+        IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
+
+        emit RootUpdated(root_);
     }
 
     function _onlyStateKeeper() internal view {
@@ -146,5 +153,17 @@ contract PoseidonSMT is Initializable, TSSUpgradeable {
                     [uint256(element1_), uint256(element2_), uint256(element3_)]
                 )
             );
+    }
+
+    function _onlyOwner() internal view {
+        require(StateKeeper(stateKeeper).isOwner(msg.sender), "PoseidonSMT: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
-import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 
-contract RegistrationSimple is Initializable, TSSUpgradeable {
+contract RegistrationSimple is Initializable, UUPSUpgradeable {
     using ECDSA for bytes32;
-    using VerifierHelper for address;
+    using Groth16VerifierHelper for address;
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -51,13 +53,9 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
     }
 
     function __RegistrationSimple_init(
-        address tssSigner_,
-        string calldata chainName_,
         address stateKeeper_,
         address[] calldata signers_
     ) external initializer {
-        __TSSSigner_init(tssSigner_, chainName_);
-
         stateKeeper = StateKeeper(stateKeeper_);
 
         _signers.add(signers_);
@@ -67,12 +65,15 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         uint256 identityKey_,
         Passport memory passport_,
         bytes memory signature_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external {
         require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
 
         bytes32 signedData_ = _buildSignedData(passport_);
-        address dataSigner_ = ECDSA.recover(signedData_.toEthSignedMessageHash(), signature_);
+        address dataSigner_ = ECDSA.recover(
+            MessageHashUtils.toEthSignedMessageHash(signedData_),
+            signature_
+        );
 
         _requireSigner(dataSigner_);
 
@@ -94,20 +95,8 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         );
     }
 
-    function updateSignerList(bytes calldata data_, bytes calldata proof_) external {
-        uint256 nonce_ = _getAndIncrementNonce(uint8(MethodId.UpdateSignerList));
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(
-                address(this),
-                uint8(MethodId.UpdateSignerList),
-                data_,
-                chainName,
-                nonce_
-            )
-        );
-
-        _checkMerkleSignature(leaf_, proof_);
-        _useNonce(uint8(MethodId.UpdateSignerList), nonce_);
+    function updateSignerList(bytes calldata data_) external {
+        _onlyOwner();
 
         (address[] memory signers_, uint8[] memory actions_) = abi.decode(
             data_,
@@ -156,7 +145,7 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         uint256 dg1Hash_,
         uint256 dg1Commitment_,
         uint256 pkIdentityHash_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
         uint256[] memory pubSignals_ = new uint256[](_PROOF_SIGNALS_COUNT);
 
@@ -165,12 +154,24 @@ contract RegistrationSimple is Initializable, TSSUpgradeable {
         pubSignals_[2] = pkIdentityHash_; // output
 
         require(
-            verifier_.verifyProof(pubSignals_, zkPoints_),
+            verifier_.verifyProof(zkPoints_, pubSignals_),
             "RegistrationSimple: invalid zk proof"
         );
     }
 
     function _requireSigner(address account_) private view {
         require(_signers.contains(account_), "RegistrationSimple: caller is not a signer");
+    }
+
+    function _onlyOwner() internal view {
+        require(stateKeeper.isOwner(msg.sender), "Registration: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

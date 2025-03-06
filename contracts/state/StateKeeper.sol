@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
-import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit1L, PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
 
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
+import {AMultiOwnable} from "@solarity/solidity-lib/access/AMultiOwnable.sol";
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
-import {TSSUpgradeable} from "./TSSUpgradeable.sol";
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract StateKeeper is Initializable, TSSUpgradeable {
+contract StateKeeper is Initializable, AMultiOwnable, UUPSUpgradeable {
+    using TypeCaster for address;
     using DynamicSet for DynamicSet.StringSet;
 
     string public constant ICAO_PREFIX = "Rarimo CSCA root";
@@ -54,8 +59,6 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     mapping(string => address) internal _registrations;
     mapping(address => bool) internal _registrationExists;
 
-    address public owner;
-
     event CertificateAdded(bytes32 certificateKey, uint256 expirationTimestamp);
     event CertificateRemoved(bytes32 certificateKey);
     event BondAdded(bytes32 passportKey, bytes32 identityKey);
@@ -72,28 +75,19 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     }
 
     function __StateKeeper_init(
-        address signer_,
-        string calldata chainName_,
+        address initialOwner_,
         address registrationSmt_,
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
+        __AMultiOwnable_init();
 
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);
 
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
-    }
 
-    function __StateKeeper_upgrade_1(address owner_) external reinitializer(2) {
-        owner = owner_;
-    }
-
-    function transferOwnership(address newOwner_) external {
-        _onlyOwner();
-
-        owner = newOwner_;
+        addOwners(initialOwner_.asSingletonArray());
     }
 
     /**
@@ -256,23 +250,8 @@ contract StateKeeper is Initializable, TSSUpgradeable {
     /**
      * @notice Change ICAO tree Merkle root to a new one via Rarimo TSS.
      * @param newRoot_ the new ICAO root
-     * @param timestamp the "nonce"
-     * @param proof_ the Rarimo TSS Merkle proof
      */
-    function changeICAOMasterTreeRoot(
-        bytes32 newRoot_,
-        uint256 timestamp,
-        bytes calldata proof_
-    ) external virtual {
-        if (proof_.length == 0) {
-            _onlyOwner();
-        } else {
-            bytes32 leaf_ = keccak256(abi.encodePacked(ICAO_PREFIX, newRoot_, timestamp));
-
-            _useNonce(uint8(MethodId.ChangeICAOMasterTreeRoot), timestamp);
-            _checkMerkleSignature(leaf_, proof_);
-        }
-
+    function changeICAOMasterTreeRoot(bytes32 newRoot_) external virtual onlyOwner {
         icaoMasterTreeMerkleRoot = newRoot_;
     }
 
@@ -280,25 +259,11 @@ contract StateKeeper is Initializable, TSSUpgradeable {
      * @notice Add or Remove registrations via Rarimo TSS
      * @param methodId_ the method id (AddRegistrations or RemoveRegistrations)
      * @param data_ An ABI encoded arrays of string keys addresses to add or remove
-     * @param proof_ the Rarimo TSS signature with MTP
      */
     function updateRegistrationSet(
         MethodId methodId_,
-        bytes calldata data_,
-        bytes calldata proof_
-    ) external virtual {
-        if (proof_.length == 0) {
-            _onlyOwner();
-        } else {
-            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-            bytes32 leaf_ = keccak256(
-                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-            );
-
-            _checkMerkleSignature(leaf_, proof_);
-            _useNonce(uint8(methodId_), nonce_);
-        }
-
+        bytes calldata data_
+    ) external virtual onlyOwner {
         if (methodId_ == MethodId.AddRegistrations) {
             (string[] memory keys_, address[] memory values_) = abi.decode(
                 data_,
@@ -386,15 +351,14 @@ contract StateKeeper is Initializable, TSSUpgradeable {
         return _registrationExists[registration_];
     }
 
-    function _authorizeUpgrade(address) internal view virtual override {
-        _onlyOwner();
-    }
-
     function _onlyRegistration() internal view {
         require(_registrationExists[msg.sender], "StateKeeper: not a registration");
     }
 
-    function _onlyOwner() internal view {
-        require(msg.sender == owner, "StateKeeper: not an owner");
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

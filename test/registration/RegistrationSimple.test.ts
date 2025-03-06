@@ -1,6 +1,5 @@
 import { expect } from "chai";
 import { zkit, ethers } from "hardhat";
-import { HDNodeWallet } from "ethers";
 
 import { Groth16Proof } from "@solarity/zkit";
 
@@ -8,8 +7,8 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { createDG1Data } from "@/test/helpers/dg1";
 
-import { getPoseidon, Reverter, TSSMerkleTree, TSSSigner } from "@/test/helpers";
-import { RegistrationSimpleMethodId, RegistrationSimpleOperationId } from "@/test/helpers/constants";
+import { getPoseidon, Reverter } from "@/test/helpers";
+import { RegistrationSimpleOperationId } from "@/test/helpers/constants";
 
 import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, StateKeeperMock } from "@ethers-v6";
 
@@ -21,7 +20,6 @@ import {
 import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
 
 const treeSize = 80;
-const chainName = "Tests";
 
 const registrationName = "Registration";
 
@@ -30,12 +28,8 @@ const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1
 describe("RegistrationSimple", () => {
   const reverter = new Reverter();
 
-  let signHelper: TSSSigner;
-  let merkleTree: TSSMerkleTree;
-
   let OWNER: SignerWithAddress;
   let FIRST: SignerWithAddress;
-  let SIGNER: HDNodeWallet;
 
   let registerLight: RegisterIdentityLight256;
 
@@ -51,7 +45,6 @@ describe("RegistrationSimple", () => {
     registerLight = await zkit.getCircuit("RegisterIdentityLight256");
 
     [OWNER, FIRST] = await ethers.getSigners();
-    SIGNER = ethers.Wallet.createRandom();
 
     const StateKeeper = await ethers.getContractFactory("StateKeeperMock", {
       libraries: {
@@ -89,23 +82,40 @@ describe("RegistrationSimple", () => {
     proxy = await Proxy.deploy(await registrationSimple.getAddress(), "0x");
     registrationSimple = await ethers.getContractAt("RegistrationSimple", await proxy.getAddress());
 
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+    const evidenceDB = await ethers.deployContract("EvidenceDB", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
+    const evidenceRegistry = await ethers.deployContract("EvidenceRegistry", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+      },
+    });
+
+    await evidenceDB.__EvidenceDB_init(await evidenceRegistry.getAddress(), 80);
+    await evidenceRegistry.__EvidenceRegistry_init(await evidenceDB.getAddress());
+
+    await registrationSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
+    await certificatesSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
 
     await stateKeeper.__StateKeeper_init(
-      SIGNER.address,
-      chainName,
+      OWNER.address,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
 
-    await registrationSimple.__RegistrationSimple_init(SIGNER.address, chainName, await stateKeeper.getAddress(), [
-      OWNER.address,
-    ]);
-
-    signHelper = new TSSSigner(SIGNER);
-    merkleTree = new TSSMerkleTree(signHelper);
+    await registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]);
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registrationSimple.getAddress()]);
 
@@ -213,15 +223,16 @@ describe("RegistrationSimple", () => {
 
   describe("$Update Signers list", () => {
     it("should successfully add a new signer and remove old one", async () => {
-      const operation = merkleTree.updateSignersListOperation(
-        [FIRST.address, OWNER.address],
-        [RegistrationSimpleOperationId.AddSigner, RegistrationSimpleOperationId.RemoveSigner],
-        chainName,
-        await registrationSimple.getNonce(RegistrationSimpleMethodId.UpdateSignerList),
-        await registrationSimple.getAddress(),
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(
+        ["address[]", "uint8[]"],
+        [
+          [FIRST.address, OWNER.address],
+          [RegistrationSimpleOperationId.AddSigner, RegistrationSimpleOperationId.RemoveSigner],
+        ],
       );
 
-      await expect(registrationSimple.updateSignerList(operation.data, operation.proof))
+      await expect(registrationSimple.connect(OWNER).updateSignerList(data))
         .to.emit(registrationSimple, "SignersListUpdated")
         .withArgs(
           [FIRST.address, OWNER.address],
@@ -230,41 +241,29 @@ describe("RegistrationSimple", () => {
     });
 
     it("should revert if None was provided as an operation ID", async () => {
-      const operation = merkleTree.updateSignersListOperation(
-        [FIRST.address],
-        [RegistrationSimpleOperationId.None],
-        chainName,
-        await registrationSimple.getNonce(RegistrationSimpleMethodId.UpdateSignerList),
-        await registrationSimple.getAddress(),
-      );
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(["address[]", "uint8[]"], [[FIRST.address], [RegistrationSimpleOperationId.None]]);
 
-      await expect(registrationSimple.updateSignerList(operation.data, operation.proof)).to.be.revertedWith(
+      await expect(registrationSimple.updateSignerList(data)).to.be.revertedWith(
         "RegistrationSimple: invalid operationId",
       );
     });
 
     it("should revert if non-exising operation ID was provided", async () => {
-      const operation = merkleTree.updateSignersListOperation(
-        [FIRST.address],
-        [12 as RegistrationSimpleOperationId],
-        chainName,
-        await registrationSimple.getNonce(RegistrationSimpleMethodId.UpdateSignerList),
-        await registrationSimple.getAddress(),
-      );
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(["address[]", "uint8[]"], [[FIRST.address], [12 as RegistrationSimpleOperationId]]);
 
-      await expect(registrationSimple.updateSignerList(operation.data, operation.proof)).to.be.reverted;
+      await expect(registrationSimple.updateSignerList(data)).to.be.reverted;
     });
 
     it("should revert if different length of signers and actions was provided", async () => {
-      const operation = merkleTree.updateSignersListOperation(
-        [FIRST.address],
-        [RegistrationSimpleOperationId.AddSigner, RegistrationSimpleOperationId.RemoveSigner],
-        chainName,
-        await registrationSimple.getNonce(RegistrationSimpleMethodId.UpdateSignerList),
-        await registrationSimple.getAddress(),
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(
+        ["address[]", "uint8[]"],
+        [[FIRST.address], [RegistrationSimpleOperationId.AddSigner, RegistrationSimpleOperationId.RemoveSigner]],
       );
 
-      await expect(registrationSimple.updateSignerList(operation.data, operation.proof)).to.be.revertedWith(
+      await expect(registrationSimple.updateSignerList(data)).to.be.revertedWith(
         "RegistrationSimple: invalid input length",
       );
     });
@@ -273,10 +272,8 @@ describe("RegistrationSimple", () => {
   describe("$Contract Management", () => {
     it("should revert if trying to initialize the contract twice", async () => {
       await expect(
-        registrationSimple.__RegistrationSimple_init(SIGNER.address, chainName, await stateKeeper.getAddress(), [
-          OWNER.address,
-        ]),
-      ).to.be.revertedWith("Initializable: contract is already initialized");
+        registrationSimple.__RegistrationSimple_init(await stateKeeper.getAddress(), [OWNER.address]),
+      ).to.be.revertedWithCustomError(registrationSimple, "InvalidInitialization");
     });
 
     it("should retrieve all signers", async () => {

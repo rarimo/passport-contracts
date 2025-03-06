@@ -15,9 +15,7 @@ import {
 } from "@/scripts/utils/types";
 
 import {
-  Registration,
   StateKeeperMock,
-  RegistrationMock,
   PUniversal2048Verifier,
   PUniversal4096Verifier,
   CRSADispatcher,
@@ -25,17 +23,18 @@ import {
   PRSASHADispatcher,
   PECDSASHA1Dispatcher,
   PoseidonSMTMock,
+  Registration2Mock,
+  Registration2,
 } from "@ethers-v6";
 
-import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
+import { Groth16VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
-import { TSSMerkleTree, TSSSigner } from "@/test/helpers";
+import { MerkleTreeHelper } from "@/test/helpers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
 import {
   identityKey,
   newIdentityKey,
   RegistrationMethodId,
-  TSSUpgradeableId,
   ECDSAPassportNewIdentityProof,
   ECDSAPassportIdentitySignature1,
   ECDSAPassportIdentitySignature2,
@@ -49,17 +48,15 @@ import {
 } from "@/test/helpers/constants";
 
 const treeSize = 80;
-const chainName = "Tests";
 
 const registrationName = "Initial";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
-describe.skip("Registration", () => {
+describe("Registration2", () => {
   const reverter = new Reverter();
 
-  let signHelper: TSSSigner;
-  let merkleTree: TSSMerkleTree;
+  let merkleTree: MerkleTreeHelper;
 
   let OWNER: SignerWithAddress;
   let SECOND: SignerWithAddress;
@@ -75,7 +72,7 @@ describe.skip("Registration", () => {
 
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
-  let registration: RegistrationMock;
+  let registration: Registration2Mock;
   let stateKeeper: StateKeeperMock;
 
   const deployPUniversalVerifiers = async () => {
@@ -146,16 +143,10 @@ describe.skip("Registration", () => {
     dispatcherType: string,
     dispatcher: string,
   ) => {
-    const operation = merkleTree.addDependencyOperation(
-      operationType,
-      dispatcherType,
-      dispatcher,
-      chainName,
-      await registration.getNonce(operationType),
-      await registration.getAddress(),
-    );
+    const encoder = new ethers.AbiCoder();
+    const data = encoder.encode(["bytes32", "address"], [dispatcherType, dispatcher]);
 
-    return registration.updateDependency(operationType, operation.data, operation.proof);
+    return registration.updateDependency(operationType, data);
   };
 
   const removeDependency = async (
@@ -165,15 +156,10 @@ describe.skip("Registration", () => {
       | RegistrationMethodId.RemovePassportVerifier,
     dispatcherType: string,
   ) => {
-    const operation = merkleTree.removeDependencyOperation(
-      operationType,
-      dispatcherType,
-      chainName,
-      await registration.getNonce(operationType),
-      await registration.getAddress(),
-    );
+    const encoder = new ethers.AbiCoder();
+    const data = encoder.encode(["bytes32"], [dispatcherType]);
 
-    return registration.updateDependency(operationType, operation.data, operation.proof);
+    return registration.updateDependency(operationType, data);
   };
 
   before("setup", async () => {
@@ -193,12 +179,12 @@ describe.skip("Registration", () => {
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
-    const Registration = await ethers.getContractFactory("RegistrationMock");
+    const Registration = await ethers.getContractFactory("Registration2");
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
     registrationSmt = await PoseidonSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
-    registration = await Registration.deploy();
+    registration = (await Registration.deploy()) as any;
     stateKeeper = await StateKeeper.deploy();
 
     await deployPUniversalVerifiers();
@@ -217,23 +203,44 @@ describe.skip("Registration", () => {
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
 
     proxy = await Proxy.deploy(await registration.getAddress(), "0x");
-    registration = registration.attach(await proxy.getAddress()) as RegistrationMock;
+    registration = registration.attach(await proxy.getAddress()) as Registration2Mock;
 
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+    const evidenceDB = await ethers.deployContract("EvidenceDB", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
+    const evidenceRegistry = await ethers.deployContract("EvidenceRegistry", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+      },
+    });
+
+    await evidenceDB.__EvidenceDB_init(await evidenceRegistry.getAddress(), 80);
+    await evidenceRegistry.__EvidenceRegistry_init(await evidenceDB.getAddress());
+
+    await registrationSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
+    await certificatesSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
 
     await stateKeeper.__StateKeeper_init(
-      SIGNER.address,
-      chainName,
+      OWNER.address,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
 
-    await registration.__Registration_init(SIGNER.address, chainName, await stateKeeper.getAddress());
+    await registration.__Registration_init(await stateKeeper.getAddress());
 
-    signHelper = new TSSSigner(SIGNER);
-    merkleTree = new TSSMerkleTree(signHelper);
+    merkleTree = new MerkleTreeHelper();
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registration.getAddress()]);
 
@@ -272,7 +279,7 @@ describe.skip("Registration", () => {
   describe("$init flow", () => {
     describe("#init", () => {
       it("should not initialize twice", async () => {
-        expect(registration.__Registration_init(SIGNER.address, chainName, ethers.ZeroAddress)).to.be.revertedWith(
+        expect(registration.__Registration_init(ethers.ZeroAddress)).to.be.revertedWith(
           "Initializable: contract is already initialized",
         );
       });
@@ -298,49 +305,21 @@ describe.skip("Registration", () => {
       });
 
       it("should not be called by not owner", async () => {
-        const ANOTHER_SIGNER = ethers.Wallet.createRandom();
-
-        let operation = merkleTree.addDependencyOperation(
-          RegistrationMethodId.AddPassportDispatcher,
-          ethers.hexlify(ethers.randomBytes(32)),
-          SIGNER.address,
-          chainName,
-          await registration.getNonce(RegistrationMethodId.AddPassportDispatcher),
-          await registration.getAddress(),
-          ANOTHER_SIGNER,
-        );
+        const encoder = new ethers.AbiCoder();
+        const data = encoder.encode(["bytes32", "address"], [ethers.hexlify(ethers.randomBytes(32)), SIGNER.address]);
 
         await expect(
-          registration.updateDependency(RegistrationMethodId.AddPassportDispatcher, operation.data, operation.proof),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
-
-        operation = merkleTree.removeDependencyOperation(
-          RegistrationMethodId.RemovePassportDispatcher,
-          ethers.hexlify(ethers.randomBytes(32)),
-          chainName,
-          await registration.getNonce(RegistrationMethodId.RemovePassportDispatcher),
-          await registration.getAddress(),
-          ANOTHER_SIGNER,
-        );
+          registration.connect(SECOND).updateDependency(RegistrationMethodId.AddPassportDispatcher, data),
+        ).to.be.rejectedWith("Registration: not an owner");
 
         await expect(
-          registration.updateDependency(RegistrationMethodId.RemovePassportDispatcher, operation.data, operation.proof),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+          registration.connect(SECOND).updateDependency(RegistrationMethodId.RemovePassportDispatcher, data),
+        ).to.be.rejectedWith("Registration: not an owner");
       });
     });
 
     it("should revert if invalid operation was signed", async () => {
-      const hash = merkleTree.getArbitraryDataSignHash(
-        RegistrationMethodId.None,
-        ethers.ZeroHash,
-        chainName,
-        await registration.getNonce(RegistrationMethodId.None),
-        await registration.getAddress(),
-      );
-
-      const proof = merkleTree.getProof(hash, true);
-
-      await expect(registration.updateDependency(RegistrationMethodId.None, ethers.ZeroHash, proof)).to.be.rejectedWith(
+      await expect(registration.updateDependency(RegistrationMethodId.None, ethers.ZeroHash)).to.be.rejectedWith(
         "Registration: invalid methodId",
       );
     });
@@ -358,14 +337,14 @@ describe.skip("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        const certificate: Registration.CertificateStruct = {
+        const certificate: Registration2.CertificateStruct = {
           dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
         };
 
-        const icaoMember: Registration.ICAOMemberStruct = {
+        const icaoMember: Registration2.ICAOMemberStruct = {
           signature: icaoSignature,
           publicKey: icaoPublicKey,
         };
@@ -387,14 +366,14 @@ describe.skip("Registration", () => {
         const proof = merkleTree.getRawProof(leaf, true);
         const root = merkleTree.getRoot();
 
-        const certificate: Registration.CertificateStruct = {
+        const certificate: Registration2.CertificateStruct = {
           dataType: C_RSA_SHA2_4096,
           signedAttributes: x509CertificateSA,
           keyOffset: 444,
           expirationOffset: 195,
         };
 
-        const icaoMember: Registration.ICAOMemberStruct = {
+        const icaoMember: Registration2.ICAOMemberStruct = {
           signature: icaoSignature,
           publicKey: icaoPublicKey,
         };
@@ -414,18 +393,19 @@ describe.skip("Registration", () => {
     const register = async (
       identityOverride?: string,
       signatureOverride?: string,
-      proofOverride?: VerifierHelper.ProofPointsStruct,
+      proofOverride?: Groth16VerifierHelper.ProofPointsStruct,
       certificatesRootOverride?: string,
     ) => {
       const dgCommit = ECDSAPassportIdentityPublicSignals[1];
 
       await certificatesSmt.mockRoot(ECDSAPassportIdentityPublicSignals[3]);
 
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.register(
@@ -438,11 +418,12 @@ describe.skip("Registration", () => {
     };
 
     const revoke = async (identityOverride?: string, signatureOverride?: string) => {
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportIdentitySignature2,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.revoke(identityOverride ?? identityKey, passport);
@@ -451,18 +432,19 @@ describe.skip("Registration", () => {
     const reissueIdentity = async (
       identityOverride?: string,
       signatureOverride?: string,
-      proofOverride?: VerifierHelper.ProofPointsStruct,
+      proofOverride?: Groth16VerifierHelper.ProofPointsStruct,
       certificatesRootOverride?: string,
     ) => {
       const dgCommit = ECDSAPassportNewIdentityPublicSignals[1];
 
       await certificatesSmt.mockRoot(ECDSAPassportNewIdentityPublicSignals[3]);
 
-      const passport: Registration.PassportStruct = {
+      const passport: Registration2.PassportStruct = {
         dataType: P_ECDSA_SHA1_2704,
         zkType: Z_UNIVERSAL_4096,
         signature: signatureOverride ?? ECDSAPassportNewIdentitySignature1,
         publicKey: ECDSAPassportPubKey,
+        passportHash: ethers.ZeroHash,
       };
 
       return registration.reissueIdentity(
@@ -475,7 +457,7 @@ describe.skip("Registration", () => {
     };
 
     describe("#register", () => {
-      it("should register", async () => {
+      it.skip("should register", async () => {
         await register();
 
         const passportInfo = await stateKeeper.getPassportInfo(
@@ -493,7 +475,7 @@ describe.skip("Registration", () => {
       });
 
       it("should not register with wrong ZK proof", async () => {
-        const formattedProof: VerifierHelper.ProofPointsStruct = {
+        const formattedProof: Groth16VerifierHelper.ProofPointsStruct = {
           a: [0, 0],
           b: [
             [0, 0],
@@ -531,7 +513,7 @@ describe.skip("Registration", () => {
     });
 
     describe("#revoke", () => {
-      it("should revoke", async () => {
+      it.skip("should revoke", async () => {
         await register();
         await revoke();
 
@@ -544,13 +526,13 @@ describe.skip("Registration", () => {
         expect(passportInfo.passportInfo_.activeIdentity).to.equal(revoked);
       });
 
-      it("should not revoke with the same signature", async () => {
+      it.skip("should not revoke with the same signature", async () => {
         await register(identityKey, ECDSAPassportIdentitySignature1);
 
         expect(revoke(identityKey, ECDSAPassportIdentitySignature1)).to.be.revertedWith("Registration: signature used");
       });
 
-      it("should revert if passport already revoked", async () => {
+      it.skip("should revert if passport already revoked", async () => {
         await register();
 
         await stateKeeper.mockPassportData(
@@ -561,7 +543,7 @@ describe.skip("Registration", () => {
         expect(revoke()).to.be.revertedWith("Registration: passport already revoked");
       });
 
-      it("should revert if identity already revoked", async () => {
+      it.skip("should revert if identity already revoked", async () => {
         await register();
 
         await stateKeeper.mockIdentityData(
@@ -578,7 +560,7 @@ describe.skip("Registration", () => {
     });
 
     describe("#reissueIdentity", () => {
-      it("should reissue identity", async () => {
+      it.skip("should reissue identity", async () => {
         await register();
         await revoke();
         await reissueIdentity();
@@ -591,7 +573,7 @@ describe.skip("Registration", () => {
         expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(1n);
       });
 
-      it("should revert if passport is not revoked", async () => {
+      it.skip("should revert if passport is not revoked", async () => {
         await register();
         await revoke();
 
@@ -603,7 +585,7 @@ describe.skip("Registration", () => {
         expect(reissueIdentity()).to.be.revertedWith("Registration: passport is not revoked");
       });
 
-      it("should revert if identity is already registered", async () => {
+      it.skip("should revert if identity is already registered", async () => {
         await register();
         await revoke();
 
@@ -621,126 +603,24 @@ describe.skip("Registration", () => {
     });
   });
 
-  describe("$TSS flow", () => {
-    describe("#changeSigner", () => {
-      const newSigner = ethers.Wallet.createRandom();
-      const tssPublicKey = "0x" + newSigner.signingKey.publicKey.slice(4);
-
-      it("should not change signer if invalid signature", async () => {
-        const signature = signHelper.signChangeSigner(newSigner.privateKey);
-        const tx = registration.changeSigner(tssPublicKey, signature);
-
-        await expect(tx).to.be.revertedWith("TSSSigner: invalid signature");
-      });
-
-      it("should not change signer if wrong pubKey length", async () => {
-        const signature = signHelper.signChangeSigner(newSigner.privateKey);
-        const tx = registration.changeSigner(newSigner.privateKey, signature);
-
-        await expect(tx).to.be.revertedWith("TSSSigner: wrong pubKey length");
-      });
-
-      it("should not change signer if zero pubKey", async () => {
-        const pBytes = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F";
-        const zeroBytes = "0000000000000000000000000000000000000000000000000000000000000000";
-        const notNull = "0000000000000000000000000000000000000000000000000000000000000001";
-
-        const zeroPubKeys = [
-          "0x" + zeroBytes + notNull,
-          "0x" + pBytes + notNull,
-          "0x" + notNull + zeroBytes,
-          "0x" + notNull + pBytes,
-        ];
-
-        for (const pubKey of zeroPubKeys) {
-          const signature = signHelper.signChangeSigner(pubKey);
-          const tx = registration.changeSigner(pubKey, signature);
-
-          await expect(tx).to.be.revertedWith("TSSSigner: zero pubKey");
-        }
-      });
-
-      it("should not change signer if pubKey not on the curve", async () => {
-        const wrongPubKey =
-          "0x10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010";
-
-        const signature = signHelper.signChangeSigner(wrongPubKey);
-        const tx = registration.changeSigner(wrongPubKey, signature);
-
-        await expect(tx).to.be.revertedWith("TSSSigner: pubKey not on the curve");
-      });
-
-      it("should change signer if all conditions are met", async () => {
-        expect(await registration.getFunction("signer").staticCall()).to.eq(SIGNER.address);
-
-        const signature = signHelper.signChangeSigner(tssPublicKey);
-
-        await registration.changeSigner(tssPublicKey, signature);
-
-        expect(await registration.getFunction("signer").staticCall()).to.eq(newSigner.address);
-      });
-    });
-  });
-
   describe("$upgrade flow", () => {
     describe("#upgrade", () => {
       it("should upgrade the contract", async () => {
-        const Registration = await ethers.getContractFactory("RegistrationMock");
+        const Registration = await ethers.getContractFactory("Registration2Mock");
         const newRegistration = await Registration.deploy();
 
-        const signature = merkleTree.authorizeUpgradeOperation(
-          await newRegistration.getAddress(),
-          chainName,
-          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
-          await registration.getAddress(),
-        );
-
-        await registration.upgradeToWithProof(await newRegistration.getAddress(), signature);
+        await registration.upgradeToAndCall(await newRegistration.getAddress(), "0x");
 
         expect(await registration.implementation()).to.be.eq(await newRegistration.getAddress());
       });
 
-      it("should revert if trying to upgrade to zero address", async () => {
-        const signature = merkleTree.authorizeUpgradeOperation(
-          ethers.ZeroAddress,
-          chainName,
-          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
-          await registration.getAddress(),
-        );
-
-        await expect(registration.upgradeToWithProof(ethers.ZeroAddress, signature)).to.be.rejectedWith(
-          "Upgradeable: Zero address",
-        );
-      });
-
       it("should revert if operation was signed by the invalid signer", async () => {
-        const ANOTHER_SIGNER = ethers.Wallet.createRandom();
+        const newRegistration = await ethers.deployContract("Registration2Mock");
 
-        const signature = merkleTree.authorizeUpgradeOperation(
-          await registration.getAddress(),
-          chainName,
-          await registration.getNonce(TSSUpgradeableId.MAGIC_ID),
-          await registration.getAddress(),
-          ANOTHER_SIGNER,
-        );
-
-        await expect(registration.upgradeToWithProof(await registration.getAddress(), signature)).to.be.rejectedWith(
-          "TSSSigner: invalid signature",
-        );
+        await expect(
+          registration.connect(SECOND).upgradeToAndCall(await newRegistration.getAddress(), "0x"),
+        ).to.be.rejectedWith("Registration: not an owner");
       });
-    });
-
-    it("should revert if trying to use default `upgradeTo` method", async () => {
-      const Proxy = await ethers.getContractFactory("ERC1967Proxy");
-      const Registration = await ethers.getContractFactory("Registration");
-
-      let registration: Registration = await Registration.deploy();
-      const proxy = await Proxy.deploy(await registration.getAddress(), "0x");
-      registration = registration.attach(await proxy.getAddress()) as Registration;
-
-      await expect(registration.upgradeTo(ethers.ZeroAddress)).to.be.rejectedWith(
-        "Upgradeable: This upgrade method is off",
-      );
     });
   });
 });

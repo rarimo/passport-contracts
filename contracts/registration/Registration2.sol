@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity ^0.8.21;
 
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16VerifierHelper.sol";
 
-import {TSSUpgradeable} from "../state/TSSUpgradeable.sol";
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
-contract Registration2 is Initializable, TSSUpgradeable {
+contract Registration2 is Initializable, UUPSUpgradeable {
     using MerkleProof for bytes32[];
-    using VerifierHelper for address;
+    using Groth16VerifierHelper for address;
 
     bytes32 public constant P_NO_AA = keccak256("P_NO_AA");
     uint256 internal constant _PROOF_SIGNALS_COUNT = 5;
@@ -60,13 +61,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         _disableInitializers();
     }
 
-    function __Registration_init(
-        address signer_,
-        string calldata chainName_,
-        address stateKeeper_
-    ) external initializer {
-        __TSSSigner_init(signer_, chainName_);
-
+    function __Registration_init(address stateKeeper_) external initializer {
         stateKeeper = StateKeeper(stateKeeper_);
     }
 
@@ -131,7 +126,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
@@ -194,7 +189,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
@@ -226,24 +221,9 @@ contract Registration2 is Initializable, TSSUpgradeable {
      * @param data_ an ABI encoded data for the method
      * - `dispatcherType` of bytes32 and `dispatcher` of address for AddDispatcher
      * - `dispatcherType` of bytes32 for RemoveDispatcher
-     * @param proof_ the Rarimo TSS signature with MTP
      */
-    function updateDependency(
-        MethodId methodId_,
-        bytes calldata data_,
-        bytes calldata proof_
-    ) external virtual {
-        if (proof_.length == 0) {
-            _onlyOwner();
-        } else {
-            uint256 nonce_ = _getAndIncrementNonce(uint8(methodId_));
-            bytes32 leaf_ = keccak256(
-                abi.encodePacked(address(this), methodId_, data_, chainName, nonce_)
-            );
-
-            _checkMerkleSignature(leaf_, proof_);
-            _useNonce(uint8(methodId_), nonce_);
-        }
+    function updateDependency(MethodId methodId_, bytes calldata data_) external virtual {
+        _onlyOwner();
 
         if (
             methodId_ == MethodId.AddCertificateDispatcher ||
@@ -299,10 +279,6 @@ contract Registration2 is Initializable, TSSUpgradeable {
         stateKeeper.useSignature(sigHash_);
     }
 
-    function _authorizeUpgrade(address) internal view virtual override {
-        _onlyOwner();
-    }
-
     function _verifyICAOSignature(
         ICertificateDispatcher dispatcher_,
         bytes memory x509SignedAttributes_,
@@ -337,7 +313,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         uint256 passportHash_,
         uint256 identityKey_,
         uint256 dgCommit_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
         require(
             PoseidonSMT(stateKeeper.certificatesSmt()).isRootValid(certificatesRoot_),
@@ -352,7 +328,7 @@ contract Registration2 is Initializable, TSSUpgradeable {
         pubSignals_[3] = identityKey_; // output
         pubSignals_[4] = uint256(certificatesRoot_); // public input
 
-        require(verifier_.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
+        require(verifier_.verifyProof(zkPoints_, pubSignals_), "Registration: invalid zk proof");
     }
 
     function _getCertificateDispatcher(
@@ -407,6 +383,14 @@ contract Registration2 is Initializable, TSSUpgradeable {
     }
 
     function _onlyOwner() internal view {
-        require(msg.sender == stateKeeper.owner(), "Registration: not an owner");
+        require(stateKeeper.isOwner(msg.sender), "Registration: not an owner");
+    }
+
+    function _authorizeUpgrade(address) internal virtual override {
+        _onlyOwner();
+    }
+
+    function implementation() external view returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }

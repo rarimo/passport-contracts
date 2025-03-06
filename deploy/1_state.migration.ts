@@ -15,28 +15,16 @@ export = async (deployer: Deployer) => {
 
   const stateKeeper = await deployProxy(deployer, StateKeeperMock__factory, "StateKeeper");
 
-  await registrationSmt.__PoseidonSMT_init(
-    config.tssSigner,
-    config.chainName,
-    await stateKeeper.getAddress(),
-    config.treeSize,
-  );
+  await registrationSmt.__PoseidonSMT_init(await stateKeeper.getAddress(), config.evidenceRegistry, config.treeSize);
 
-  await certificatesSmt.__PoseidonSMT_init(
-    config.tssSigner,
-    config.chainName,
-    await stateKeeper.getAddress(),
-    config.treeSize,
-  );
+  await certificatesSmt.__PoseidonSMT_init(await stateKeeper.getAddress(), config.evidenceRegistry, config.treeSize);
 
   await stateKeeper.__StateKeeper_init(
-    config.tssSigner,
-    config.chainName,
+    config.owner,
     await registrationSmt.getAddress(),
     await certificatesSmt.getAddress(),
     config.icaoMasterTreeMerkleRoot,
   );
-  await stateKeeper.__StateKeeper_upgrade_1(config.owner);
 
   Reporter.reportContracts(
     ["StateKeeper", `${await stateKeeper.getAddress()}`],

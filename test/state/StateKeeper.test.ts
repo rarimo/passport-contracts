@@ -1,38 +1,36 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { HDNodeWallet, ZeroAddress, ZeroHash } from "ethers";
+import { ZeroAddress, ZeroHash } from "ethers";
 
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import { StateKeeperMock, PoseidonSMTMock } from "@ethers-v6";
+import { Poseidon } from "@iden3/js-crypto";
 
-import { TSSMerkleTree, TSSSigner } from "@/test/helpers";
+import { StateKeeperMock, PoseidonSMTMock, EvidenceDB } from "@ethers-v6";
+
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
 import { StateKeeperMethodId } from "@/test/helpers/constants";
+import { time } from "@nomicfoundation/hardhat-network-helpers";
 
 const treeSize = 80;
-const chainName = "Tests";
 
 const icaoMerkleRoot = "0x2c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
 
 describe("StateKeeper", () => {
   const reverter = new Reverter();
 
-  let signHelper: TSSSigner;
-  let merkleTree: TSSMerkleTree;
-
   let ADDRESS1: SignerWithAddress;
   let ADDRESS2: SignerWithAddress;
-  let SIGNER: HDNodeWallet;
 
   let registrationSmt: PoseidonSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let stateKeeper: StateKeeperMock;
 
+  let evidenceDB: EvidenceDB;
+
   before("setup", async () => {
     [ADDRESS1, ADDRESS2] = await ethers.getSigners();
-    SIGNER = ethers.Wallet.createRandom();
 
     const StateKeeper = await ethers.getContractFactory("StateKeeperMock", {
       libraries: {
@@ -62,19 +60,38 @@ describe("StateKeeper", () => {
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
 
-    await registrationSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
-    await certificatesSmt.__PoseidonSMT_init(SIGNER.address, chainName, await stateKeeper.getAddress(), treeSize);
+    evidenceDB = await ethers.deployContract("EvidenceDB", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
+    const evidenceRegistry = await ethers.deployContract("EvidenceRegistry", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+      },
+    });
+
+    await evidenceDB.__EvidenceDB_init(await evidenceRegistry.getAddress(), 80);
+    await evidenceRegistry.__EvidenceRegistry_init(await evidenceDB.getAddress());
+
+    await registrationSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
+    await certificatesSmt.__PoseidonSMT_init(
+      await stateKeeper.getAddress(),
+      await evidenceRegistry.getAddress(),
+      treeSize,
+    );
 
     await stateKeeper.__StateKeeper_init(
-      SIGNER.address,
-      chainName,
+      ADDRESS1.address,
       await registrationSmt.getAddress(),
       await certificatesSmt.getAddress(),
       icaoMerkleRoot,
     );
-
-    signHelper = new TSSSigner(SIGNER);
-    merkleTree = new TSSMerkleTree(signHelper);
 
     await reverter.snapshot();
   });
@@ -82,17 +99,6 @@ describe("StateKeeper", () => {
   afterEach(reverter.revert);
 
   describe("access", () => {
-    it("should initialize after upgrade", async () => {
-      expect(await stateKeeper.owner()).to.be.equal(ZeroAddress);
-
-      await stateKeeper.__StateKeeper_upgrade_1(ADDRESS1);
-      await expect(stateKeeper.__StateKeeper_upgrade_1(ADDRESS1)).to.be.revertedWith(
-        "Initializable: contract is already initialized",
-      );
-
-      expect(await stateKeeper.owner()).to.be.equal(ADDRESS1);
-    });
-
     it("should not be called by non-registrations", async () => {
       await expect(stateKeeper.addCertificate(ZeroHash, 0)).to.be.rejectedWith("StateKeeper: not a registration");
       await expect(stateKeeper.removeCertificate(ZeroHash)).to.be.rejectedWith("StateKeeper: not a registration");
@@ -107,84 +113,66 @@ describe("StateKeeper", () => {
     });
 
     it("should not be called by non-owner", async () => {
-      await stateKeeper.__StateKeeper_upgrade_1(ADDRESS1);
+      await stateKeeper.addOwners([ADDRESS2]);
+      await stateKeeper.removeOwners([ADDRESS1]);
+      await expect(stateKeeper.addOwners([ADDRESS2]))
+        .to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount")
+        .withArgs(ADDRESS1.address);
 
-      await stateKeeper.transferOwnership(ADDRESS2);
-      await expect(stateKeeper.transferOwnership(ADDRESS2)).to.be.revertedWith("StateKeeper: not an owner");
-
-      expect(await stateKeeper.owner()).to.be.equal(ADDRESS2);
+      expect(await stateKeeper.isOwner(ADDRESS2)).to.be.true;
     });
   });
 
-  describe("$TSS flow", () => {
+  describe("$Contract management", () => {
     describe("#changeICAOMasterTreeRoot", () => {
       const newIcaoMerkleRoot = "0x3c50ce3aa92bc3dd0351a89970b02630415547ea83c487befbc8b1795ea90c45";
-      const timestamp = "123456";
 
       it("should change the root", async () => {
         expect(await stateKeeper.icaoMasterTreeMerkleRoot()).to.equal(icaoMerkleRoot);
 
-        const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint256"],
-          ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
-        );
-
-        const proof = merkleTree.getProof(leaf, true);
-
-        await stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof);
+        await stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot);
 
         expect(await stateKeeper.icaoMasterTreeMerkleRoot()).to.equal(newIcaoMerkleRoot);
       });
 
       it("should not reuse the signature", async () => {
-        const leaf = ethers.solidityPackedKeccak256(
-          ["string", "bytes32", "uint256"],
-          ["Rarimo CSCA root", newIcaoMerkleRoot, timestamp],
-        );
+        await stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot);
 
-        const proof = merkleTree.getProof(leaf, true);
-
-        await stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof);
-
-        expect(stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot, timestamp, proof)).to.be.revertedWith(
-          "TSSSigner: nonce used",
-        );
+        expect(stateKeeper.changeICAOMasterTreeRoot(newIcaoMerkleRoot)).to.be.revertedWith("TSSSigner: nonce used");
       });
     });
+
+    describe("#EvidenceRegistry integration", () => {
+      beforeEach(async () => {
+        await addRegistrations(["First Registration"], [ADDRESS1.address]);
+      });
+
+      it("should update the root and store it in the registry", async () => {
+        await stateKeeper.addBond(ZeroHash, ZeroHash, ZeroHash, 0);
+
+        const registrationRoot = await registrationSmt.getRoot();
+        const expectedKey = Poseidon.hash([BigInt(await registrationSmt.getAddress()), BigInt(registrationRoot)]);
+
+        expect(BigInt(await evidenceDB.getValue(ethers.toBeHex(expectedKey)))).to.equal(await time.latest());
+      });
+    });
+
+    const addRegistrations = async (registrationKeys: string[], registrations: string[]) => {
+      const encoder = new ethers.AbiCoder();
+      const data = encoder.encode(["string[]", "address[]"], [registrationKeys, registrations]);
+
+      await stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data);
+    };
 
     describe("#addRegistrations, #removeRegistrations", () => {
       const REG1 = "ONE";
       const REG2 = "TWO";
 
-      const addRegistrations = async (registrationKeys: string[], registrations: string[]) => {
-        const operations = merkleTree.addRegistrationsOperation(
-          registrationKeys,
-          registrations,
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.AddRegistrations),
-          await stateKeeper.getAddress(),
-        );
-
-        await stateKeeper.updateRegistrationSet(
-          StateKeeperMethodId.AddRegistrations,
-          operations.data,
-          operations.proof,
-        );
-      };
-
       const removeRegistrations = async (registrationKeys: string[]) => {
-        const operations = merkleTree.removeRegistrationsOperation(
-          registrationKeys,
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.RemoveRegistrations),
-          await stateKeeper.getAddress(),
-        );
+        const encoder = new ethers.AbiCoder();
+        const data = encoder.encode(["string[]"], [registrationKeys]);
 
-        await stateKeeper.updateRegistrationSet(
-          StateKeeperMethodId.RemoveRegistrations,
-          operations.data,
-          operations.proof,
-        );
+        await stateKeeper.updateRegistrationSet(StateKeeperMethodId.RemoveRegistrations, data);
       };
 
       it("should add multiple registrations", async () => {
@@ -210,63 +198,22 @@ describe("StateKeeper", () => {
       });
 
       it("should not be able to add/remove with invalid signer", async () => {
-        const ANOTHER_SIGNER = ethers.Wallet.createRandom();
+        const encoder = new ethers.AbiCoder();
+        const data = encoder.encode(["string[]", "address[]"], [[REG1], [ADDRESS1.address]]);
 
-        let operation = merkleTree.addRegistrationsOperation(
-          [REG1],
-          [ADDRESS1.address],
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.AddRegistrations),
-          await stateKeeper.getAddress(),
-          ANOTHER_SIGNER,
-        );
+        await expect(stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.AddRegistrations, data))
+          .to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount")
+          .withArgs(ADDRESS2.address);
 
-        await expect(
-          stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, operation.data, operation.proof),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
-
-        operation = merkleTree.removeRegistrationsOperation(
-          [REG1],
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.RemoveRegistrations),
-          await stateKeeper.getAddress(),
-          ANOTHER_SIGNER,
-        );
-
-        await expect(
-          stateKeeper.updateRegistrationSet(StateKeeperMethodId.RemoveRegistrations, operation.data, operation.proof),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
-      });
-
-      it("should revert if trying to use same signature twice", async () => {
-        const operation = merkleTree.addRegistrationsOperation(
-          [REG1],
-          [ADDRESS1.address],
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.AddRegistrations),
-          await stateKeeper.getAddress(),
-        );
-
-        await stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, operation.data, operation.proof);
-
-        await expect(
-          stateKeeper.updateRegistrationSet(StateKeeperMethodId.AddRegistrations, operation.data, operation.proof),
-        ).to.be.rejectedWith("TSSSigner: invalid signature");
+        await expect(stateKeeper.connect(ADDRESS2).updateRegistrationSet(StateKeeperMethodId.RemoveRegistrations, data))
+          .to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount")
+          .withArgs(ADDRESS2.address);
       });
 
       it("should revert if invalid operation was signed", async () => {
-        const hash = merkleTree.getArbitraryDataSignHash(
-          StateKeeperMethodId.None,
-          ethers.ZeroAddress,
-          chainName,
-          await stateKeeper.getNonce(StateKeeperMethodId.None),
-          await stateKeeper.getAddress(),
+        await expect(stateKeeper.updateRegistrationSet(StateKeeperMethodId.None, "0x")).to.be.rejectedWith(
+          "StateKeeper: Invalid method",
         );
-        const signature = merkleTree.getProof(hash, true, undefined);
-
-        await expect(
-          stateKeeper.updateRegistrationSet(StateKeeperMethodId.None, ethers.ZeroAddress, signature),
-        ).to.be.rejectedWith("StateKeeper: Invalid method");
       });
     });
   });
