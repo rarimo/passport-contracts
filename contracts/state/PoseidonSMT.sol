@@ -35,7 +35,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
     modifier withRootUpdate() {
         _saveRoot();
         _;
-        _notifyRoot();
+        _commitRoot();
     }
 
     constructor() {
@@ -126,7 +126,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
 
-    function _notifyRoot() internal {
+    function _commitRoot() internal {
         bytes32 root_ = _bytes32Tree.getRoot();
 
         IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
