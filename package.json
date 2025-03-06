@@ -1,6 +1,6 @@
 {
   "name": "@rarimo/passport-contracts",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
   "author": "Zero Block Global Foundation",
   "readme": "README.md",
@@ -54,7 +54,7 @@
     "@openzeppelin/contracts": "5.2.0",
     "@openzeppelin/contracts-upgradeable": "5.2.0",
     "@rarimo/evidence-registry": "0.1.1",
-    "@solarity/solidity-lib": "2.7.17"
+    "@solarity/solidity-lib": "3.0.0-rc.1"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",
