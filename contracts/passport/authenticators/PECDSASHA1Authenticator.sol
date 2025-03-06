@@ -5,9 +5,6 @@ import {SHA1} from "../../utils/SHA1.sol";
 
 import {ECDSA256} from "@solarity/solidity-lib/libs/crypto/ECDSA256.sol";
 
-/**
- * @notice Forked from https://github.com/tdrerup/elliptic-curve-solidity/blob/master/contracts/curves/EllipticCurve.sol
- */
 contract PECDSASHA1Authenticator {
     using ECDSA256 for *;
     using SHA1 for bytes;
