@@ -27,7 +27,7 @@ import {
   Registration2,
 } from "@ethers-v6";
 
-import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
+import { Groth16VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
 import { MerkleTreeHelper } from "@/test/helpers";
 import { Reverter, getPoseidon } from "@/test/helpers/";
@@ -393,7 +393,7 @@ describe("Registration2", () => {
     const register = async (
       identityOverride?: string,
       signatureOverride?: string,
-      proofOverride?: VerifierHelper.ProofPointsStruct,
+      proofOverride?: Groth16VerifierHelper.ProofPointsStruct,
       certificatesRootOverride?: string,
     ) => {
       const dgCommit = ECDSAPassportIdentityPublicSignals[1];
@@ -432,7 +432,7 @@ describe("Registration2", () => {
     const reissueIdentity = async (
       identityOverride?: string,
       signatureOverride?: string,
-      proofOverride?: VerifierHelper.ProofPointsStruct,
+      proofOverride?: Groth16VerifierHelper.ProofPointsStruct,
       certificatesRootOverride?: string,
     ) => {
       const dgCommit = ECDSAPassportNewIdentityPublicSignals[1];
@@ -475,7 +475,7 @@ describe("Registration2", () => {
       });
 
       it("should not register with wrong ZK proof", async () => {
-        const formattedProof: VerifierHelper.ProofPointsStruct = {
+        const formattedProof: Groth16VerifierHelper.ProofPointsStruct = {
           a: [0, 0],
           b: [
             [0, 0],

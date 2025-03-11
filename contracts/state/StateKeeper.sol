@@ -8,13 +8,13 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
-import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
+import {AMultiOwnable} from "@solarity/solidity-lib/access/AMultiOwnable.sol";
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
 import {PoseidonSMT} from "./PoseidonSMT.sol";
 
-contract StateKeeper is Initializable, MultiOwnable, UUPSUpgradeable {
+contract StateKeeper is Initializable, AMultiOwnable, UUPSUpgradeable {
     using TypeCaster for address;
     using DynamicSet for DynamicSet.StringSet;
 
@@ -80,7 +80,7 @@ contract StateKeeper is Initializable, MultiOwnable, UUPSUpgradeable {
         address certificatesSmt_,
         bytes32 icaoMasterTreeMerkleRoot_
     ) external initializer {
-        __MultiOwnable_init();
+        __AMultiOwnable_init();
 
         registrationSmt = PoseidonSMT(registrationSmt_);
         certificatesSmt = PoseidonSMT(certificatesSmt_);

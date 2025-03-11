@@ -9,13 +9,13 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
 
 contract RegistrationSimple is Initializable, UUPSUpgradeable {
     using ECDSA for bytes32;
-    using VerifierHelper for address;
+    using Groth16VerifierHelper for address;
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -65,7 +65,7 @@ contract RegistrationSimple is Initializable, UUPSUpgradeable {
         uint256 identityKey_,
         Passport memory passport_,
         bytes memory signature_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external {
         require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
 
@@ -145,7 +145,7 @@ contract RegistrationSimple is Initializable, UUPSUpgradeable {
         uint256 dg1Hash_,
         uint256 dg1Commitment_,
         uint256 pkIdentityHash_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
         uint256[] memory pubSignals_ = new uint256[](_PROOF_SIGNALS_COUNT);
 
@@ -154,7 +154,7 @@ contract RegistrationSimple is Initializable, UUPSUpgradeable {
         pubSignals_[2] = pkIdentityHash_; // output
 
         require(
-            verifier_.verifyProof(pubSignals_, zkPoints_),
+            verifier_.verifyProof(zkPoints_, pubSignals_),
             "RegistrationSimple: invalid zk proof"
         );
     }
