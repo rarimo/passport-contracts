@@ -6,7 +6,7 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
+import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16VerifierHelper.sol";
 
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
@@ -16,7 +16,7 @@ import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDisp
 
 contract Registration is Initializable, UUPSUpgradeable {
     using MerkleProof for bytes32[];
-    using VerifierHelper for address;
+    using Groth16VerifierHelper for address;
 
     bytes32 public constant P_NO_AA = keccak256("P_NO_AA");
     uint256 internal constant _PROOF_SIGNALS_COUNT = 5;
@@ -125,7 +125,7 @@ contract Registration is Initializable, UUPSUpgradeable {
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
@@ -183,7 +183,7 @@ contract Registration is Initializable, UUPSUpgradeable {
         uint256 identityKey_,
         uint256 dgCommit_,
         Passport memory passport_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external {
         require(identityKey_ > 0, "Registration: identity can not be zero");
 
@@ -307,7 +307,7 @@ contract Registration is Initializable, UUPSUpgradeable {
         uint256 passportKey_,
         uint256 identityKey_,
         uint256 dgCommit_,
-        VerifierHelper.ProofPoints memory zkPoints_
+        Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) internal view {
         require(
             PoseidonSMT(stateKeeper.certificatesSmt()).isRootValid(certificatesRoot_),
@@ -328,7 +328,7 @@ contract Registration is Initializable, UUPSUpgradeable {
         pubSignals_[3] = identityKey_; // output
         pubSignals_[4] = uint256(certificatesRoot_); // public input
 
-        require(verifier_.verifyProof(pubSignals_, zkPoints_), "Registration: invalid zk proof");
+        require(verifier_.verifyProof(zkPoints_, pubSignals_), "Registration: invalid zk proof");
     }
 
     function _getCertificateDispatcher(
