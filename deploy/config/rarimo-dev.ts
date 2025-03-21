@@ -1,0 +1,9 @@
+export const treeSize = 80;
+export const evidenceRegistry = "0x621415816395372D40567B950B98BF0146b7DBdC";
+export const owner = "0x53638975BC11de3029E46DF193d64879EAeA94eB";
+export const icaoMasterTreeMerkleRoot = "0x8333b03adaa94382a73d63db06038f46e65a941176a221e51c3f7b141ddd973c";
+export const registrationName = "SecondRegistration";
+export const registration2 = "0xC0B09085Fa2ad3A8BbF96494B8d5cd10702FE20d";
+export const simpleRegistrationName = "SimpleRegistration";
+export const simpleRegistrationSigners = [];
+export const stateKeeper = "0x7d4E8Da1d10f8Db46C52414175d4003ab0Aef506";

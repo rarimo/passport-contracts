@@ -1,3 +1,4 @@
+import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@solarity/hardhat-migrate";
@@ -81,6 +82,14 @@ const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
       timeout: 60000,
     },
+    "rarimo-l2": {
+      url: "https://l2.rarimo.com",
+      gasMultiplier: 1.2,
+    },
+    "rarimo-dev": {
+      url: "http://34.134.193.127:8545",
+      gasMultiplier: 1.2,
+    },
   },
   solidity: {
     version: "0.8.28",
@@ -133,7 +142,9 @@ const config: HardhatUserConfig = {
     ],
   },
   migrate: {
-    pathToMigrations: "./deploy/",
+    paths: {
+      pathToMigrations: "./deploy/",
+    },
   },
   mocha: {
     timeout: 1000000,
