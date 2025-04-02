@@ -75,14 +75,6 @@ describe("Registration2", () => {
   let registration: Registration2Mock;
   let stateKeeper: StateKeeperMock;
 
-  const deployPUniversalVerifiers = async () => {
-    const PUniversal2048Verifier = await ethers.getContractFactory("PUniversal2048Verifier");
-    const PUniversal4096Verifier = await ethers.getContractFactory("PUniversal4096Verifier");
-
-    pUniversal2048Verifier = await PUniversal2048Verifier.deploy();
-    pUniversal4096Verifier = await PUniversal4096Verifier.deploy();
-  };
-
   const deployCRSADispatcher = async () => {
     const CRSASHA2Signer = await ethers.getContractFactory("CRSASigner");
     const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
@@ -187,7 +179,6 @@ describe("Registration2", () => {
     registration = (await Registration.deploy()) as any;
     stateKeeper = await StateKeeper.deploy();
 
-    await deployPUniversalVerifiers();
     await deployCRSADispatcher();
     await deployPNOAADispatcher();
     await deployPRSASHA1Dispatcher();
@@ -244,16 +235,6 @@ describe("Registration2", () => {
 
     await stateKeeper.mockAddRegistrations([registrationName], [await registration.getAddress()]);
 
-    await addDependency(
-      RegistrationMethodId.AddPassportVerifier,
-      Z_UNIVERSAL_2048,
-      await pUniversal2048Verifier.getAddress(),
-    );
-    await addDependency(
-      RegistrationMethodId.AddPassportVerifier,
-      Z_UNIVERSAL_4096,
-      await pUniversal4096Verifier.getAddress(),
-    );
     await addDependency(
       RegistrationMethodId.AddCertificateDispatcher,
       C_RSA_SHA2_4096,
@@ -457,17 +438,6 @@ describe("Registration2", () => {
     };
 
     describe("#register", () => {
-      it.skip("should register", async () => {
-        await register();
-
-        const passportInfo = await stateKeeper.getPassportInfo(
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-        );
-
-        expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(identityKey, 32));
-        expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(0n);
-      });
-
       it("should not register with wrong AA", async () => {
         const signature = "0x1111";
 
@@ -513,90 +483,12 @@ describe("Registration2", () => {
     });
 
     describe("#revoke", () => {
-      it.skip("should revoke", async () => {
-        await register();
-        await revoke();
-
-        const passportInfo = await stateKeeper.getPassportInfo(
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-        );
-
-        const revoked = ethers.keccak256(ethers.toUtf8Bytes("REVOKED"));
-
-        expect(passportInfo.passportInfo_.activeIdentity).to.equal(revoked);
-      });
-
-      it.skip("should not revoke with the same signature", async () => {
-        await register(identityKey, ECDSAPassportIdentitySignature1);
-
-        expect(revoke(identityKey, ECDSAPassportIdentitySignature1)).to.be.revertedWith("Registration: signature used");
-      });
-
-      it.skip("should revert if passport already revoked", async () => {
-        await register();
-
-        await stateKeeper.mockPassportData(
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-          newIdentityKey,
-        );
-
-        expect(revoke()).to.be.revertedWith("Registration: passport already revoked");
-      });
-
-      it.skip("should revert if identity already revoked", async () => {
-        await register();
-
-        await stateKeeper.mockIdentityData(
-          identityKey,
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32).slice(0, -2) + "aa",
-        );
-
-        expect(revoke()).to.be.revertedWith("Registration: identity already revoked");
-      });
-
       it("should revert if identity is zero", async () => {
         expect(revoke("0")).to.be.revertedWith("Registration: identity can not be zero");
       });
     });
 
     describe("#reissueIdentity", () => {
-      it.skip("should reissue identity", async () => {
-        await register();
-        await revoke();
-        await reissueIdentity();
-
-        const passportInfo = await stateKeeper.getPassportInfo(
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-        );
-
-        expect(passportInfo.passportInfo_.activeIdentity).to.equal(ethers.toBeHex(newIdentityKey, 32));
-        expect(passportInfo.passportInfo_.identityReissueCounter).to.equal(1n);
-      });
-
-      it.skip("should revert if passport is not revoked", async () => {
-        await register();
-        await revoke();
-
-        await stateKeeper.mockPassportData(
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-          newIdentityKey,
-        );
-
-        expect(reissueIdentity()).to.be.revertedWith("Registration: passport is not revoked");
-      });
-
-      it.skip("should revert if identity is already registered", async () => {
-        await register();
-        await revoke();
-
-        await stateKeeper.mockIdentityData(
-          newIdentityKey,
-          ethers.toBeHex(await pEcdsaSha1Dispatcher.getPassportKey(ECDSAPassportPubKey), 32),
-        );
-
-        expect(reissueIdentity()).to.be.revertedWith("Registration: identity already registered");
-      });
-
       it("should revert if identity is zero", async () => {
         expect(reissueIdentity("0")).to.be.revertedWith("Registration: identity can not be zero");
       });

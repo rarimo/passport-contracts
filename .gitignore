@@ -13,3 +13,8 @@ generated-types
 
 # Hardhat migrate
 .storage.json
+
+# Custom deployments
+deploy/noir-verifier
+deploy/update-verifier
+deploy/update-registration
