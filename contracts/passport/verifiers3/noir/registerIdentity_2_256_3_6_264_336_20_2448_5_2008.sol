@@ -1,11 +1,11 @@
-// Verification Key Hash: d543a3d4c1403ca9532ae21f2aa590c76bf2307647484b1810c2b24c39638f18
+// Verification Key Hash: 4829f7b9f30cb162689146d19777b815894a55ca5b8871a22992582daae15953
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2022 Aztec
 pragma solidity >=0.8.4;
 
 library UltraVerificationKey {
     function verificationKeyHash() internal pure returns (bytes32) {
-        return 0xd543a3d4c1403ca9532ae21f2aa590c76bf2307647484b1810c2b24c39638f18;
+        return 0x4829f7b9f30cb162689146d19777b815894a55ca5b8871a22992582daae15953;
     }
 
     function loadVerificationKey(uint256 _vk, uint256 _omegaInverseLoc) internal pure {
@@ -116,11 +116,11 @@ library UltraVerificationKey {
             ) // vk.SIGMA1.y
             mstore(
                 add(_vk, 0x340),
-                0x12380f22ba9b694d76b53b811b3c2b24b5e9e8bd7b9e745c6e23df60837c5823
+                0x28565da0b802303e5a1eb44cd1f1554f83328270ad35acf3696471cdcdbd55a6
             ) // vk.SIGMA2.x
             mstore(
                 add(_vk, 0x360),
-                0x0498b8843e3a396ebd1a72ad402b43c94f64befd37d795190ad1f9d76d836e7a
+                0x1c3f1f1cb2f88326a749d3986f04d931ab469ae3e3ffde4cf0179c7ab377cfce
             ) // vk.SIGMA2.y
             mstore(
                 add(_vk, 0x380),
@@ -3402,7 +3402,7 @@ abstract contract BaseUltraVerifier {
     }
 }
 
-contract UltraVerifier is BaseUltraVerifier {
+contract NoirRegisterIdentity_2_256_3_6_264_336_20_2448_5_2008 is BaseUltraVerifier {
     function getVerificationKeyHash() public pure override(BaseUltraVerifier) returns (bytes32) {
         return UltraVerificationKey.verificationKeyHash();
     }

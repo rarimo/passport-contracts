@@ -46,6 +46,7 @@ import {
   PPerPassport_20_256_3_5_336_72_NAVerifier2__factory,
   PPerPassport_21_256_3_5_576_232_NAVerifier2__factory,
   PPerPassport_4_160_3_3_336_216_1_1296_3_256Verifier2__factory,
+  NoirRegisterIdentity_2_256_3_6_264_336_20_2448_5_2008__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -98,4 +99,6 @@ export const deployPVerifiers = async (deployer: Deployer) => {
 
   await deployer.deploy(PMNEOptVerifier2__factory);
   await deployer.deploy(PMNEOpt2Verifier2__factory);
+
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_264_336_20_2448_5_2008__factory);
 };

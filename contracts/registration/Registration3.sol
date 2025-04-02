@@ -11,10 +11,9 @@ import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16Veri
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 
+import {INoirVerifier} from "../interfaces/verifiers/INoirVerifier.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
-
-import {BaseUltraVerifier} from "../passport/verifiers2/noir/UltraPlonkPassport.sol";
 
 contract Registration3 is Initializable, UUPSUpgradeable {
     using MerkleProof for bytes32[];
@@ -333,7 +332,7 @@ contract Registration3 is Initializable, UUPSUpgradeable {
         pubSignals_[4] = certificatesRoot_; // public input
 
         require(
-            BaseUltraVerifier(verifier_).verify(zkPoints_, pubSignals_),
+            INoirVerifier(verifier_).verify(zkPoints_, pubSignals_),
             InvalidProof(zkPoints_, pubSignals_)
         );
     }
