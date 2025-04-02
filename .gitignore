@@ -17,4 +17,4 @@ generated-types
 # Custom deployments
 deploy/noir-verifier
 deploy/update-verifier
-deploy/update-registration
+deploy/upgrade-registration
