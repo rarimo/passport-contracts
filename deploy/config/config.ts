@@ -5,16 +5,8 @@ export async function getConfig() {
     return await import("./localhost");
   }
 
-  if (hre.network.name == "rarimo-testnet") {
-    return await import("./rarimo-testnet");
-  }
-
-  if (hre.network.name == "rarimo-mainnet") {
-    return await import("./rarimo-mainnet");
-  }
-
-  if (hre.network.name == "rarimo-l2-testnet") {
-    return await import("./rarimo-l2-testnet");
+  if (hre.network.name == "rarimo-l2") {
+    return await import("./rarimo-l2");
   }
 
   if (hre.network.name == "rarimo-dev") {
