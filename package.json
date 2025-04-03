@@ -37,7 +37,7 @@
     "solhint-check": "solhint \"./contracts/**/*.sol\"",
     "lint-fix": "npm run lint-sol-fix && npm run lint-ts-fix && npm run lint-json-fix && npm run solhint-check",
     "lint-json-fix": "prettier --write \"./**/*.json\"",
-    "lint-ts-fix": "prettier --write \"./**/*.ts\"",
+    "lint-ts-fix": "prettier --write \"./**/*.ts\" --ignore-path .prettierignore",
     "lint-sol-fix": "prettier --write \"contracts/**/*.sol\"",
     "publish-to-npm": "npm run lint-fix && bash ./scripts/publish.sh --public"
   },
