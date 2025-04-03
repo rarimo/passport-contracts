@@ -32,6 +32,7 @@
     "private-network-fork": "npx hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '\"' -f2)",
     "deploy-rarimo-l2": "npx hardhat migrate --network rarimo-l2 --verify",
     "deploy-rarimo-dev": "npx hardhat migrate --network rarimo-dev --verify",
+    "deploy-rarimo-beta": "npx hardhat migrate --network rarimo-beta --verify",
     "generate-types": "TYPECHAIN_FORCE=true npx hardhat typechain && npx hardhat gobind",
     "generate-docs": "npx hardhat markup",
     "solhint-check": "solhint \"./contracts/**/*.sol\"",
