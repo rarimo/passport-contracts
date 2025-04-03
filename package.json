@@ -30,17 +30,7 @@
     "test-all": "npx hardhat migrate && npm run test",
     "private-network": "npx hardhat node",
     "private-network-fork": "npx hardhat node --fork https://mainnet.infura.io/v3/$(grep INFURA_KEY .env | cut -d '\"' -f2)",
-    "deploy-localhost": "npx hardhat migrate --network localhost",
-    "deploy-sepolia": "npx hardhat migrate --network sepolia --verify",
-    "deploy-rarimo-testnet": "npx hardhat migrate --network rarimo-testnet --verify",
-    "deploy-rarimo-mainnet": "npx hardhat migrate --network rarimo-mainnet --verify",
-    "deploy-q-testnet": "npx hardhat migrate --network q-testnet --verify",
-    "deploy-chapel": "npx hardhat migrate --network chapel --verify",
-    "deploy-fuji": "npx hardhat migrate --network fuji --verify",
-    "deploy-ethereum": "npx hardhat migrate --network ethereum --verify",
-    "deploy-bsc": "npx hardhat migrate --network bsc --verify",
-    "deploy-polygon": "npx hardhat migrate --network polygon --verify",
-    "deploy-avalanche": "npx hardhat migrate --network avalanche --verify",
+    "deploy-rarimo-l2": "npx hardhat migrate --network rarimo-l2 --verify",
     "generate-types": "TYPECHAIN_FORCE=true npx hardhat typechain && npx hardhat gobind",
     "generate-docs": "npx hardhat markup",
     "solhint-check": "solhint \"./contracts/**/*.sol\"",
@@ -54,7 +44,7 @@
     "@openzeppelin/contracts": "5.2.0",
     "@openzeppelin/contracts-upgradeable": "5.2.0",
     "@rarimo/evidence-registry": "0.1.1",
-    "@solarity/solidity-lib": "3.0.0-rc.1"
+    "@solarity/solidity-lib": "3.0.0"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",
