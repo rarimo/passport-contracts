@@ -184,22 +184,6 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         );
     }
 
-    function _passportValidation(
-        uint256 identityKey_,
-        Passport memory passport_
-    ) internal returns (uint256 passportKey_) {
-        require(identityKey_ > 0, "Registration: identity can not be zero");
-
-        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
-        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
-        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
-
-        _useSignature(passport_.signature);
-        _authenticate(dispatcher_, challenge_, passport_);
-
-        return passportKey_;
-    }
-
     /**
      * @notice Revokes the passport <> identity bond (doesn't actually remove it, sets as "revoked")
      * @param identityKey_ the hash of the public key of an identity
@@ -452,6 +436,22 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         } else {
             revert("Registration: unknown dependency");
         }
+    }
+
+    function _passportValidation(
+        uint256 identityKey_,
+        Passport memory passport_
+    ) internal returns (uint256 passportKey_) {
+        require(identityKey_ > 0, "Registration: identity can not be zero");
+
+        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
+        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
+        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
+
+        _useSignature(passport_.signature);
+        _authenticate(dispatcher_, challenge_, passport_);
+
+        return passportKey_;
     }
 
     function _onlyOwner() internal view {
