@@ -17,7 +17,7 @@ import {
   ProofRegisterIdentityLight256Groth16,
   RegisterIdentityLight256,
 } from "@/generated-types/zkit";
-import { VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration";
+import { Groth16VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
 const treeSize = 80;
 
@@ -205,7 +205,7 @@ describe("RegistrationSimple", () => {
     });
 
     it("should revert if invalid proof is provided", async () => {
-      const localProof: VerifierHelper.ProofPointsStruct = JSON.parse(JSON.stringify(formatProof(proof.proof)));
+      const localProof: Groth16VerifierHelper.ProofPointsStruct = JSON.parse(JSON.stringify(formatProof(proof.proof)));
 
       localProof.a[0] = 0n;
 
@@ -281,7 +281,7 @@ describe("RegistrationSimple", () => {
     });
   });
 
-  function formatProof(data: Groth16Proof): VerifierHelper.ProofPointsStruct {
+  function formatProof(data: Groth16Proof): Groth16VerifierHelper.ProofPointsStruct {
     return {
       a: [data.pi_a[0], data.pi_a[1]],
       b: [

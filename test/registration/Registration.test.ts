@@ -5,19 +5,10 @@ import { HDNodeWallet } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-import {
-  Z_UNIVERSAL_2048,
-  Z_UNIVERSAL_4096,
-  C_RSA_SHA2_4096,
-  P_ECDSA_SHA1_2704,
-  P_RSA_SHA1_2688,
-  P_NO_AA,
-} from "@/scripts/utils/types";
+import { Z_UNIVERSAL_4096, C_RSA_SHA2_4096, P_ECDSA_SHA1_2704, P_RSA_SHA1_2688, P_NO_AA } from "@/scripts/utils/types";
 
 import {
   StateKeeperMock,
-  PUniversal2048Verifier,
-  PUniversal4096Verifier,
   CRSADispatcher,
   PNOAADispatcher,
   PRSASHADispatcher,
@@ -26,7 +17,6 @@ import {
   Registration2Mock,
   Registration2,
 } from "@ethers-v6";
-
 import { Groth16VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
 import { MerkleTreeHelper } from "@/test/helpers";
@@ -61,9 +51,6 @@ describe("Registration2", () => {
   let OWNER: SignerWithAddress;
   let SECOND: SignerWithAddress;
   let SIGNER: HDNodeWallet;
-
-  let pUniversal2048Verifier: PUniversal2048Verifier;
-  let pUniversal4096Verifier: PUniversal4096Verifier;
 
   let pNoAaDispatcher: PNOAADispatcher;
   let pRsaSha1Dispatcher: PRSASHADispatcher;

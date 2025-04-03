@@ -61,6 +61,11 @@ const config: HardhatUserConfig = {
       url: "http://34.134.193.127:8545",
       gasMultiplier: 1.2,
     },
+    "rarimo-beta": {
+      url: "https://rpc.evm.mainnet.rarimo.com",
+      gasPrice: 0,
+      gasMultiplier: 1.2,
+    },
   },
   solidity: {
     version: "0.8.28",
@@ -75,8 +80,17 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       "rarimo-l2": "abc",
+      "rarimo-beta": "abc",
     },
     customChains: [
+      {
+        network: "rarimo-beta",
+        chainId: 201411,
+        urls: {
+          apiURL: "https://api.evmscan.rarimo.com/api",
+          browserURL: "https://evmscan.rarimo.com",
+        },
+      },
       {
         network: "rarimo-l2",
         chainId: 7368,
