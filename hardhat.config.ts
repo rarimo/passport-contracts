@@ -1,13 +1,19 @@
+import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
+
 import "@solarity/hardhat-migrate";
 import "@solarity/hardhat-gobind";
 import "@solarity/hardhat-markup";
 import "@solarity/hardhat-zkit";
+
 import "@typechain/hardhat";
+
 import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
+
 import "solidity-coverage";
+
 import "tsconfig-paths/register";
 
 import { HardhatUserConfig } from "hardhat/config";
@@ -33,37 +39,9 @@ const config: HardhatUserConfig = {
       accounts: privateKey(),
       gasMultiplier: 1.2,
     },
-    "rarimo-testnet": {
-      url: "https://rpc.evm.node2.mainnet-beta.rarimo.com",
-      accounts: privateKey(),
-      gasPrice: 0,
-      gasMultiplier: 1.2,
-    },
-    "rarimo-mainnet": {
-      url: "https://rpc.evm.mainnet.rarimo.com",
-      accounts: privateKey(),
-      gasPrice: 0,
-      gasMultiplier: 1.2,
-    },
     "q-testnet": {
       url: "https://rpc.qtestnet.org/",
       accounts: privateKey(),
-    },
-    chapel: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-      accounts: privateKey(),
-      gasMultiplier: 1.2,
-      timeout: 60000,
-    },
-    fuji: {
-      url: `https://avalanche-fuji.infura.io/v3/${process.env.INFURA_KEY}`,
-      accounts: privateKey(),
-      gasMultiplier: 1.2,
-    },
-    bsc: {
-      url: "https://bsc-dataseed.binance.org/",
-      accounts: privateKey(),
-      gasMultiplier: 1.2,
     },
     ethereum: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
@@ -75,11 +53,13 @@ const config: HardhatUserConfig = {
       accounts: privateKey(),
       gasMultiplier: 1.2,
     },
-    avalanche: {
-      url: `https://api.avax.network/ext/bc/C/rpc`,
-      accounts: privateKey(),
+    "rarimo-l2": {
+      url: "https://l2.rarimo.com",
       gasMultiplier: 1.2,
-      timeout: 60000,
+    },
+    "rarimo-dev": {
+      url: "http://34.134.193.127:8545",
+      gasMultiplier: 1.2,
     },
   },
   solidity: {
@@ -94,46 +74,23 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      "rarimo-testnet": "abc",
-      "rarimo-mainnet": "abc",
-      "q-testnet": "abc",
-      sepolia: `${process.env.ETHERSCAN_KEY}`,
-      mainnet: `${process.env.ETHERSCAN_KEY}`,
-      bscTestnet: `${process.env.BSCSCAN_KEY}`,
-      bsc: `${process.env.BSCSCAN_KEY}`,
-      polygon: `${process.env.POLYGONSCAN_KEY}`,
-      avalancheFujiTestnet: `${process.env.AVALANCHE_KEY}`,
-      avalanche: `${process.env.AVALANCHE_KEY}`,
+      "rarimo-l2": "abc",
     },
     customChains: [
       {
-        network: "rarimo-testnet",
-        chainId: 42,
+        network: "rarimo-l2",
+        chainId: 7368,
         urls: {
-          apiURL: "https://evmscan.mainnet-beta.rarimo.com/api",
-          browserURL: "https://newevmscan.mainnet-beta.rarimo.com",
-        },
-      },
-      {
-        network: "rarimo-mainnet",
-        chainId: 201411,
-        urls: {
-          apiURL: "https://api.evmscan.rarimo.com/api",
-          browserURL: "https://evmscan.rarimo.com",
-        },
-      },
-      {
-        network: "q-testnet",
-        chainId: 35443,
-        urls: {
-          apiURL: "https://explorer.qtestnet.org/api",
-          browserURL: "https://explorer.qtestnet.org",
+          apiURL: "https://evmscan.l2.rarimo.com/api",
+          browserURL: "https://newscan.l2.rarimo.com/",
         },
       },
     ],
   },
   migrate: {
-    pathToMigrations: "./deploy/",
+    paths: {
+      pathToMigrations: "./deploy/",
+    },
   },
   mocha: {
     timeout: 1000000,

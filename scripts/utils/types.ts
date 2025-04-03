@@ -136,3 +136,8 @@ export const Z_INTERNAL_OPT = keccak256(["string"], ["Z_INTERNAL_OPT"]);
 
 export const Z_MNE_OPT = keccak256(["string"], ["Z_MNE_OPT"]);
 export const Z_MNE_OPT_2 = keccak256(["string"], ["Z_MNE_OPT_2"]);
+
+export const Z_NOIR_PASSPORT_2_256_3_6_264_336_20_2448_5_2008 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_2_256_3_6_264_336_20_2448_5_2008"],
+);

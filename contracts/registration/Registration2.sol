@@ -11,6 +11,7 @@ import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16Veri
 import {StateKeeper} from "../state/StateKeeper.sol";
 import {PoseidonSMT} from "../state/PoseidonSMT.sol";
 
+import {INoirVerifier} from "../interfaces/verifiers/INoirVerifier.sol";
 import {IPassportDispatcher} from "../interfaces/dispatchers/IPassportDispatcher.sol";
 import {ICertificateDispatcher} from "../interfaces/dispatchers/ICertificateDispatcher.sol";
 
@@ -56,6 +57,14 @@ contract Registration2 is Initializable, UUPSUpgradeable {
     mapping(bytes32 => address) public certificateDispatchers;
     mapping(bytes32 => address) public passportDispatchers;
     mapping(bytes32 => address) public passportVerifiers;
+
+    error InvalidNoirProof(bytes proof, bytes32[] pubSignals);
+    error InvalidCircomProof(Groth16VerifierHelper.ProofPoints proof, uint256[] pubSignals);
+
+    modifier onlyValidCertificateRoot(bytes32 certificatesRoot_) {
+        _requireValidCertificateRoot(certificatesRoot_);
+        _;
+    }
 
     constructor() {
         _disableInitializers();
@@ -128,18 +137,37 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         Passport memory passport_,
         Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual {
-        require(identityKey_ > 0, "Registration: identity can not be zero");
+        uint256 passportKey_ = _passportValidation(identityKey_, passport_);
 
-        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
-        address verifier_ = _getPassportVerifier(passport_.zkType);
+        _verifyCircomZKProof(
+            _getPassportVerifier(passport_.zkType),
+            certificatesRoot_,
+            passportKey_,
+            uint256(passport_.passportHash),
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
-        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
-        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
+        stateKeeper.addBond(
+            bytes32(passportKey_),
+            passport_.passportHash,
+            bytes32(identityKey_),
+            dgCommit_
+        );
+    }
 
-        _useSignature(passport_.signature);
-        _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(
-            verifier_,
+    function registerViaNoir(
+        bytes32 certificatesRoot_,
+        uint256 identityKey_,
+        uint256 dgCommit_,
+        Passport memory passport_,
+        bytes memory zkPoints_
+    ) external virtual {
+        uint256 passportKey_ = _passportValidation(identityKey_, passport_);
+
+        _verifyNoirZKProof(
+            _getPassportVerifier(passport_.zkType),
             certificatesRoot_,
             passportKey_,
             uint256(passport_.passportHash),
@@ -162,16 +190,9 @@ contract Registration2 is Initializable, UUPSUpgradeable {
      * @param passport_ the passport info
      */
     function revoke(uint256 identityKey_, Passport memory passport_) external virtual {
-        require(identityKey_ > 0, "Registration: identity can not be zero");
         require(passport_.dataType != P_NO_AA, "Registration: can't revoke without AA");
 
-        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
-
-        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
-        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
-
-        _useSignature(passport_.signature);
-        _authenticate(dispatcher_, challenge_, passport_);
+        uint256 passportKey_ = _passportValidation(identityKey_, passport_);
 
         stateKeeper.revokeBond(bytes32(passportKey_), bytes32(identityKey_));
     }
@@ -191,18 +212,32 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         Passport memory passport_,
         Groth16VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual {
-        require(identityKey_ > 0, "Registration: identity can not be zero");
+        uint256 passportKey_ = _passportValidation(identityKey_, passport_);
 
-        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
-        address verifier_ = _getPassportVerifier(passport_.zkType);
+        _verifyCircomZKProof(
+            _getPassportVerifier(passport_.zkType),
+            certificatesRoot_,
+            passportKey_,
+            uint256(passport_.passportHash),
+            identityKey_,
+            dgCommit_,
+            zkPoints_
+        );
 
-        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
-        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
+        stateKeeper.reissueBondIdentity(bytes32(passportKey_), bytes32(identityKey_), dgCommit_);
+    }
 
-        _useSignature(passport_.signature);
-        _authenticate(dispatcher_, challenge_, passport_);
-        _verifyZKProof(
-            verifier_,
+    function reissueIdentityViaNoir(
+        bytes32 certificatesRoot_,
+        uint256 identityKey_,
+        uint256 dgCommit_,
+        Passport memory passport_,
+        bytes memory zkPoints_
+    ) external virtual {
+        uint256 passportKey_ = _passportValidation(identityKey_, passport_);
+
+        _verifyNoirZKProof(
+            _getPassportVerifier(passport_.zkType),
             certificatesRoot_,
             passportKey_,
             uint256(passport_.passportHash),
@@ -306,7 +341,7 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         );
     }
 
-    function _verifyZKProof(
+    function _verifyCircomZKProof(
         address verifier_,
         bytes32 certificatesRoot_,
         uint256 passportKey_,
@@ -314,12 +349,7 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         uint256 identityKey_,
         uint256 dgCommit_,
         Groth16VerifierHelper.ProofPoints memory zkPoints_
-    ) internal view {
-        require(
-            PoseidonSMT(stateKeeper.certificatesSmt()).isRootValid(certificatesRoot_),
-            "Registration: invalid certificates root"
-        );
-
+    ) internal view onlyValidCertificateRoot(certificatesRoot_) {
         uint256[] memory pubSignals_ = new uint256[](_PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = passportKey_; // output
@@ -328,7 +358,33 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         pubSignals_[3] = identityKey_; // output
         pubSignals_[4] = uint256(certificatesRoot_); // public input
 
-        require(verifier_.verifyProof(zkPoints_, pubSignals_), "Registration: invalid zk proof");
+        require(
+            verifier_.verifyProof(zkPoints_, pubSignals_),
+            InvalidCircomProof(zkPoints_, pubSignals_)
+        );
+    }
+
+    function _verifyNoirZKProof(
+        address verifier_,
+        bytes32 certificatesRoot_,
+        uint256 passportKey_,
+        uint256 passportHash_,
+        uint256 identityKey_,
+        uint256 dgCommit_,
+        bytes memory zkPoints_
+    ) internal view onlyValidCertificateRoot(certificatesRoot_) {
+        bytes32[] memory pubSignals_ = new bytes32[](_PROOF_SIGNALS_COUNT);
+
+        pubSignals_[0] = bytes32(passportKey_); // output
+        pubSignals_[1] = bytes32(passportHash_); // output
+        pubSignals_[2] = bytes32(dgCommit_); // output
+        pubSignals_[3] = bytes32(identityKey_); // output
+        pubSignals_[4] = certificatesRoot_; // public input
+
+        require(
+            INoirVerifier(verifier_).verify(zkPoints_, pubSignals_),
+            InvalidNoirProof(zkPoints_, pubSignals_)
+        );
     }
 
     function _getCertificateDispatcher(
@@ -382,8 +438,31 @@ contract Registration2 is Initializable, UUPSUpgradeable {
         }
     }
 
+    function _passportValidation(
+        uint256 identityKey_,
+        Passport memory passport_
+    ) internal returns (uint256 passportKey_) {
+        require(identityKey_ > 0, "Registration: identity can not be zero");
+
+        IPassportDispatcher dispatcher_ = _getPassportDispatcher(passport_.dataType);
+        bytes memory challenge_ = dispatcher_.getPassportChallenge(identityKey_);
+        uint256 passportKey_ = dispatcher_.getPassportKey(passport_.publicKey);
+
+        _useSignature(passport_.signature);
+        _authenticate(dispatcher_, challenge_, passport_);
+
+        return passportKey_;
+    }
+
     function _onlyOwner() internal view {
         require(stateKeeper.isOwner(msg.sender), "Registration: not an owner");
+    }
+
+    function _requireValidCertificateRoot(bytes32 certificatesRoot_) internal view {
+        require(
+            PoseidonSMT(stateKeeper.certificatesSmt()).isRootValid(certificatesRoot_),
+            "Registration: invalid certificates root"
+        );
     }
 
     function _authorizeUpgrade(address) internal virtual override {
