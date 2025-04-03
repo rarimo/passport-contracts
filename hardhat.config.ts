@@ -80,7 +80,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       "rarimo-l2": "abc",
-      "rarimo-testnet": "abc",
+      "rarimo-beta": "abc",
     },
     customChains: [
       {
