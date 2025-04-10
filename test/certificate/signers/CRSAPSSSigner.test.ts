@@ -16,8 +16,8 @@ describe("CRSAPSSSHA2Signer", () => {
     signerSha2 = await CRSAPSSSigner.deploy();
     signerSha512 = await CRSAPSSSigner.deploy();
 
-    await signerSha2.__CRSAPSSSigner_init(65537, true);
-    await signerSha512.__CRSAPSSSigner_init(65537, false);
+    await signerSha2.__CRSAPSSSigner_init(65537, 0);
+    await signerSha512.__CRSAPSSSigner_init(65537, 1);
 
     await reverter.snapshot();
   });

@@ -13,7 +13,7 @@ import {
 
 export const deployCRSADispatcher = async (
   deployer: Deployer,
-  hashFunc: "SHA1" | "SHA2",
+  hashFunc: "SHA1" | "SHA2" | "SHA512",
   exponent: string,
   keyLength: string,
   keyPrefix: string,
@@ -70,7 +70,17 @@ const deployRSASigner = async (deployer: Deployer, hashfunc: string, exponent: s
     name: `CRSASigner ${hashfunc} ${exponent} ${keyLength}`,
   });
 
-  await signer.__CRSASigner_init(exponent, hashfunc === "SHA1");
+  let hf;
+
+  if (hashfunc === "SHA1") {
+    hf = 0;
+  } else if (hashfunc === "SHA2") {
+    hf = 1;
+  } else {
+    hf = 2;
+  }
+
+  await signer.__CRSASigner_init(exponent, hf);
 
   return signer;
 };
@@ -80,7 +90,15 @@ const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent
     name: `CRSAPSSSigner ${hashfunc} ${exponent} ${keyLength}`,
   });
 
-  await signer.__CRSAPSSSigner_init(exponent, hashfunc === "SHA2");
+  let hf;
+
+  if (hashfunc === "SHA2") {
+    hf = 0;
+  } else {
+    hf = 1;
+  }
+
+  await signer.__CRSAPSSSigner_init(exponent, hf);
 
   return signer;
 };
