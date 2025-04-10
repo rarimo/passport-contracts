@@ -4,6 +4,7 @@ import {
   CRSAPSSSigner__factory,
   CRSADispatcher__factory,
   CRSASigner__factory,
+  CECDSA256Signer__factory,
   CECDSA384Signer__factory,
   CECDSA512Signer__factory,
   CECDSADispatcher__factory,
@@ -45,8 +46,8 @@ export const deployCRSAPSSDispatcher = async (
 
 export const deployCECDSADispatcher = async (
   deployer: Deployer,
-  curve: "SECP384" | "brainpoolP384r1" | "brainpoolP512r1",
-  hashFunc: "SHA2" | "SHA384" | "SHA512",
+  curve: "SECP256" | "SECP384" | "brainpoolP384r1" | "brainpoolP512r1",
+  hashFunc: "SHA1" | "SHA2" | "SHA384" | "SHA512",
   keyLength: "64" | "96" | "128",
   keyPrefix: string,
 ) => {
@@ -54,6 +55,8 @@ export const deployCECDSADispatcher = async (
 
   if (curve == "brainpoolP512r1") {
     signer = await deployECDSA512Signer(deployer, keyLength);
+  } else if (curve == "SECP256") {
+    signer = await deployECDSA256Signer(deployer, keyLength);
   } else {
     signer = await deployECDSA384Signer(deployer, curve, hashFunc, keyLength);
   }
@@ -108,7 +111,30 @@ const deployECDSA384Signer = async (deployer: Deployer, curve: string, hashfunc:
     name: `CESDCA384Signer ${curve} ${hashfunc} ${keyLength}`,
   });
 
-  await signer.__CECDSA384Signer_init(curve === "SECP384", hashfunc === "SHA2");
+  let hf;
+  let curv;
+
+  if (curve === "SECP384") {
+    curv = 0;
+  } else {
+    curv = 1;
+  }
+
+  if (hashfunc === "SHA2") {
+    hf = 0;
+  } else {
+    hf = 1;
+  }
+
+  await signer.__CECDSA384Signer_init(curv, hf);
+
+  return signer;
+};
+
+const deployECDSA256Signer = async (deployer: Deployer, keyLength: string) => {
+  const signer = await deployer.deploy(CECDSA256Signer__factory, {
+    name: `CESDCA256Signer ${keyLength}`,
+  });
 
   return signer;
 };
