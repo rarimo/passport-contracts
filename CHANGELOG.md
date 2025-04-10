@@ -1,6 +1,18 @@
 # Changelog
 
+## [0.1.6]
+
+* Added new algorithms:
+    1. **Certificate dispatchers**
+
+    ```solidity
+    C_RSA_SHA2_3072 = keccak256("C_RSA_3072");
+    C_RSA_SHA512_4096 = keccak256("C_RSA_SHA512_4096");
+    C_ECDSA_SECP256R1_SHA1_256 = keccak256("C_ECDSA_SECP256R1_SHA1_256");
+    ```
+
 ## [0.1.5]
+
 
 * Upgraded `StateKeeper` and `Registration2` to be Ownable + TSS. Ownable changes do not require Merkle Proof checks.
 * Added new algorithms:
@@ -12,7 +24,6 @@
     ```
 
     2. **Passport verifiers**
-    
 
     ```solidity
     Z_PER_PASSPORT_2_256_3_6_336_264_1_2448_3_256 = keccak256("Z_PER_PASSPORT_2_256_3_6_336_264_1_2448_3_256");
