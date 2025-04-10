@@ -16,6 +16,7 @@ export const C_ECDSA_SECP384R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_SECP38
 export const C_ECDSA_SECP384R1_SHA384_512 = keccak256(["string"], ["C_ECDSA_SECP384R1_SHA384_512"]);
 export const C_ECDSA_BRAINPOOLP384R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA2_512"]);
 export const C_ECDSA_BRAINPOOLP384R1_SHA384_512 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA384_512"]);
+export const C_ECDSA_BRAINPOOLP384R1_SHA384_768 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA384_768"]);
 export const C_ECDSA_BRAINPOOLP512R1_SHA512_1024 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP512R1_SHA512_1024"]);
 
 // -------------------------- PASSPORT --------------------------

@@ -70,6 +70,7 @@ import {
   C_ECDSA_SECP384R1_SHA384_512,
   C_ECDSA_BRAINPOOLP384R1_SHA2_512,
   C_ECDSA_BRAINPOOLP384R1_SHA384_512,
+  C_ECDSA_BRAINPOOLP384R1_SHA384_768,
   C_ECDSA_BRAINPOOLP512R1_SHA512_1024,
   P_ECDSA_SHA1_2704,
   P_NO_AA,
@@ -172,6 +173,10 @@ export = async (deployer: Deployer) => {
   const cEcdsaBrainpoolP384r1512Sha384Dispatcher = await deployer.deployed(
     CECDSADispatcher__factory,
     "CECDSADispatcher brainpoolP384r1 SHA384 64",
+  );
+  const cEcdsaBrainpoolP384r1768Sha384Dispatcher = await deployer.deployed(
+    CECDSADispatcher__factory,
+    "CECDSADispatcher brainpoolP384r1 SHA384 96",
   );
   const cEcdsaBrainpoolP512r11024Sha512Dispatcher = await deployer.deployed(
     CECDSADispatcher__factory,
@@ -343,6 +348,10 @@ export = async (deployer: Deployer) => {
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_BRAINPOOLP384R1_SHA384_512,
     await cEcdsaBrainpoolP384r1512Sha384Dispatcher.getAddress(),
+  );
+  await registration.mockAddCertificateDispatcher(
+    C_ECDSA_BRAINPOOLP384R1_SHA384_768,
+    await cEcdsaBrainpoolP384r1768Sha384Dispatcher.getAddress(),
   );
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_BRAINPOOLP512R1_SHA512_1024,
