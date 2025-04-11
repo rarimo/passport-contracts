@@ -213,3 +213,14 @@
     * The `chainName` field is used to add support for contract upgradability and other actions via TSS.
     * It was also added due to current conventions in the existing system.
 * Cleaned up tests.
+
+### Added
+
+- Add Noir passport verifiers: 
+    - Z_NOIR_PASSPORT_1_256_3_4_600_248_1_1496_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_248_336_1_2432_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_336_248_1_2432_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008, 
+    - Z_NOIR_PASSPORT_10_256_3_3_576_248_1_1184_5_264, 
+    - Z_NOIR_PASSPORT_20_256_3_3_336_224_NA, 
+    - Z_NOIR_PASSPORT_21_256_3_3_576_232_NA.
