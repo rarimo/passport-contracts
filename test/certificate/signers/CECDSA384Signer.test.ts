@@ -14,7 +14,7 @@ describe("CECDSA384Signer", () => {
 
     signerSha2 = await CECDSA384Signer.deploy();
 
-    await signerSha2.__CECDSA384Signer_init(true, true);
+    await signerSha2.__CECDSA384Signer_init(0, 0);
 
     await reverter.snapshot();
   });

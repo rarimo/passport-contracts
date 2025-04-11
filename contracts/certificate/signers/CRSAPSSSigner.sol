@@ -12,12 +12,17 @@ import {SHA512} from "../../utils/SHA512.sol";
 contract CRSAPSSSigner is ICertificateSigner, Initializable {
     using RSASSAPSS for *;
 
-    uint256 public exponent; // RSAPSS exponent
-    bool public isSha2; // hash function switcher, true - sha2, false - sha512
+    enum HF {
+        sha256,
+        sha512
+    }
 
-    function __CRSAPSSSigner_init(uint256 exponent_, bool isSha2_) external initializer {
+    uint256 public exponent; // RSAPSS exponent
+    HF public hashFunction; // hash function switcher
+
+    function __CRSAPSSSigner_init(uint256 exponent_, HF hashFunction_) external initializer {
         exponent = exponent_;
-        isSha2 = isSha2_;
+        hashFunction = hashFunction_;
     }
 
     /**
@@ -30,9 +35,9 @@ contract CRSAPSSSigner is ICertificateSigner, Initializable {
     ) external view override returns (bool) {
         RSASSAPSS.Parameters memory params_;
 
-        if (isSha2) {
+        if (hashFunction == HF.sha256) {
             params_ = RSASSAPSS.Parameters({hashLength: 32, saltLength: 32, hasher: _sha2});
-        } else {
+        } else if (hashFunction == HF.sha512) {
             params_ = RSASSAPSS.Parameters({
                 hashLength: 64,
                 saltLength: 64,

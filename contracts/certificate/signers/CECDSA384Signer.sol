@@ -13,6 +13,16 @@ contract CECDSA384Signer is ICertificateSigner, Initializable {
     using ECDSA384 for *;
     using SHA384 for *;
 
+    enum Curve {
+        secp384r1,
+        brainpoolP384r1
+    }
+
+    enum HF {
+        sha256,
+        sha384
+    }
+
     ECDSA384.Parameters internal _secp384r1CurveParams =
         ECDSA384.Parameters({
             a: hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000fffffffc",
@@ -35,12 +45,12 @@ contract CECDSA384Signer is ICertificateSigner, Initializable {
             lowSmax: hex"465c8f41519c369407aeb7bf287320ef8a97b884f6aa2b598f8b3736560212d3e79d5b57b5bfe1881dc41901748232b2"
         });
 
-    bool public isSecp;
-    bool public isSha2;
+    Curve public curve;
+    HF public hashFunction;
 
-    function __CECDSA384Signer_init(bool isSecp_, bool isSha2_) external initializer {
-        isSecp = isSecp_;
-        isSha2 = isSha2_;
+    function __CECDSA384Signer_init(Curve curve_, HF hashFunction_) external initializer {
+        curve = curve_;
+        hashFunction = hashFunction_;
     }
 
     function verifyICAOSignature(
@@ -51,15 +61,15 @@ contract CECDSA384Signer is ICertificateSigner, Initializable {
         ECDSA384.Parameters memory curveParams_;
         function(bytes memory) internal view returns (bytes memory) hasher_;
 
-        if (isSecp) {
+        if (curve == Curve.secp384r1) {
             curveParams_ = _secp384r1CurveParams;
-        } else {
+        } else if (curve == Curve.brainpoolP384r1) {
             curveParams_ = _brainpoolP384r1CurveParams;
         }
 
-        if (isSha2) {
+        if (hashFunction == HF.sha256) {
             hasher_ = _sha2;
-        } else {
+        } else if (hashFunction == HF.sha384) {
             hasher_ = SHA384.sha384;
         }
 

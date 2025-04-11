@@ -22,7 +22,7 @@ describe("CECDSADispatcher", () => {
     const signerSha2 = await CECDSA384Signer.deploy();
     dispatcher = await CECDSADispatcher.deploy();
 
-    await signerSha2.__CECDSA384Signer_init(true, true);
+    await signerSha2.__CECDSA384Signer_init(0, 0);
     await dispatcher.__CECDSADispatcher_init(await signerSha2.getAddress(), 64, "0x0103420004");
 
     await reverter.snapshot();
