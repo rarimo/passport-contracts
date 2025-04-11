@@ -73,7 +73,7 @@ describe("Registration2", () => {
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
     cRsaDispatcher = await CRSADispatcher.deploy();
 
-    await rsaSha2Signer.__CRSASigner_init(65537, false);
+    await rsaSha2Signer.__CRSASigner_init(65537, 1);
     await cRsaDispatcher.__CRSADispatcher_init(await rsaSha2Signer.getAddress(), 512, x509CertificateKeyCheckPrefix);
   };
 

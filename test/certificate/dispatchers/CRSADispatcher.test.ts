@@ -21,7 +21,7 @@ describe("CRSADispatcher", () => {
     const signerSha2 = await CRSAPSSSigner.deploy();
     dispatcher = await CRSADispatcher.deploy();
 
-    await signerSha2.__CRSAPSSSigner_init(65537, true);
+    await signerSha2.__CRSAPSSSigner_init(65537, 0);
     await dispatcher.__CRSADispatcher_init(await signerSha2.getAddress(), 256, "0x0282010100");
 
     await reverter.snapshot();
