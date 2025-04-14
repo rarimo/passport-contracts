@@ -1,7 +1,13 @@
 # Changelog
 
-## [0.1.6]
+## [0.2.0]
 
+* Removed TSS integration from all the contracts.
+* Upgraded OZ dependency to `0.5.2`.
+* Upgraded Solarity dependency to `3.0.0`.
+* The minimal Solidity compiler version is now `0.8.21`.
+* Removed the legacy `Registration` contract with its verifiers.
+* Added `Registration2` support for Noir-based verifiers.
 * Added new algorithms:
     1. **Certificate dispatchers**
 
@@ -11,8 +17,19 @@
     C_ECDSA_SECP256R1_SHA1_256 = keccak256("C_ECDSA_SECP256R1_SHA1_256");
     ```
 
-## [0.1.5]
+    2. **Passport verifiers**
 
+    ```solidity
+    Z_NOIR_PASSPORT_1_256_3_4_600_248_1_1496_3_256 = keccak256("Z_NOIR_PASSPORT_1_256_3_4_600_248_1_1496_3_256");
+    Z_NOIR_PASSPORT_2_256_3_6_248_336_1_2432_3_256 = keccak256("Z_NOIR_PASSPORT_2_256_3_6_248_336_1_2432_3_256");
+    Z_NOIR_PASSPORT_2_256_3_6_336_248_1_2432_3_256 = keccak256("Z_NOIR_PASSPORT_2_256_3_6_336_248_1_2432_3_256");
+    Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008 = keccak256("Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008");
+    Z_NOIR_PASSPORT_10_256_3_3_576_248_1_1184_5_264 = keccak256("Z_NOIR_PASSPORT_10_256_3_3_576_248_1_1184_5_264");
+    Z_NOIR_PASSPORT_20_256_3_3_336_224_NA = keccak256("Z_NOIR_PASSPORT_20_256_3_3_336_224_NA");
+    Z_NOIR_PASSPORT_21_256_3_3_576_232_NA = keccak256("Z_NOIR_PASSPORT_21_256_3_3_576_232_NA");
+    ```
+
+## [0.1.5]
 
 * Upgraded `StateKeeper` and `Registration2` to be Ownable + TSS. Ownable changes do not require Merkle Proof checks.
 * Added new algorithms:
@@ -224,3 +241,14 @@
     * The `chainName` field is used to add support for contract upgradability and other actions via TSS.
     * It was also added due to current conventions in the existing system.
 * Cleaned up tests.
+
+### Added
+
+- Add Noir passport verifiers: 
+    - Z_NOIR_PASSPORT_1_256_3_4_600_248_1_1496_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_248_336_1_2432_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_336_248_1_2432_3_256, 
+    - Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008, 
+    - Z_NOIR_PASSPORT_10_256_3_3_576_248_1_1184_5_264, 
+    - Z_NOIR_PASSPORT_20_256_3_3_336_224_NA, 
+    - Z_NOIR_PASSPORT_21_256_3_3_576_232_NA.
