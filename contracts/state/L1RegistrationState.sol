@@ -49,6 +49,8 @@ contract L1RegistrationState is Initializable, AMultiOwnable, UUPSUpgradeable {
             latestRoot = root_;
             latestRootTimestamp = timestamp_;
         }
+
+        emit RootSet(root_);
     }
 
     function isRootLatest(bytes32 root_) public view virtual returns (bool) {
