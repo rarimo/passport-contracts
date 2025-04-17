@@ -318,7 +318,7 @@ library LibBytes {
                     let first := mload(source)
 
                     // Copy whole words back to front
-                    // We use a signed comparisson here to allow dEnd to become
+                    // We use a signed comparison here to allow dEnd to become
                     // negative (happens when source and dest < 32). Valid
                     // addresses in local memory will never be larger than
                     // 2**255, so they can be safely re-interpreted as signed.
