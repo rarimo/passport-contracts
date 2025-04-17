@@ -209,6 +209,10 @@ describe("Registration2", () => {
       treeSize,
     );
 
+    const messageServiceMock = await ethers.deployContract("MessageServiceMock");
+    await registrationSmt.__SetL1TransitionRootData_init(await messageServiceMock.getAddress(), ethers.ZeroAddress);
+    await certificatesSmt.__SetL1TransitionRootData_init(await messageServiceMock.getAddress(), ethers.ZeroAddress);
+
     await stateKeeper.__StateKeeper_init(
       OWNER.address,
       await registrationSmt.getAddress(),
