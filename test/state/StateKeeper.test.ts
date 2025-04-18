@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { Poseidon } from "@iden3/js-crypto";
 
-import { StateKeeperMock, PoseidonSMTMock, EvidenceDB } from "@ethers-v6";
+import { StateKeeperMock, PoseidonSMTMock, EvidenceDB, RegistrationSMTMock, RegistrationSMT } from "@ethers-v6";
 
 import { Reverter, getPoseidon } from "@/test/helpers/";
 
@@ -23,7 +23,7 @@ describe("StateKeeper", () => {
   let ADDRESS1: SignerWithAddress;
   let ADDRESS2: SignerWithAddress;
 
-  let registrationSmt: PoseidonSMTMock;
+  let registrationSmt: RegistrationSMT;
   let certificatesSmt: PoseidonSMTMock;
   let stateKeeper: StateKeeperMock;
 
@@ -45,9 +45,15 @@ describe("StateKeeper", () => {
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
+    const RegistrationSMT = await ethers.getContractFactory("RegistrationSMTMock", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
-    registrationSmt = await PoseidonSMT.deploy();
+    registrationSmt = await RegistrationSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
     stateKeeper = await StateKeeper.deploy();
 
@@ -55,7 +61,7 @@ describe("StateKeeper", () => {
     stateKeeper = stateKeeper.attach(await proxy.getAddress()) as StateKeeperMock;
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
-    registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
+    registrationSmt = registrationSmt.attach(await proxy.getAddress()) as RegistrationSMTMock;
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
@@ -85,6 +91,9 @@ describe("StateKeeper", () => {
       await evidenceRegistry.getAddress(),
       treeSize,
     );
+
+    const messageServiceMock = await ethers.deployContract("MessageServiceMock");
+    await registrationSmt.__SetL1TransitionRootData_init(await messageServiceMock.getAddress(), ethers.ZeroAddress);
 
     await stateKeeper.__StateKeeper_init(
       ADDRESS1.address,

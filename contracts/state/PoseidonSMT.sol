@@ -38,6 +38,11 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _commitRoot();
     }
 
+    modifier onlyOwner() {
+        _onlyOwner();
+        _;
+    }
+
     constructor() {
         _disableInitializers();
     }
@@ -126,7 +131,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
 
-    function _commitRoot() internal {
+    function _commitRoot() internal virtual {
         bytes32 root_ = _bytes32Tree.getRoot();
 
         IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
@@ -159,9 +164,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         require(StateKeeper(stateKeeper).isOwner(msg.sender), "PoseidonSMT: not an owner");
     }
 
-    function _authorizeUpgrade(address) internal virtual override {
-        _onlyOwner();
-    }
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function implementation() external view returns (address) {
         return ERC1967Utils.getImplementation();

@@ -10,7 +10,13 @@ import { createDG1Data } from "@/test/helpers/dg1";
 import { getPoseidon, Reverter } from "@/test/helpers";
 import { RegistrationSimpleOperationId } from "@/test/helpers/constants";
 
-import { PoseidonSMTMock, RegisterIdentityLight256Verifier, RegistrationSimple, StateKeeperMock } from "@ethers-v6";
+import {
+  PoseidonSMTMock,
+  RegisterIdentityLight256Verifier,
+  RegistrationSimple,
+  RegistrationSMTMock,
+  StateKeeperMock,
+} from "@ethers-v6";
 
 import {
   PrivateRegisterIdentityLight256Groth16,
@@ -35,7 +41,7 @@ describe("RegistrationSimple", () => {
 
   let registrationSimple: RegistrationSimple;
 
-  let registrationSmt: PoseidonSMTMock;
+  let registrationSmt: RegistrationSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let stateKeeper: StateKeeperMock;
 
@@ -59,14 +65,19 @@ describe("RegistrationSimple", () => {
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
-
+    const RegistrationSMT = await ethers.getContractFactory("RegistrationSMTMock", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
     registerLightVerifier = await ethers.deployContract("RegisterIdentityLight256Verifier");
 
     registrationSimple = await ethers.deployContract("RegistrationSimple");
 
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
-    registrationSmt = await PoseidonSMT.deploy();
+    registrationSmt = await RegistrationSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
     stateKeeper = await StateKeeper.deploy();
 
@@ -74,7 +85,7 @@ describe("RegistrationSimple", () => {
     stateKeeper = await ethers.getContractAt("StateKeeperMock", await proxy.getAddress());
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
-    registrationSmt = await ethers.getContractAt("PoseidonSMTMock", await proxy.getAddress());
+    registrationSmt = await ethers.getContractAt("RegistrationSMTMock", await proxy.getAddress());
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = await ethers.getContractAt("PoseidonSMTMock", await proxy.getAddress());
@@ -107,6 +118,9 @@ describe("RegistrationSimple", () => {
       await evidenceRegistry.getAddress(),
       treeSize,
     );
+
+    const messageServiceMock = await ethers.deployContract("MessageServiceMock");
+    await registrationSmt.__SetL1TransitionRootData_init(await messageServiceMock.getAddress(), ethers.ZeroAddress);
 
     await stateKeeper.__StateKeeper_init(
       OWNER.address,

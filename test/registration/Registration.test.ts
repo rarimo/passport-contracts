@@ -16,6 +16,7 @@ import {
   PoseidonSMTMock,
   Registration2Mock,
   Registration2,
+  RegistrationSMTMock,
 } from "@ethers-v6";
 import { Groth16VerifierHelper } from "@/generated-types/ethers/contracts/registration/Registration2";
 
@@ -57,7 +58,7 @@ describe("Registration2", () => {
   let pEcdsaSha1Dispatcher: PECDSASHA1Dispatcher;
   let cRsaDispatcher: CRSADispatcher;
 
-  let registrationSmt: PoseidonSMTMock;
+  let registrationSmt: RegistrationSMTMock;
   let certificatesSmt: PoseidonSMTMock;
   let registration: Registration2Mock;
   let stateKeeper: StateKeeperMock;
@@ -158,10 +159,16 @@ describe("Registration2", () => {
         PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
       },
     });
+    const RegistrationSMT = await ethers.getContractFactory("RegistrationSMTMock", {
+      libraries: {
+        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+      },
+    });
     const Registration = await ethers.getContractFactory("Registration2");
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
 
-    registrationSmt = await PoseidonSMT.deploy();
+    registrationSmt = await RegistrationSMT.deploy();
     certificatesSmt = await PoseidonSMT.deploy();
     registration = (await Registration.deploy()) as any;
     stateKeeper = await StateKeeper.deploy();
@@ -175,7 +182,7 @@ describe("Registration2", () => {
     stateKeeper = stateKeeper.attach(await proxy.getAddress()) as StateKeeperMock;
 
     proxy = await Proxy.deploy(await registrationSmt.getAddress(), "0x");
-    registrationSmt = registrationSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
+    registrationSmt = registrationSmt.attach(await proxy.getAddress()) as RegistrationSMTMock;
 
     proxy = await Proxy.deploy(await certificatesSmt.getAddress(), "0x");
     certificatesSmt = certificatesSmt.attach(await proxy.getAddress()) as PoseidonSMTMock;
@@ -208,6 +215,9 @@ describe("Registration2", () => {
       await evidenceRegistry.getAddress(),
       treeSize,
     );
+
+    const messageServiceMock = await ethers.deployContract("MessageServiceMock");
+    await registrationSmt.__SetL1TransitionRootData_init(await messageServiceMock.getAddress(), ethers.ZeroAddress);
 
     await stateKeeper.__StateKeeper_init(
       OWNER.address,
