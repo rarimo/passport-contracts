@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1]
+
+* Added `L1RegistrationState` and `RegistrationSMT` contracts for automatic root transition from L2 Rarimo to L1.
+
 ## [0.2.0]
 
 * Removed TSS integration from all the contracts.
@@ -224,31 +228,3 @@
 * Fixed all the tests except ZK.
 * Fixed migration scripts. Added config resolution based on deployment chain.
 * Updated natspec.
-
-## [Unreleased]
-
-* Made the `PoseidonSMT` and `Registration` contracts upgradable via TSS.
-    * Copied `UUPSSignableUpgradeable`  from the `@rarimo/evm-bridge-contracts` package to the `Registration` and `PoseidonSMT` contracts to support upgradability via TSS.
-    * Modified `UUPSSignableUpgradeable` to work with encoded (signature + MTP), not just signature
-    * Rewrote tests and deployment scripts to deploy `ERC1967Proxy` before initializing the `Registration` and `PoseidonSMT` contracts.
-    * Added the `_disableInitializers()` function in the constructors of the `Registration` and `PoseidonSMT` contracts.
-* Added the ability for the `PoseidonSMT` contract to handle multiple registrations.
-    * Restricted adding or removing registrations to the TSS.
-* Replaced `OwnableUpgradeable` functionality in the registration contract with the functionality of TSS, so dispatchers can be added or removed only via signatures.
-* Added the ability to set `methodId` as the first key of the `_nonces` and `_usedNonces` fields to separate them for different methods within the contract.
-* Added a `nonces` mapping in the `TSSSigner` contract to have the functionality of getting them for calling specific methods within the contract, for example, for implementation upgrades via TSS.
-* Added the ability to set `chainName` in the `TSSSigner` contract.
-    * The `chainName` field is used to add support for contract upgradability and other actions via TSS.
-    * It was also added due to current conventions in the existing system.
-* Cleaned up tests.
-
-### Added
-
-- Add Noir passport verifiers: 
-    - Z_NOIR_PASSPORT_1_256_3_4_600_248_1_1496_3_256, 
-    - Z_NOIR_PASSPORT_2_256_3_6_248_336_1_2432_3_256, 
-    - Z_NOIR_PASSPORT_2_256_3_6_336_248_1_2432_3_256, 
-    - Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008, 
-    - Z_NOIR_PASSPORT_10_256_3_3_576_248_1_1184_5_264, 
-    - Z_NOIR_PASSPORT_20_256_3_3_336_224_NA, 
-    - Z_NOIR_PASSPORT_21_256_3_3_576_232_NA.
