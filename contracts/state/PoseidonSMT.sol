@@ -10,10 +10,8 @@ import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/Spar
 import {IEvidenceRegistry} from "@rarimo/evidence-registry/interfaces/IEvidenceRegistry.sol";
 
 import {StateKeeper} from "./StateKeeper.sol";
-import {L1RegistrationState} from "./L1RegistrationState.sol";
 
 import {PoseidonUnit2L, PoseidonUnit3L} from "../libraries/Poseidon.sol";
-import {IMessageService} from "../interfaces/rollup/IMessageService.sol";
 
 contract PoseidonSMT is Initializable, UUPSUpgradeable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
@@ -27,9 +25,6 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
 
     SparseMerkleTree.Bytes32SMT internal _bytes32Tree;
 
-    address public l2MessageService;
-    address public l1RegistrationState;
-
     event RootUpdated(bytes32 root);
 
     modifier onlyStateKeeper() {
@@ -41,6 +36,11 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _saveRoot();
         _;
         _commitRoot();
+    }
+
+    modifier onlyOwner() {
+        _onlyOwner();
+        _;
     }
 
     constructor() {
@@ -57,14 +57,6 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
 
         stateKeeper = stateKeeper_;
         evidenceRegistry = evidenceRegistry_;
-    }
-
-    function __SetL1TransitionRootData_init(
-        address l2MessageService_,
-        address l1RegistrationState_
-    ) external reinitializer(2) {
-        l2MessageService = l2MessageService_;
-        l1RegistrationState = l1RegistrationState_;
     }
 
     /**
@@ -139,19 +131,10 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         _roots[_bytes32Tree.getRoot()] = block.timestamp;
     }
 
-    function _commitRoot() internal {
+    function _commitRoot() internal virtual {
         bytes32 root_ = _bytes32Tree.getRoot();
 
         IEvidenceRegistry(evidenceRegistry).addStatement(root_, bytes32(block.timestamp));
-        IMessageService(l2MessageService).sendMessage(
-            l1RegistrationState,
-            0,
-            abi.encodeWithSelector(
-                L1RegistrationState.setRegistrationRoot.selector,
-                root_,
-                block.timestamp
-            )
-        );
 
         emit RootUpdated(root_);
     }
@@ -181,9 +164,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
         require(StateKeeper(stateKeeper).isOwner(msg.sender), "PoseidonSMT: not an owner");
     }
 
-    function _authorizeUpgrade(address) internal virtual override {
-        _onlyOwner();
-    }
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function implementation() external view returns (address) {
         return ERC1967Utils.getImplementation();

@@ -53,6 +53,10 @@ contract L1RegistrationState is Initializable, AMultiOwnable, UUPSUpgradeable {
         emit RootSet(root_);
     }
 
+    function setRarimoRollup(address rarimoRollup_) external onlyOwner {
+        rarimoRollup = rarimoRollup_;
+    }
+
     function isRootLatest(bytes32 root_) public view virtual returns (bool) {
         return latestRoot == root_;
     }
