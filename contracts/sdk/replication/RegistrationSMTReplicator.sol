@@ -3,7 +3,6 @@ pragma solidity ^0.8.22;
 
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
 import {AMultiOwnable} from "@solarity/solidity-lib/access/AMultiOwnable.sol";
@@ -26,8 +25,7 @@ contract RegistrationSMTReplicator is AMultiOwnable, UUPSUpgradeable {
 
     function transitionRoot(
         bytes32 newRoot_,
-        uint256 transitionTimestamp_,
-        bytes calldata proof_
+        uint256 transitionTimestamp_
     ) external virtual onlyOwner {
         if (_roots[newRoot_] != 0) {
             return;
@@ -60,6 +58,7 @@ contract RegistrationSMTReplicator is AMultiOwnable, UUPSUpgradeable {
         emit RootTransitioned(newRoot_, transitionTimestamp_);
     }
 
+    // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function implementation() external view returns (address) {
