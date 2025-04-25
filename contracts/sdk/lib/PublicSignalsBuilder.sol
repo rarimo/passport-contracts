@@ -23,7 +23,7 @@ library PublicSignalsBuilder {
     uint256 public constant ZERO_DATE = 0x303030303030;
 
     // bytes32(uint256(keccak256("rarimo.contract.AQueryProofExecutor")) - 1)
-    bytes32 public constant A_BUILDER_STORAGE =
+    bytes32 private constant A_BUILDER_STORAGE =
         0x3844f6f56a171c93056bdfb3ce2525778ef493f53ef90b0283983867a69d2128;
 
     error InvalidDate(uint256 parsedTimestamp, uint256 currentTimestamp);
@@ -327,10 +327,9 @@ library PublicSignalsBuilder {
 
     /**
      * @notice Retrieves the AQueryProofExecutor.ABuilderStorage storage reference.
-     * @return $ The AQueryProofExecutor.ABuilderStorage storage reference.
      */
     function getABuilderStorage()
-        internal
+        private
         pure
         returns (AQueryProofExecutor.ABuilderStorage storage $)
     {

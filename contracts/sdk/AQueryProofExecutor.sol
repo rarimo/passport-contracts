@@ -17,6 +17,10 @@ abstract contract AQueryProofExecutor is Initializable {
     using Strings for uint256;
     using PublicSignalsBuilder for uint256;
 
+    // bytes32(uint256(keccak256("rarimo.contract.AQueryProofExecutor")) - 1)
+    bytes32 private constant A_BUILDER_STORAGE =
+        0x3844f6f56a171c93056bdfb3ce2525778ef493f53ef90b0283983867a69d2128;
+
     struct ABuilderStorage {
         address registrationSMT;
         address verifier;
@@ -178,7 +182,12 @@ abstract contract AQueryProofExecutor is Initializable {
         return abi.decode(returnData_, (bool));
     }
 
+    /**
+     * @notice Retrieves the ABuilderStorage storage reference.
+     */
     function _getABuilderStorage() private pure returns (ABuilderStorage storage $) {
-        return PublicSignalsBuilder.getABuilderStorage();
+        assembly {
+            $.slot := A_BUILDER_STORAGE
+        }
     }
 }
