@@ -154,7 +154,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
 
         originalPubSignals[13] = currentDate_;
 
-        PublicSignalsBuilder.withCurrentDate(builder, currentDate_);
+        PublicSignalsBuilder.withCurrentDate(builder, currentDate_, 1 days);
 
         uint256[] memory libPubSignals = PublicSignalsBuilder.buildAsUintArray(builder);
         _compareArrays(originalPubSignals, libPubSignals);

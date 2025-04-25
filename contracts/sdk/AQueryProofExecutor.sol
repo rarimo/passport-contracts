@@ -101,7 +101,6 @@ abstract contract AQueryProofExecutor is Initializable {
         _beforeVerify(registrationRoot_, currentDate_, userPayload_);
 
         uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
-        builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
         uint256[] memory publicSignals_ = PublicSignalsBuilder.buildAsUintArray(builder_);
@@ -129,7 +128,6 @@ abstract contract AQueryProofExecutor is Initializable {
         _beforeVerify(registrationRoot_, currentDate_, userPayload_);
 
         uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
-        builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
         bytes32[] memory publicSignals_ = PublicSignalsBuilder.buildAsBytesArray(builder_);

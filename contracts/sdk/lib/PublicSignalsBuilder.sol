@@ -178,11 +178,16 @@ library PublicSignalsBuilder {
      * @dev Current date in `yyMMdd` format (encoded).
      * @param dataPointer_ Pointer to the public signals array in memory.
      * @param currentDate_ The current date value (encoded).
+     * @param timeBound_ The time bound value (in seconds) for date validation.
      */
-    function withCurrentDate(uint256 dataPointer_, uint256 currentDate_) internal view {
+    function withCurrentDate(
+        uint256 dataPointer_,
+        uint256 currentDate_,
+        uint256 timeBound_
+    ) internal view {
         uint256 parsedTimestamp_ = Date2Time.timestampFromDate(currentDate_);
 
-        if (!validateDate(parsedTimestamp_)) {
+        if (!validateDate(parsedTimestamp_, timeBound_)) {
             revert InvalidDate(parsedTimestamp_, block.timestamp);
         }
 
@@ -314,15 +319,19 @@ library PublicSignalsBuilder {
     }
 
     /**
-     * @notice Validates the date by checking if it is within a 1-day range of the current block timestamp.
+     * @notice Validates the date by checking if it is within a timeBound_ range of the current block timestamp.
      * @param parsedTimestamp_ The parsed timestamp value.
+     * @param timeBound_ The time bound value (in seconds).
      * @return true if the date is valid, false otherwise.
      */
-    function validateDate(uint256 parsedTimestamp_) internal view returns (bool) {
+    function validateDate(
+        uint256 parsedTimestamp_,
+        uint256 timeBound_
+    ) internal view returns (bool) {
         // +- 1 day validity
         return
-            parsedTimestamp_ > block.timestamp - 1 days &&
-            parsedTimestamp_ < block.timestamp + 1 days;
+            parsedTimestamp_ > block.timestamp - timeBound_ &&
+            parsedTimestamp_ < block.timestamp + timeBound_;
     }
 
     /**
