@@ -145,6 +145,14 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         return _getABuilderStorage().registrationSMT;
     }
 
+    function getVerifier() public view returns (address) {
+        return _getABuilderStorage().verifier;
+    }
+
+    function _setVerifier(address verifier_) internal {
+        _getABuilderStorage().verifier = verifier_;
+    }
+
     function _verifyCircomProof(
         ProofPoints memory zkPoints_,
         uint256[] memory pubSignals_
