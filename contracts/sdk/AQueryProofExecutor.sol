@@ -9,11 +9,11 @@ import {PublicSignalsBuilder} from "./lib/PublicSignalsBuilder.sol";
 import {INoirVerifier} from "../interfaces/verifiers/INoirVerifier.sol";
 
 /**
- * @title Abstract Query Proof Verifier Builder
+ * @title Abstract Query Proof Executor
  * @notice An abstract contract providing a framework for verifying ZK proofs related to user queries,
  * supporting both Circom (Groth16) and Noir systems.
  */
-abstract contract AQueryProofVerifierBuilder is Initializable {
+abstract contract AQueryProofExecutor is Initializable {
     using Strings for uint256;
     using PublicSignalsBuilder for uint256;
 

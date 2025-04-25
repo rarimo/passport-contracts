@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {AQueryProofVerifierBuilder} from "../AQueryProofVerifierBuilder.sol";
+import {AQueryProofExecutor} from "../AQueryProofExecutor.sol";
 
 import {IPoseidonSMT} from "../../interfaces/state/IPoseidonSMT.sol";
 

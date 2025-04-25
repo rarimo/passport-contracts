@@ -2,9 +2,9 @@
 pragma solidity ^0.8.22;
 
 import {PublicSignalsBuilder} from "../../sdk/lib/PublicSignalsBuilder.sol";
-import {AQueryProofVerifierBuilder} from "../../sdk/AQueryProofVerifierBuilder.sol";
+import {AQueryProofExecutor} from "../../sdk/AQueryProofExecutor.sol";
 
-contract ProofBuilderTest is AQueryProofVerifierBuilder {
+contract ProofBuilderTest is AQueryProofExecutor {
     uint256 private constant PROOF_SIGNALS_COUNT = PublicSignalsBuilder.PROOF_SIGNALS_COUNT;
     uint256 private constant ZERO_DATE = PublicSignalsBuilder.ZERO_DATE;
 
