@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.0]
+
+* Added `RegistrationSMTReplicator` contract and `AQueryProofVerifierBuilder` abstract contract to accommodate integration 
+with Rarime. 
+
 ## [0.2.1]
 
 * Added `L1RegistrationState` and `RegistrationSMT` contracts for automatic root transition from L2 Rarimo to L1.
