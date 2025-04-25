@@ -16,7 +16,11 @@ contract ProofBuilderTest is AQueryProofVerifierBuilder {
         __AQueryProofVerifierBuilder_init(registrationSMT_, address(0));
     }
 
-    function _buildPublicSignals(bytes memory userPayload_) public override returns (uint256) {
+    function _buildPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public override returns (uint256) {
         return 0;
     }
 

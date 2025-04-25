@@ -51,7 +51,11 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
      * @param userPayload_ Encoded application-specific data passed from the external `execute` or `executeNoir` call.
      */
     // solhint-disable-next-line no-empty-blocks
-    function _beforeVerify(bytes memory userPayload_) public virtual {}
+    function _beforeVerify(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public virtual {}
 
     /**
      * @notice Hook executed after a `successful` ZK proof verification.
@@ -60,7 +64,11 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
      * @param userPayload_ Encoded application-specific data passed from the external `execute` or `executeNoir` call.
      */
     // solhint-disable-next-line no-empty-blocks
-    function _afterVerify(bytes memory userPayload_) public virtual {}
+    function _afterVerify(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public virtual {}
 
     /**
      * @notice Abstract function responsible for constructing the public signals array for the ZK proof.
@@ -70,6 +78,8 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
      * @return dataPointer_ A `uint256` representing the memory pointer to the constructed public signals array.
      */
     function _buildPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
         bytes memory userPayload_
     ) public virtual returns (uint256 dataPointer_);
 
@@ -86,9 +96,9 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         bytes memory userPayload_,
         ProofPoints memory zkPoints_
     ) external {
-        _beforeVerify(userPayload_);
+        _beforeVerify(registrationRoot_, currentDate_, userPayload_);
 
-        uint256 builder_ = _buildPublicSignals(userPayload_);
+        uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
         builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
@@ -98,7 +108,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
             revert InvalidCircomProof(publicSignals_, zkPoints_);
         }
 
-        _afterVerify(userPayload_);
+        _afterVerify(registrationRoot_, currentDate_, userPayload_);
     }
 
     /**
@@ -114,9 +124,9 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         bytes memory userPayload_,
         bytes memory zkPoints_
     ) external {
-        _beforeVerify(userPayload_);
+        _beforeVerify(registrationRoot_, currentDate_, userPayload_);
 
-        uint256 builder_ = _buildPublicSignals(userPayload_);
+        uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
         builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
@@ -128,7 +138,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
             revert InvalidNoirProof(publicSignals_, zkPoints_);
         }
 
-        _afterVerify(userPayload_);
+        _afterVerify(registrationRoot_, currentDate_, userPayload_);
     }
 
     function getRegistrationSMT() public view returns (address) {
