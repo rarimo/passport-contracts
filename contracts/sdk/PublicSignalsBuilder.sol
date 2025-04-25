@@ -181,6 +181,7 @@ library PublicSignalsBuilder {
      */
     function withCurrentDate(uint256 dataPointer_, uint256 currentDate_) internal view {
         uint256 parsedTimestamp_ = Date2Time.timestampFromDate(currentDate_);
+
         if (!validateDate(parsedTimestamp_)) {
             revert InvalidDate(parsedTimestamp_, block.timestamp);
         }
