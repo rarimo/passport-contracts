@@ -26,7 +26,7 @@ describe("RegistrationSMTReplicator", () => {
     const proxy = await ethers.deployContract("ERC1967Proxy", [await implementation.getAddress(), "0x"]);
     replicator = await ethers.getContractAt("RegistrationSMTReplicator", await proxy.getAddress());
 
-    await replicator.__RegistrationSMTReplicator_init(3600, [ORACLE1]);
+    await replicator.__RegistrationSMTReplicator_init([ORACLE1]);
 
     await reverter.snapshot();
   });
@@ -42,7 +42,7 @@ describe("RegistrationSMTReplicator", () => {
     });
 
     it("should revert if trying to initialize twice", async () => {
-      await expect(replicator.__RegistrationSMTReplicator_init(3600, [OTHER.address])).to.be.revertedWithCustomError(
+      await expect(replicator.__RegistrationSMTReplicator_init([OTHER.address])).to.be.revertedWithCustomError(
         replicator,
         "InvalidInitialization",
       );
