@@ -21,7 +21,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
 
     struct ABuilderStorage {
         address registrationSMT;
-        address votingVerifier;
+        address verifier;
     }
 
     struct ProofPoints {
@@ -36,12 +36,12 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
 
     function __AQueryProofVerifierBuilder_init(
         address registrationSMT_,
-        address votingVerifier
+        address verifier
     ) internal onlyInitializing {
         ABuilderStorage storage $ = _getABuilderStorage();
 
         $.registrationSMT = registrationSMT_;
-        $.votingVerifier = votingVerifier;
+        $.verifier = verifier;
     }
 
     /**
@@ -134,7 +134,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
 
         ABuilderStorage storage $ = _getABuilderStorage();
 
-        if (!INoirVerifier($.votingVerifier).verify(zkPoints_, publicSignals_)) {
+        if (!INoirVerifier($.verifier).verify(zkPoints_, publicSignals_)) {
             revert InvalidNoirProof(publicSignals_, zkPoints_);
         }
 
@@ -160,7 +160,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         );
 
         /// @dev We have to use abi.encodePacked to encode a dynamic array as a static array (without offset and length)
-        (bool success_, bytes memory returnData_) = $.votingVerifier.staticcall(
+        (bool success_, bytes memory returnData_) = $.verifier.staticcall(
             abi.encodePacked(
                 abi.encodeWithSignature(funcSign_, zkPoints_.a, zkPoints_.b, zkPoints_.c),
                 pubSignals_
