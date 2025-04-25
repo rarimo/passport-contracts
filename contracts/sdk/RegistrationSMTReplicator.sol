@@ -9,7 +9,7 @@ import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
 import {AMultiOwnable} from "@solarity/solidity-lib/access/AMultiOwnable.sol";
 
-import {IPoseidonSMT} from "../../interfaces/state/IPoseidonSMT.sol";
+import {IPoseidonSMT} from "../interfaces/state/IPoseidonSMT.sol";
 
 /**
  * @title State Replicator for Registration SMT

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {AQueryProofVerifierBuilder} from "./AQueryProofVerifierBuilder.sol";
+import {AQueryProofVerifierBuilder} from "../AQueryProofVerifierBuilder.sol";
 
-import {IPoseidonSMT} from "../interfaces/state/IPoseidonSMT.sol";
+import {IPoseidonSMT} from "../../interfaces/state/IPoseidonSMT.sol";
 
-import {Date2Time} from "../utils/Date2Time.sol";
+import {Date2Time} from "../../utils/Date2Time.sol";
 
 /**
  * @title PublicSignalsBuilder Library.

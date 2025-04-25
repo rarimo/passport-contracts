@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {PublicSignalsBuilder} from "../../sdk/PublicSignalsBuilder.sol";
+import {PublicSignalsBuilder} from "../../sdk/lib/PublicSignalsBuilder.sol";
 import {AQueryProofVerifierBuilder} from "../../sdk/AQueryProofVerifierBuilder.sol";
 
 contract ProofBuilderTest is AQueryProofVerifierBuilder {

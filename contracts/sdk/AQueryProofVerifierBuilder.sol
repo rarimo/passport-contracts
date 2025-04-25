@@ -4,7 +4,7 @@ pragma solidity ^0.8.22;
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {PublicSignalsBuilder} from "./PublicSignalsBuilder.sol";
+import {PublicSignalsBuilder} from "./lib/PublicSignalsBuilder.sol";
 
 import {INoirVerifier} from "../interfaces/verifiers/INoirVerifier.sol";
 
