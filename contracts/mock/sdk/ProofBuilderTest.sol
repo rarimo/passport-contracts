@@ -5,7 +5,7 @@ import {PublicSignalsBuilder} from "../../sdk/PublicSignalsBuilder.sol";
 import {AQueryProofVerifierBuilder} from "../../sdk/AQueryProofVerifierBuilder.sol";
 
 contract ProofBuilderTest is AQueryProofVerifierBuilder {
-    uint256 private constant PROOF_SIGNALS_COUNT = PublicSignalsBuilder._PROOF_SIGNALS_COUNT;
+    uint256 private constant PROOF_SIGNALS_COUNT = PublicSignalsBuilder.PROOF_SIGNALS_COUNT;
     uint256 private constant ZERO_DATE = PublicSignalsBuilder.ZERO_DATE;
 
     AQueryProofVerifierBuilder.ABuilderStorage internal mockBuilderStorage;
