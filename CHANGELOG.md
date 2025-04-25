@@ -2,8 +2,7 @@
 
 ## [0.3.0]
 
-* Added `RegistrationSMTReplicator` contract and `AQueryProofVerifierBuilder` abstract contract to accommodate integration 
-with Rarime. 
+* Added `RegistrationSMTReplicator` contract and `AQueryProofExecutor` abstract contract to accommodate integration with Rarime. 
 
 ## [0.2.1]
 
