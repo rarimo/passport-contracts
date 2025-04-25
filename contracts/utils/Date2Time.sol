@@ -86,6 +86,23 @@ library Date2Time {
         day = uint(_day);
     }
 
+    function timestampFromDate(uint256 date_) internal pure returns (uint256) {
+        uint256[] memory asciiTime = new uint256[](3);
+
+        for (uint256 i = 0; i < 6; ++i) {
+            uint256 asciiNum_ = uint8(date_ >> ((6 - i - 1) * 8)) - 48;
+
+            asciiTime[i / 2] += i % 2 == 0 ? asciiNum_ * 10 : asciiNum_;
+        }
+
+        return
+            timestampFromDate(
+                asciiTime[0] + 2000, // only the last 2 digits of the year are encoded
+                asciiTime[1],
+                asciiTime[2]
+            );
+    }
+
     function timestampFromDate(
         uint year,
         uint month,
