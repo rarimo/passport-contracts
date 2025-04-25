@@ -148,6 +148,7 @@ library PublicSignalsBuilder {
      */
     function withIdStateRoot(uint256 dataPointer_, bytes32 idStateRoot_) internal view {
         AQueryProofVerifierBuilder.ABuilderStorage storage $ = getABuilderStorage();
+
         if (!IPoseidonSMT($.registrationSMT).isRootValid(idStateRoot_)) {
             revert InvalidRegistrationRoot($.registrationSMT, idStateRoot_);
         }
