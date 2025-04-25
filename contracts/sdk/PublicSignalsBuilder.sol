@@ -19,8 +19,8 @@ import {Date2Time} from "../utils/Date2Time.sol";
  * Detailed documentation: https://github.com/rarimo/docs/blob/Add-table-with-query-proof-pub-signals-description/docs/zk-passport/query-proof-table.md#verificator-svc-parametert-table
  */
 library PublicSignalsBuilder {
-    uint256 internal constant PROOF_SIGNALS_COUNT = 23;
-    uint256 internal constant ZERO_DATE = 0x303030303030;
+    uint256 public constant PROOF_SIGNALS_COUNT = 23;
+    uint256 public constant ZERO_DATE = 0x303030303030;
 
     // bytes32(uint256(keccak256("rarimo.contract.AQueryProofVerifierBuilder")) - 1)
     bytes32 public constant A_BUILDER_STORAGE =
