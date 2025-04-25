@@ -22,7 +22,7 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
     using SetHelper for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant ROOT_VALIDITY = 1 hours;
+    uint256 public rootValidity;
 
     bytes32 public latestRoot;
     uint256 public latestTimestamp;
@@ -40,8 +40,13 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
 
     error NotAnOracle(address sender);
 
-    function __RegistrationSMTReplicator_init(address[] memory oracles_) external initializer {
+    function __RegistrationSMTReplicator_init(
+        uint256 rootValidity_,
+        address[] memory oracles_
+    ) external initializer {
         __AMultiOwnable_init();
+
+        rootValidity = rootValidity_;
 
         _oracles.add(oracles_);
     }
@@ -85,7 +90,7 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
             return false;
         }
 
-        return isRootLatest(root_) || _roots[root_] + ROOT_VALIDITY > block.timestamp;
+        return isRootLatest(root_) || _roots[root_] + rootValidity > block.timestamp;
     }
 
     /*
@@ -107,6 +112,17 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
      */
     function getOracles() external view returns (address[] memory) {
         return _oracles.values();
+    }
+
+    function getRootValidity() external view returns (uint256) {
+        return rootValidity;
+    }
+
+    /*
+     * @notice This function is added for backward compatibility with the old API.
+     */
+    function ROOT_VALIDITY() external view returns (uint256) {
+        return rootValidity;
     }
 
     function _updateRoot(bytes32 newRoot_, uint256 transitionTimestamp_) internal virtual {
