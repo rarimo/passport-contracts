@@ -17,8 +17,6 @@ abstract contract AQueryProofExecutor is Initializable {
     using Strings for uint256;
     using PublicSignalsBuilder for uint256;
 
-    uint256 public constant _PROOF_SIGNALS_COUNT = 23;
-
     struct ABuilderStorage {
         address registrationSMT;
         address verifier;

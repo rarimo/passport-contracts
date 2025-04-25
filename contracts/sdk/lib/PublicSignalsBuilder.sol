@@ -11,7 +11,7 @@ import {Date2Time} from "../../utils/Date2Time.sol";
  * @title PublicSignalsBuilder Library.
  * @notice Provides helper functions to construct the public signals array for ZK proof verification.
  *
- * MUST be used together with AQueryProofVerifierBuilder, because it relies on the ABuilderStorage storage for validations.
+ * MUST be used together with AQueryProofExecutor, because it relies on the ABuilderStorage storage for validations.
  *
  * @dev This library facilitates setting specific values at predefined indices within the public signals array,
  *      which is expected by the verifier contract. The indices correspond to the specification detailed
@@ -22,9 +22,9 @@ library PublicSignalsBuilder {
     uint256 public constant PROOF_SIGNALS_COUNT = 23;
     uint256 public constant ZERO_DATE = 0x303030303030;
 
-    // bytes32(uint256(keccak256("rarimo.contract.AQueryProofVerifierBuilder")) - 1)
+    // bytes32(uint256(keccak256("rarimo.contract.AQueryProofExecutor")) - 1)
     bytes32 public constant A_BUILDER_STORAGE =
-        0xc8584cec8aae02642b0bde846f2dd89f93c7f8e83fd7a7a741f20b30b171c908;
+        0x3844f6f56a171c93056bdfb3ce2525778ef493f53ef90b0283983867a69d2128;
 
     error InvalidDate(uint256 parsedTimestamp, uint256 currentTimestamp);
     error InvalidRegistrationRoot(address registrationSMT, bytes32 registrationRoot);
@@ -147,7 +147,7 @@ library PublicSignalsBuilder {
      * @param idStateRoot_ The Merkle root value.
      */
     function withIdStateRoot(uint256 dataPointer_, bytes32 idStateRoot_) internal view {
-        AQueryProofVerifierBuilder.ABuilderStorage storage $ = getABuilderStorage();
+        AQueryProofExecutor.ABuilderStorage storage $ = getABuilderStorage();
 
         if (!IPoseidonSMT($.registrationSMT).isRootValid(idStateRoot_)) {
             revert InvalidRegistrationRoot($.registrationSMT, idStateRoot_);
@@ -325,13 +325,13 @@ library PublicSignalsBuilder {
     }
 
     /**
-     * @notice Retrieves the AQueryProofVerifierBuilder.ABuilderStorage storage reference.
-     * @return $ The AQueryProofVerifierBuilder.ABuilderStorage storage reference.
+     * @notice Retrieves the AQueryProofExecutor.ABuilderStorage storage reference.
+     * @return $ The AQueryProofExecutor.ABuilderStorage storage reference.
      */
     function getABuilderStorage()
         internal
         pure
-        returns (AQueryProofVerifierBuilder.ABuilderStorage storage $)
+        returns (AQueryProofExecutor.ABuilderStorage storage $)
     {
         assembly {
             $.slot := A_BUILDER_STORAGE

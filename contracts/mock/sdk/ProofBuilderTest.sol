@@ -8,7 +8,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
     uint256 private constant PROOF_SIGNALS_COUNT = PublicSignalsBuilder.PROOF_SIGNALS_COUNT;
     uint256 private constant ZERO_DATE = PublicSignalsBuilder.ZERO_DATE;
 
-    AQueryProofVerifierBuilder.ABuilderStorage internal mockBuilderStorage;
+    AQueryProofExecutor.ABuilderStorage internal mockBuilderStorage;
 
     error Mismatch(uint256 iteration, uint256 original, uint256 lib);
 
