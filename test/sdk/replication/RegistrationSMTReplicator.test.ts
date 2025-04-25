@@ -33,7 +33,7 @@ describe("RegistrationSMTReplicator", () => {
 
   afterEach(reverter.revert);
 
-  describe.only("Initialization", () => {
+  describe("Initialization", () => {
     it("should set the correct initial state", async () => {
       expect(await replicator.getOwners()).to.deep.equal([OWNER.address]);
 
@@ -49,7 +49,7 @@ describe("RegistrationSMTReplicator", () => {
     });
   });
 
-  describe.only("Oracle Management", () => {
+  describe("Oracle Management", () => {
     describe("addOracles", () => {
       it("should allow owner to add multiple oracles", async () => {
         const newOracle3 = ethers.Wallet.createRandom().address;

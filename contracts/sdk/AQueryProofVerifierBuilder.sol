@@ -92,9 +92,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
-        uint256[] memory publicSignals_ = PublicSignalsBuilder.buildPublicSignalsAsUintArray(
-            builder_
-        );
+        uint256[] memory publicSignals_ = PublicSignalsBuilder.buildAsUintArray(builder_);
 
         if (!_verifyCircomProof(zkPoints_, publicSignals_)) {
             revert InvalidCircomProof(publicSignals_, zkPoints_);
@@ -122,9 +120,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         builder_.withCurrentDate(currentDate_);
         builder_.withIdStateRoot(registrationRoot_);
 
-        bytes32[] memory publicSignals_ = PublicSignalsBuilder.buildPublicSignalsAsBytesArray(
-            builder_
-        );
+        bytes32[] memory publicSignals_ = PublicSignalsBuilder.buildAsBytesArray(builder_);
 
         ABuilderStorage storage $ = _getABuilderStorage();
         if (!INoirVerifier($.votingVerifier).verify(zkPoints_, publicSignals_)) {

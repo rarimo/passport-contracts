@@ -9,12 +9,14 @@ import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
 import {AMultiOwnable} from "@solarity/solidity-lib/access/AMultiOwnable.sol";
 
+import {IPoseidonSMT} from "../../interfaces/state/IPoseidonSMT.sol";
+
 /**
  * @title State Replicator for Registration SMT
  * @notice This contract is meant to be deployed on the chain for the Registration SMT is not available.
  * The owner of the replicator will be able to set a set of oracles that can transition the root.
  */
-contract RegistrationSMTReplicator is AMultiOwnable, UUPSUpgradeable {
+contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeable {
     using TypeCaster for *;
 
     using SetHelper for EnumerableSet.AddressSet;

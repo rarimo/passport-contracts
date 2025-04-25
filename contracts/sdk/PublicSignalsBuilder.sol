@@ -8,15 +8,19 @@ import {IPoseidonSMT} from "../interfaces/state/IPoseidonSMT.sol";
 import {Date2Time} from "../utils/Date2Time.sol";
 
 /**
- * @title PublicSignalsBuilder Library
+ * @title PublicSignalsBuilder Library.
  * @notice Provides helper functions to construct the public signals array for ZK proof verification.
+ *
+ * MUST be used together with AQueryProofVerifierBuilder, because it relies on the ABuilderStorage storage for validations.
+ *
  * @dev This library facilitates setting specific values at predefined indices within the public signals array,
  *      which is expected by the verifier contract. The indices correspond to the specification detailed
  *      at: https://github.com/rarimo/passport-zk-circuits/?tab=readme-ov-file#query-circuit-public-signals
  * Detailed documentation: https://github.com/rarimo/docs/blob/Add-table-with-query-proof-pub-signals-description/docs/zk-passport/query-proof-table.md#verificator-svc-parametert-table
  */
 library PublicSignalsBuilder {
-    uint256 public constant _PROOF_SIGNALS_COUNT = 23;
+    uint256 internal constant _PROOF_SIGNALS_COUNT = 23;
+    uint256 internal constant ZERO_DATE = 0x303030303030;
 
     // bytes32(uint256(keccak256("rarimo.contract.AQueryProofVerifierBuilder")) - 1)
     bytes32 public constant A_BUILDER_STORAGE =
@@ -32,14 +36,23 @@ library PublicSignalsBuilder {
         uint256[] memory pubSignals_ = new uint256[](_PROOF_SIGNALS_COUNT);
 
         assembly {
-            let ptr := add(pubSignals_, 32)
-
-            // 32 (ptr) + 0
-            mstore(ptr, nullifier_)
-            // 32 (ptr) + 12*32 = 32 + 384
-            mstore(add(ptr, 384), selector_)
-
             dataPointer_ := pubSignals_
+
+            // 32 + 0 = 32
+            mstore(add(dataPointer_, 32), nullifier_)
+            // 32 + 12*32 = 32 + 384 = 416
+            mstore(add(dataPointer_, 416), selector_)
+
+            // currentDate_
+            mstore(add(dataPointer_, 448), ZERO_DATE)
+            // birthDateLowerbound_
+            mstore(add(dataPointer_, 608), ZERO_DATE)
+            // birthDateUpperbound_
+            mstore(add(dataPointer_, 640), ZERO_DATE)
+            // expirationDateLowerbound_
+            mstore(add(dataPointer_, 672), ZERO_DATE)
+            // expirationDateUpperbound_
+            mstore(add(dataPointer_, 704), ZERO_DATE)
         }
     }
 
@@ -279,7 +292,7 @@ library PublicSignalsBuilder {
     /**
      * @notice Converts the public signals array to a uint256 array.
      */
-    function buildPublicSignalsAsUintArray(
+    function buildAsUintArray(
         uint256 dataPointer_
     ) internal pure returns (uint256[] memory pubSignals_) {
         assembly {
@@ -290,7 +303,7 @@ library PublicSignalsBuilder {
     /**
      * @notice Converts the public signals array to a bytes32 array.
      */
-    function buildPublicSignalsAsBytesArray(
+    function buildAsBytesArray(
         uint256 dataPointer_
     ) internal pure returns (bytes32[] memory pubSignals_) {
         assembly {
