@@ -8,12 +8,12 @@ contract ProofBuilderTest is AQueryProofExecutor {
     uint256 private constant PROOF_SIGNALS_COUNT = PublicSignalsBuilder.PROOF_SIGNALS_COUNT;
     uint256 private constant ZERO_DATE = PublicSignalsBuilder.ZERO_DATE;
 
-    AQueryProofExecutor.ABuilderStorage internal mockBuilderStorage;
+    AQueryProofExecutor.AExecutorStorage internal mockBuilderStorage;
 
     error Mismatch(uint256 iteration, uint256 original, uint256 lib);
 
     function init(address registrationSMT_) external initializer {
-        __AQueryProofVerifierBuilder_init(registrationSMT_, address(0));
+        __AQueryProofExecutor_init(registrationSMT_, address(0));
     }
 
     function _buildPublicSignals(

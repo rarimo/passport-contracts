@@ -147,7 +147,7 @@ library PublicSignalsBuilder {
      * @param idStateRoot_ The Merkle root value.
      */
     function withIdStateRoot(uint256 dataPointer_, bytes32 idStateRoot_) internal view {
-        AQueryProofExecutor.ABuilderStorage storage $ = getABuilderStorage();
+        AQueryProofExecutor.AExecutorStorage storage $ = getABuilderStorage();
 
         if (!IPoseidonSMT($.registrationSMT).isRootValid(idStateRoot_)) {
             revert InvalidRegistrationRoot($.registrationSMT, idStateRoot_);
@@ -340,7 +340,7 @@ library PublicSignalsBuilder {
     function getABuilderStorage()
         private
         pure
-        returns (AQueryProofExecutor.ABuilderStorage storage $)
+        returns (AQueryProofExecutor.AExecutorStorage storage $)
     {
         assembly {
             $.slot := A_BUILDER_STORAGE

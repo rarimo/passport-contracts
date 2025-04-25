@@ -21,7 +21,7 @@ abstract contract AQueryProofExecutor is Initializable {
     bytes32 private constant A_BUILDER_STORAGE =
         0x3844f6f56a171c93056bdfb3ce2525778ef493f53ef90b0283983867a69d2128;
 
-    struct ABuilderStorage {
+    struct AExecutorStorage {
         address registrationSMT;
         address verifier;
     }
@@ -36,11 +36,11 @@ abstract contract AQueryProofExecutor is Initializable {
     error InvalidNoirProof(bytes32[] pubSignals, bytes zkPoints);
     error InvalidCircomProof(uint256[] pubSignals, ProofPoints zkPoints);
 
-    function __AQueryProofVerifierBuilder_init(
+    function __AQueryProofExecutor_init(
         address registrationSMT_,
         address verifier
     ) internal onlyInitializing {
-        ABuilderStorage storage $ = _getABuilderStorage();
+        AExecutorStorage storage $ = _getABuilderStorage();
 
         $.registrationSMT = registrationSMT_;
         $.verifier = verifier;
@@ -132,7 +132,7 @@ abstract contract AQueryProofExecutor is Initializable {
 
         bytes32[] memory publicSignals_ = PublicSignalsBuilder.buildAsBytesArray(builder_);
 
-        ABuilderStorage storage $ = _getABuilderStorage();
+        AExecutorStorage storage $ = _getABuilderStorage();
 
         if (!INoirVerifier($.verifier).verify(zkPoints_, publicSignals_)) {
             revert InvalidNoirProof(publicSignals_, zkPoints_);
@@ -157,7 +157,7 @@ abstract contract AQueryProofExecutor is Initializable {
         ProofPoints memory zkPoints_,
         uint256[] memory pubSignals_
     ) private view returns (bool) {
-        ABuilderStorage storage $ = _getABuilderStorage();
+        AExecutorStorage storage $ = _getABuilderStorage();
 
         string memory funcSign_ = string(
             abi.encodePacked(
@@ -183,7 +183,7 @@ abstract contract AQueryProofExecutor is Initializable {
     /**
      * @notice Retrieves the ABuilderStorage storage reference.
      */
-    function _getABuilderStorage() private pure returns (ABuilderStorage storage $) {
+    function _getABuilderStorage() private pure returns (AExecutorStorage storage $) {
         assembly {
             $.slot := A_BUILDER_STORAGE
         }
