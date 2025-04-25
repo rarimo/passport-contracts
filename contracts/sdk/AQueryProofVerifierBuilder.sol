@@ -123,6 +123,7 @@ abstract contract AQueryProofVerifierBuilder is Initializable {
         bytes32[] memory publicSignals_ = PublicSignalsBuilder.buildAsBytesArray(builder_);
 
         ABuilderStorage storage $ = _getABuilderStorage();
+
         if (!INoirVerifier($.votingVerifier).verify(zkPoints_, publicSignals_)) {
             revert InvalidNoirProof(publicSignals_, zkPoints_);
         }
