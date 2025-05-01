@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1]
+
+* Enhanced `RegistrationSMTReplicator` with signature-based root transition.
+
 ## [0.3.0]
 
 * Added `RegistrationSMTReplicator` contract and `AQueryProofExecutor` abstract contract to accommodate integration with Rarime. 

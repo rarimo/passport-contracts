@@ -52,6 +52,8 @@ Afterwards, you will be able to use the application by calling the `Registration
 > [!NOTE]
 > This is experimental, state of the art software. Behold and use at your own risk.
 
+Here you will find a guide for the on-chain integration with the SDK, which is provided as a part of the NPM package: [Guide: Setting up on-chain user verification with ZK Passport](https://docs.rarimo.com/zk-passport/guide-on-chain-verification/)
+
 ## License
 
 The smart contracts are released under the MIT License.
