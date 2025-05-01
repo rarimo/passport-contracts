@@ -17,10 +17,10 @@ contract ProofBuilderTest is AQueryProofExecutor {
     }
 
     function _buildPublicSignals(
-        bytes32 registrationRoot_,
-        uint256 currentDate_,
-        bytes memory userPayload_
-    ) public override returns (uint256) {
+        bytes32,
+        uint256,
+        bytes memory
+    ) public pure override returns (uint256) {
         return 0;
     }
 
@@ -48,7 +48,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         }
     }
 
-    function testEquivalencePart1_NewBuilder() external view {
+    function testEquivalencePart1_NewBuilder() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
 
@@ -61,7 +61,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart2_Name() external view {
+    function testEquivalencePart2_Name() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 name_ = 3;
@@ -82,7 +82,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart3_NationalityCitizenshipSex() external view {
+    function testEquivalencePart3_NationalityCitizenshipSex() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 nationality_ = 5;
@@ -106,7 +106,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart4_Event() external view {
+    function testEquivalencePart4_Event() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 eventId_ = 9;
@@ -160,7 +160,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart7_TimestampBounds() external view {
+    function testEquivalencePart7_TimestampBounds() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 timestampLowerbound_ = 14;
@@ -184,7 +184,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart8_IdentityCounterBounds() external view {
+    function testEquivalencePart8_IdentityCounterBounds() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 identityCounterLowerbound_ = 16;
@@ -208,7 +208,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart9_BirthDateBounds() external view {
+    function testEquivalencePart9_BirthDateBounds() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 birthDateLowerbound_ = 18;
@@ -232,7 +232,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart10_ExpirationDateBounds() external view {
+    function testEquivalencePart10_ExpirationDateBounds() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 expirationDateLowerbound_ = 20;
@@ -256,7 +256,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         _compareArrays(originalPubSignals, libPubSignals);
     }
 
-    function testEquivalencePart11_CitizenshipMask() external view {
+    function testEquivalencePart11_CitizenshipMask() external pure {
         uint256 nullifier = 1;
         uint256 selector = 2;
         uint256 citizenshipMask_ = 22;
