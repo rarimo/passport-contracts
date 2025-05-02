@@ -126,7 +126,7 @@ describe("RegistrationSMTReplicator", () => {
 
       expect(await replicator.isRootValid(randomRoot)).to.be.false;
 
-      await replicator.connect(ORACLE1)["transitionRoot(bytes32,uint256)"](randomRoot, currentTime);
+      await replicator.connect(ORACLE1).transitionRoot(randomRoot, currentTime);
 
       expect(await replicator.latestRoot()).to.equal(randomRoot);
       expect(await replicator.latestTimestamp()).to.equal(currentTime);
@@ -138,12 +138,12 @@ describe("RegistrationSMTReplicator", () => {
       const firstRoot = ethers.hexlify(ethers.randomBytes(32));
       const currentTime = await time.latest();
 
-      await replicator.connect(ORACLE1)["transitionRoot(bytes32,uint256)"](firstRoot, currentTime);
+      await replicator.connect(ORACLE1).transitionRoot(firstRoot, currentTime);
 
       const secondRoot = ethers.hexlify(ethers.randomBytes(32));
       const secondTime = currentTime - 1;
 
-      await replicator.connect(ORACLE1)["transitionRoot(bytes32,uint256)"](secondRoot, secondTime);
+      await replicator.connect(ORACLE1).transitionRoot(secondRoot, secondTime);
 
       expect(await replicator.latestRoot()).to.equal(firstRoot);
 
@@ -165,7 +165,7 @@ describe("RegistrationSMTReplicator", () => {
 
       const signature = await ORACLE1.signMessage(ethers.getBytes(messageHash));
 
-      await replicator["transitionRoot(bytes32,uint256,bytes)"](randomRoot, currentTime, signature);
+      await replicator.transitionRootWithSignature(randomRoot, currentTime, signature);
 
       expect(await replicator.latestRoot()).to.equal(randomRoot);
       expect(await replicator.latestTimestamp()).to.equal(currentTime);
@@ -186,7 +186,7 @@ describe("RegistrationSMTReplicator", () => {
       const signature = await OTHER.signMessage(ethers.getBytes(messageHash));
 
       await expect(
-        replicator["transitionRoot(bytes32,uint256,bytes)"](randomRoot, currentTime, signature),
+        replicator.transitionRootWithSignature(randomRoot, currentTime, signature),
       ).to.be.revertedWithCustomError(replicator, "NotAnOracle");
     });
   });

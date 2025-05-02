@@ -44,7 +44,6 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
     event RootTransitioned(bytes32 newRoot, uint256 transitionTimestamp);
 
     error NotAnOracle(address sender);
-    error InvalidSignature();
 
     function __RegistrationSMTReplicator_init(
         address[] memory oracles_,
@@ -72,6 +71,13 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
     }
 
     /*
+     * @notice Updates the source SMT address.
+     */
+    function setSourceSMT(address newSourceSMT_) external onlyOwner {
+        sourceSMT = newSourceSMT_;
+    }
+
+    /*
      * @notice Transitions the root of the Registration SMT.
      * @param newRoot_ The new root to be set.
      * @param transitionTimestamp_ The timestamp of the transition.
@@ -93,7 +99,7 @@ contract RegistrationSMTReplicator is IPoseidonSMT, AMultiOwnable, UUPSUpgradeab
      * @param transitionTimestamp_ The timestamp of the transition.
      * @param signature_ The signature from the sourceSMT verifying the root transition.
      */
-    function transitionRoot(
+    function transitionRootWithSignature(
         bytes32 newRoot_,
         uint256 transitionTimestamp_,
         bytes memory signature_
