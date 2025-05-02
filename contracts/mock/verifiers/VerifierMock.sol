@@ -3,11 +3,11 @@ pragma solidity ^0.8.21;
 
 contract VerifierMock {
     function verifyProof(
-        uint256[2] calldata pA_,
-        uint256[2][2] calldata pB_,
-        uint256[2] calldata pC_,
-        uint256[4] calldata pubSignals_
-    ) public view returns (bool) {
+        uint256[2] calldata,
+        uint256[2][2] calldata,
+        uint256[2] calldata,
+        uint256[4] calldata
+    ) public pure returns (bool) {
         return true;
     }
 }

@@ -15,18 +15,20 @@ describe("RegistrationSMTReplicator", () => {
   let ORACLE1: SignerWithAddress;
   let ORACLE2: SignerWithAddress;
   let OTHER: SignerWithAddress;
+  let SOURCE_SMT: SignerWithAddress;
 
   let replicator: RegistrationSMTReplicator;
+  const REGISTRATION_ROOT_PREFIX = "Rarimo root";
 
   before("setup", async () => {
-    [OWNER, ORACLE1, ORACLE2, OTHER] = await ethers.getSigners();
+    [OWNER, ORACLE1, ORACLE2, OTHER, SOURCE_SMT] = await ethers.getSigners();
 
     const implementation = await ethers.deployContract("RegistrationSMTReplicator");
 
     const proxy = await ethers.deployContract("ERC1967Proxy", [await implementation.getAddress(), "0x"]);
     replicator = await ethers.getContractAt("RegistrationSMTReplicator", await proxy.getAddress());
 
-    await replicator.__RegistrationSMTReplicator_init([ORACLE1]);
+    await replicator.__RegistrationSMTReplicator_init([ORACLE1.address], SOURCE_SMT.address);
 
     await reverter.snapshot();
   });
@@ -39,13 +41,13 @@ describe("RegistrationSMTReplicator", () => {
 
       expect(await replicator.isOracle(ORACLE1.address)).to.be.true;
       expect(await replicator.getOracles()).to.deep.equal([ORACLE1.address]);
+      expect(await replicator.sourceSMT()).to.equal(SOURCE_SMT.address);
     });
 
     it("should revert if trying to initialize twice", async () => {
-      await expect(replicator.__RegistrationSMTReplicator_init([OTHER.address])).to.be.revertedWithCustomError(
-        replicator,
-        "InvalidInitialization",
-      );
+      await expect(
+        replicator.__RegistrationSMTReplicator_init([OTHER.address], OTHER.address),
+      ).to.be.revertedWithCustomError(replicator, "InvalidInitialization");
     });
   });
 
@@ -146,6 +148,46 @@ describe("RegistrationSMTReplicator", () => {
       expect(await replicator.latestRoot()).to.equal(firstRoot);
 
       expect(await replicator.isRootValid(secondRoot)).to.be.true;
+    });
+  });
+
+  describe("transitionRoot() with signature", () => {
+    it("should transition root with valid signature from oracle", async () => {
+      const randomRoot = ethers.hexlify(ethers.randomBytes(32));
+      const currentTime = await time.latest();
+
+      const messageHash = ethers.keccak256(
+        ethers.solidityPacked(
+          ["string", "address", "address", "bytes32", "uint256"],
+          [REGISTRATION_ROOT_PREFIX, SOURCE_SMT.address, await replicator.getAddress(), randomRoot, currentTime],
+        ),
+      );
+
+      const signature = await ORACLE1.signMessage(ethers.getBytes(messageHash));
+
+      await replicator.transitionRootWithSignature(randomRoot, currentTime, signature);
+
+      expect(await replicator.latestRoot()).to.equal(randomRoot);
+      expect(await replicator.latestTimestamp()).to.equal(currentTime);
+      expect(await replicator.isRootValid(randomRoot)).to.be.true;
+    });
+
+    it("should revert when signature is from non-oracle", async () => {
+      const randomRoot = ethers.hexlify(ethers.randomBytes(32));
+      const currentTime = await time.latest();
+
+      const messageHash = ethers.keccak256(
+        ethers.solidityPacked(
+          ["string", "address", "address", "bytes32", "uint256"],
+          [REGISTRATION_ROOT_PREFIX, SOURCE_SMT.address, await replicator.getAddress(), randomRoot, currentTime],
+        ),
+      );
+
+      const signature = await OTHER.signMessage(ethers.getBytes(messageHash));
+
+      await expect(
+        replicator.transitionRootWithSignature(randomRoot, currentTime, signature),
+      ).to.be.revertedWithCustomError(replicator, "NotAnOracle");
     });
   });
 
