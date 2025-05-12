@@ -62,6 +62,18 @@ import {
   NoirRegisterIdentity_3_512_3_3_336_264_NA__factory,
   NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory,
   NoirRegisterIdentity_21_256_3_4_576_232_NA__factory,
+  NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory,
+  NoirRegisterIdentity_1_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory,
+  NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory,
+  NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory,
+  NoirRegisterIdentity_11_256_3_3_576_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory,
+  NoirRegisterIdentity_20_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_20_256_3_5_336_248_NA__factory,
+  NoirRegisterIdentity_23_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_24_256_3_4_336_248_NA__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -131,4 +143,16 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(NoirRegisterIdentity_3_512_3_3_336_264_NA__factory);
   await deployer.deploy(NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory);
   await deployer.deploy(NoirRegisterIdentity_21_256_3_4_576_232_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_5_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_3_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_5_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory);
+  await deployer.deploy(NoirRegisterIdentity_20_160_3_3_576_200_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_20_256_3_5_336_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_23_160_3_3_576_200_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_24_256_3_4_336_248_NA__factory);
 };

@@ -70,6 +70,18 @@ import {
   NoirRegisterIdentity_3_512_3_3_336_264_NA__factory,
   NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory,
   NoirRegisterIdentity_21_256_3_4_576_232_NA__factory,
+  NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory,
+  NoirRegisterIdentity_1_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory,
+  NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory,
+  NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory,
+  NoirRegisterIdentity_11_256_3_3_576_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory,
+  NoirRegisterIdentity_20_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_20_256_3_5_336_248_NA__factory,
+  NoirRegisterIdentity_23_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_24_256_3_4_336_248_NA__factory,
 } from "@ethers-v6";
 
 import {
@@ -157,6 +169,18 @@ import {
   Z_NOIR_PASSPORT_3_512_3_3_336_264_NA,
   Z_NOIR_PASSPORT_2_256_3_6_336_264_21_2448_6_2008,
   Z_NOIR_PASSPORT_21_256_3_4_576_232_NA,
+  Z_NOIR_PASSPORT_1_256_3_4_576_232_1_1480_3_256,
+  Z_NOIR_PASSPORT_1_256_3_5_576_248_NA,
+  Z_NOIR_PASSPORT_1_256_3_6_576_264_1_2448_3_256,
+  Z_NOIR_PASSPORT_3_256_3_4_600_248_1_1496_3_256,
+  Z_NOIR_PASSPORT_6_160_3_3_336_216_1_1080_3_256,
+  Z_NOIR_PASSPORT_11_256_3_3_576_248_NA,
+  Z_NOIR_PASSPORT_11_256_3_5_576_248_NA,
+  Z_NOIR_PASSPORT_14_256_3_4_336_232_1_1480_5_296,
+  Z_NOIR_PASSPORT_20_160_3_3_576_200_NA,
+  Z_NOIR_PASSPORT_20_256_3_5_336_248_NA,
+  Z_NOIR_PASSPORT_23_160_3_3_576_200_NA,
+  Z_NOIR_PASSPORT_24_256_3_4_336_248_NA,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -404,6 +428,42 @@ export = async (deployer: Deployer) => {
   );
   const pNoirPassport_21_256_3_4_576_232_NA = await deployer.deployed(
     NoirRegisterIdentity_21_256_3_4_576_232_NA__factory,
+  );
+  const pNoirPassport_1_256_3_4_576_232_1_1480_3_256 = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory,
+  );
+  const pNoirPassport_1_256_3_5_576_248_NA = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_5_576_248_NA__factory,
+  );
+  const pNoirPassport_1_256_3_6_576_264_1_2448_3_256 = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory,
+  );
+  const pNoirPassport_3_256_3_4_600_248_1_1496_3_256 = await deployer.deployed(
+    NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory,
+  );
+  const pNoirPassport_6_160_3_3_336_216_1_1080_3_256 = await deployer.deployed(
+    NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory,
+  );
+  const pNoirPassport_11_256_3_3_576_248_NA = await deployer.deployed(
+    NoirRegisterIdentity_11_256_3_3_576_248_NA__factory,
+  );
+  const pNoirPassport_11_256_3_5_576_248_NA = await deployer.deployed(
+    NoirRegisterIdentity_11_256_3_5_576_248_NA__factory,
+  );
+  const pNoirPassport_14_256_3_4_336_232_1_1480_5_296 = await deployer.deployed(
+    NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory,
+  );
+  const pNoirPassport_20_160_3_3_576_200_NA = await deployer.deployed(
+    NoirRegisterIdentity_20_160_3_3_576_200_NA__factory,
+  );
+  const pNoirPassport_20_256_3_5_336_248_NA = await deployer.deployed(
+    NoirRegisterIdentity_20_256_3_5_336_248_NA__factory,
+  );
+  const pNoirPassport_23_160_3_3_576_200_NA = await deployer.deployed(
+    NoirRegisterIdentity_23_160_3_3_576_200_NA__factory,
+  );
+  const pNoirPassport_24_256_3_4_336_248_NA = await deployer.deployed(
+    NoirRegisterIdentity_24_256_3_4_336_248_NA__factory,
   );
 
   // ------------------------ CERTIFICATE ------------------------
@@ -690,6 +750,55 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(
     Z_NOIR_PASSPORT_21_256_3_4_576_232_NA,
     await pNoirPassport_21_256_3_4_576_232_NA.getAddress(),
+  );
+
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_4_576_232_1_1480_3_256,
+    await pNoirPassport_1_256_3_4_576_232_1_1480_3_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_5_576_248_NA,
+    await pNoirPassport_1_256_3_5_576_248_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_6_576_264_1_2448_3_256,
+    await pNoirPassport_1_256_3_6_576_264_1_2448_3_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_3_256_3_4_600_248_1_1496_3_256,
+    await pNoirPassport_3_256_3_4_600_248_1_1496_3_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_6_160_3_3_336_216_1_1080_3_256,
+    await pNoirPassport_6_160_3_3_336_216_1_1080_3_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_11_256_3_3_576_248_NA,
+    await pNoirPassport_11_256_3_3_576_248_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_11_256_3_5_576_248_NA,
+    await pNoirPassport_11_256_3_5_576_248_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_14_256_3_4_336_232_1_1480_5_296,
+    await pNoirPassport_14_256_3_4_336_232_1_1480_5_296.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_20_160_3_3_576_200_NA,
+    await pNoirPassport_20_160_3_3_576_200_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_20_256_3_5_336_248_NA,
+    await pNoirPassport_20_256_3_5_336_248_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_23_160_3_3_576_200_NA,
+    await pNoirPassport_23_160_3_3_576_200_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_24_256_3_4_336_248_NA,
+    await pNoirPassport_24_256_3_4_336_248_NA.getAddress(),
   );
 
   await stateKeeper.mockAddRegistrations([config.registrationName], [await registration.getAddress()]);
