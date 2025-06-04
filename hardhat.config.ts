@@ -57,6 +57,10 @@ const config: HardhatUserConfig = {
       url: "https://l2.rarimo.com",
       gasMultiplier: 1.2,
     },
+    "rarimo-l2-testnet": {
+      url: "https://l2.testnet.rarimo.com",
+      gasMultiplier: 1.2,
+    },
     "rarimo-dev": {
       url: "http://34.134.193.127:8545",
       gasMultiplier: 1.2,
@@ -80,6 +84,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       "rarimo-l2": "abc",
+      "rarimo-l2-testnet": "abc",
       "rarimo-beta": "abc",
     },
     customChains: [
@@ -97,6 +102,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://evmscan.l2.rarimo.com/api",
           browserURL: "https://newscan.l2.rarimo.com/",
+        },
+      },
+      {
+        network: "rarimo-l2-testnet",
+        chainId: 7369,
+        urls: {
+          apiURL: "https://scan.testnet.rarimo.com/api",
+          browserURL: "https://scan.testnet.rarimo.com",
         },
       },
     ],
