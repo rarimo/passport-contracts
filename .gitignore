@@ -15,8 +15,4 @@ generated-types
 .storage.json
 
 # Custom deployments
-deploy/add-verifier
-deploy/cert-disp
-deploy/noir-verifier
-deploy/update-verifier
-deploy/upgrade-registration
+deploy/dep-*
