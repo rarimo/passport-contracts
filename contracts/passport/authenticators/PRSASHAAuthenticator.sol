@@ -41,7 +41,9 @@ contract PRSASHAAuthenticator is Initializable {
         bytes memory decipher_ = s_.decrypt(e_, n_);
 
         assembly {
-            mstore(decipher_, sub(mload(decipher_), exp(2, sub(1, sload(isSha1.slot)))))
+            let sha1val := sload(isSha1.slot)
+            let pow := add(1, iszero(sha1val))
+            mstore(decipher_, sub(mload(decipher_), pow))
         }
 
         bytes memory prepared_ = new bytes(decipher_.length - hashLen - 1);
