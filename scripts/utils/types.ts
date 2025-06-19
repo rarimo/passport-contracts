@@ -28,8 +28,8 @@ export const P_NO_AA = keccak256(["string"], ["P_NO_AA"]);
 export const P_RSA_SHA1_2688 = keccak256(["string"], ["P_RSA_SHA1_2688"]);
 export const P_RSA_SHA1_2688_3 = keccak256(["string"], ["P_RSA_SHA1_2688_3"]);
 export const P_ECDSA_SHA1_2704 = keccak256(["string"], ["P_ECDSA_SHA1_2704"]);
-export const P_RSA_SHA2_2688 = keccak256(["string"], ["P_RSA_SHA2_2688"]);
-export const P_RSA_SHA2_2688_3 = keccak256(["string"], ["P_RSA_SHA2_2688_3"]);
+export const P_RSA_SHA256_2688 = keccak256(["string"], ["P_RSA_SHA256_2688"]);
+export const P_RSA_SHA256_2688_3 = keccak256(["string"], ["P_RSA_SHA256_2688_3"]);
 
 // -------------------------- VERIFIER --------------------------
 
