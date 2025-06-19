@@ -111,9 +111,8 @@ import {
   P_NO_AA,
   P_RSA_SHA1_2688,
   P_RSA_SHA1_2688_3,
-  P_RSA_SHA2_2688_3,
-  P_RSA_SHA256_2688,
   P_RSA_SHA2_2688,
+  P_RSA_SHA2_2688_3,
   Z_PER_PASSPORT_1_256_3_5_576_248_NA,
   Z_PER_PASSPORT_1_256_3_6_576_248_1_2432_5_296,
   Z_PER_PASSPORT_21_256_3_7_336_264_21_3072_6_2008,
@@ -542,8 +541,6 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportDispatcher(P_RSA_SHA1_2688_3, await pRsaSha126883Dispatcher.getAddress());
 
   await registration.mockAddPassportDispatcher(P_RSA_SHA2_2688, await pRsaSha22688Dispatcher.getAddress());
-  await registration.mockAddPassportDispatcher(P_RSA_SHA256_2688, await pRsaSha22688Dispatcher.getAddress());
-
   await registration.mockAddPassportDispatcher(P_RSA_SHA2_2688_3, await pRsaSha226883Dispatcher.getAddress());
 
   await registration.mockAddPassportDispatcher(P_ECDSA_SHA1_2704, await pEcdsaSha12704Dispatcher.getAddress());
