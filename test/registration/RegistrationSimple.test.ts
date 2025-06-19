@@ -263,7 +263,7 @@ describe("RegistrationSimple", () => {
       );
     });
 
-    it("should revert if non-exising operation ID was provided", async () => {
+    it("should revert if non-existing operation ID was provided", async () => {
       const encoder = new ethers.AbiCoder();
       const data = encoder.encode(["address[]", "uint8[]"], [[FIRST.address], [12 as RegistrationSimpleOperationId]]);
 

@@ -112,6 +112,14 @@ const config: HardhatUserConfig = {
           browserURL: "https://scan.testnet.rarimo.com",
         },
       },
+      {
+        network: "rarimo-l2-testnet",
+        chainId: 7369,
+        urls: {
+          apiURL: "https://scan.testnet.rarimo.com/api",
+          browserURL: "https://scan.testnet.rarimo.com",
+        },
+      },
     ],
   },
   migrate: {

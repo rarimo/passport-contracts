@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1]
+
+* Enhanced `RegistrationSMTReplicator` with signature-based root transition.
+
 ## [0.3.0]
 
 * Added `RegistrationSMTReplicator` contract and `AQueryProofExecutor` abstract contract to accommodate integration with Rarime. 
@@ -170,7 +174,7 @@
         - **Passport hash** in every other case.
     * Now a passport can't be registered with both the public key and the hash.
 * Added the second registration contract `Registration2` which works with the updated circuits. Updated circuits utilize five public inputs and always output a passport hash.
-    * The `Passport` struct has changed, hence chenging `register()`, `revoke()`, and `reissueIdentity()` methods signatures.
+    * The `Passport` struct has changed, hence changing `register()`, `revoke()`, and `reissueIdentity()` methods signatures.
 * Updated `PRSASHA1Authenticator` contract to accept an RSA exponent as an initialization parameter to support the wider range of passports.
 * New constants have been added:
     1. **Passport dispatchers**
