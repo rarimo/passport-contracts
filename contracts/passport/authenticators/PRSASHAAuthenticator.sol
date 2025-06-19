@@ -24,7 +24,7 @@ contract PRSASHAAuthenticator is Initializable {
      * @notice Checks active authentication of a passport. The RSA algorithm is as follows:
      *
      * 1. Decrypt the signature
-     * 2. Remove the 1 byte (hash function indicator) suffix
+     * 2. Remove the 1 byte or 2 bytes (hash function indicator) suffix
      * 3. The last 20 bytes of the decrypted signature is the SHA1 hash of random + challenge or the last 32 bytes in case SHA2 hash
      */
     function authenticate(
@@ -41,7 +41,8 @@ contract PRSASHAAuthenticator is Initializable {
         bytes memory decipher_ = s_.decrypt(e_, n_);
 
         assembly {
-            mstore(decipher_, sub(mload(decipher_), 1))
+            let suffixLen_ := add(1, iszero(sload(isSha1.slot)))
+            mstore(decipher_, sub(mload(decipher_), suffixLen_))
         }
 
         bytes memory prepared_ = new bytes(decipher_.length - hashLen - 1);
