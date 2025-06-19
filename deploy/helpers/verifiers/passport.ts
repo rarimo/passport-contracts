@@ -46,13 +46,39 @@ import {
   PPerPassport_20_256_3_5_336_72_NAVerifier2__factory,
   PPerPassport_21_256_3_5_576_232_NAVerifier2__factory,
   PPerPassport_4_160_3_3_336_216_1_1296_3_256Verifier2__factory,
-  NoirRegisterIdentity_2_256_3_6_248_336_1_2432_3_256__factory,
-  NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory,
-  NoirRegisterIdentity_2_256_3_6_336_248_1_2432_3_256__factory,
-  NoirRegisterIdentity_20_256_3_3_336_224_NA__factory,
   NoirRegisterIdentity_1_256_3_4_600_248_1_1496_3_256__factory,
+  NoirRegisterIdentity_1_256_3_5_336_248_1_2120_4_256__factory,
   NoirRegisterIdentity_10_256_3_3_576_248_1_1184_5_264__factory,
+  NoirRegisterIdentity_11_256_3_4_336_232_1_1480_4_256__factory,
+  NoirRegisterIdentity_14_256_3_3_576_240_NA__factory,
+  NoirRegisterIdentity_14_256_3_4_576_248_1_1496_3_256__factory,
+  NoirRegisterIdentity_2_256_3_4_336_232_1_1480_4_256__factory,
+  NoirRegisterIdentity_2_256_3_4_336_248_NA__factory,
+  NoirRegisterIdentity_2_256_3_6_336_248_1_2432_3_256__factory,
+  NoirRegisterIdentity_2_256_3_6_576_248_1_2432_3_256__factory,
+  NoirRegisterIdentity_20_160_3_2_576_184_NA__factory,
+  NoirRegisterIdentity_20_256_3_3_336_224_NA__factory,
   NoirRegisterIdentity_21_256_3_3_576_232_NA__factory,
+  NoirRegisterIdentity_3_512_3_3_336_264_NA__factory,
+  NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory,
+  NoirRegisterIdentity_21_256_3_4_576_232_NA__factory,
+  NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory,
+  NoirRegisterIdentity_1_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory,
+  NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory,
+  NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory,
+  NoirRegisterIdentity_11_256_3_3_576_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_5_576_248_NA__factory,
+  NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory,
+  NoirRegisterIdentity_20_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_20_256_3_5_336_248_NA__factory,
+  NoirRegisterIdentity_23_160_3_3_576_200_NA__factory,
+  NoirRegisterIdentity_24_256_3_4_336_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_5_576_248_1_1808_4_256__factory,
+  NoirRegisterIdentity_11_256_3_5_576_264_NA__factory,
+  NoirRegisterIdentity_11_256_3_5_584_264_1_2136_4_256__factory,
+  NoirRegisterIdentity_1_256_3_4_336_232_NA__factory,
+  NoirRegisterIdentity_2_256_3_4_336_248_22_1496_7_2408__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -107,10 +133,37 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(PMNEOpt2Verifier2__factory);
 
   await deployer.deploy(NoirRegisterIdentity_1_256_3_4_600_248_1_1496_3_256__factory);
-  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_248_336_1_2432_3_256__factory);
-  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_336_248_1_2432_3_256__factory);
-  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_5_336_248_1_2120_4_256__factory);
   await deployer.deploy(NoirRegisterIdentity_10_256_3_3_576_248_1_1184_5_264__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_4_336_232_1_1480_4_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_14_256_3_3_576_240_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_14_256_3_4_576_248_1_1496_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_4_336_232_1_1480_4_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_4_336_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_336_248_1_2432_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_576_248_1_2432_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_20_160_3_2_576_184_NA__factory);
   await deployer.deploy(NoirRegisterIdentity_20_256_3_3_336_224_NA__factory);
   await deployer.deploy(NoirRegisterIdentity_21_256_3_3_576_232_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_3_512_3_3_336_264_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_6_336_264_21_2448_6_2008__factory);
+  await deployer.deploy(NoirRegisterIdentity_21_256_3_4_576_232_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_4_576_232_1_1480_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_5_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_6_576_264_1_2448_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_3_256_3_4_600_248_1_1496_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_6_160_3_3_336_216_1_1080_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_3_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_5_576_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_14_256_3_4_336_232_1_1480_5_296__factory);
+  await deployer.deploy(NoirRegisterIdentity_20_160_3_3_576_200_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_20_256_3_5_336_248_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_23_160_3_3_576_200_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_24_256_3_4_336_248_NA__factory);
+
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_5_576_248_1_1808_4_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_5_576_264_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_5_584_264_1_2136_4_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_4_336_232_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_4_336_248_22_1496_7_2408__factory);
 };
