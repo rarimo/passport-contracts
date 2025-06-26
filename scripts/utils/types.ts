@@ -8,6 +8,7 @@ export const C_RSA_SHA2_4096 = keccak256(["string"], ["C_RSA_4096"]);
 export const C_RSA_SHA2_3072 = keccak256(["string"], ["C_RSA_3072"]);
 export const C_RSA_SHA2_2048 = keccak256(["string"], ["C_RSA_2048"]);
 export const C_RSA_SHA512_4096 = keccak256(["string"], ["C_RSA_SHA512_4096"]);
+export const C_RSA_SHA2_3072_56611 = keccak256(["string"], ["C_RSA_3072_56611"]);
 
 export const C_RSAPSS_SHA2_2048 = keccak256(["string"], ["C_RSAPSS_SHA2_2048"]);
 export const C_RSAPSS_SHA2_4096 = keccak256(["string"], ["C_RSAPSS_SHA2_4096"]);

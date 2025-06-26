@@ -22,7 +22,7 @@ export const deployCRSADispatcher = async (
   const signer = await deployRSASigner(deployer, hashFunc, exponent, keyLength);
 
   const dispatcher = await deployer.deploy(CRSADispatcher__factory, {
-    name: `CRSADispatcher ${hashFunc} ${keyLength}`,
+    name: `CRSADispatcher ${hashFunc} ${keyLength} ${exponent}`,
   });
 
   await dispatcher.__CRSADispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
