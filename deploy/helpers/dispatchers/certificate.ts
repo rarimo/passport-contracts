@@ -1,15 +1,15 @@
 import { Deployer } from "@solarity/hardhat-migrate";
 
 import {
-  CRSAPSSSigner__factory,
-  CRSADispatcher__factory,
-  CRSASigner__factory,
   CECDSA256Signer__factory,
+  CECDSA384Signer,
   CECDSA384Signer__factory,
+  CECDSA512Signer,
   CECDSA512Signer__factory,
   CECDSADispatcher__factory,
-  CECDSA384Signer,
-  CECDSA512Signer,
+  CRSADispatcher__factory,
+  CRSAPSSSigner__factory,
+  CRSASigner__factory,
 } from "@ethers-v6";
 
 export const deployCRSADispatcher = async (
@@ -38,7 +38,7 @@ export const deployCRSAPSSDispatcher = async (
   const signer = await deployRSAPSSSigner(deployer, hashFunc, exponent, keyLength);
 
   const dispatcher = await deployer.deploy(CRSADispatcher__factory, {
-    name: `CRSAPSSDispatcher ${hashFunc} ${exponent} ${keyLength}`,
+    name: `CRSAPSSDispatcher ${hashFunc} ${exponent} ${keyLength} ${keyPrefix}`,
   });
 
   await dispatcher.__CRSADispatcher_init(await signer.getAddress(), keyLength, keyPrefix);
@@ -89,6 +89,14 @@ const deployRSASigner = async (deployer: Deployer, hashfunc: string, exponent: s
 };
 
 const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent: string, keyLength: string) => {
+  try {
+    const result = await deployer.deployed(
+      CRSAPSSSigner__factory,
+      `CRSAPSSSigner ${hashfunc} ${exponent} ${keyLength}`,
+    );
+    return result;
+  } catch {}
+
   const signer = await deployer.deploy(CRSAPSSSigner__factory, {
     name: `CRSAPSSSigner ${hashfunc} ${exponent} ${keyLength}`,
   });
