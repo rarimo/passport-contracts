@@ -69,6 +69,11 @@ export const deployCECDSADispatcher = async (
 };
 
 const deployRSASigner = async (deployer: Deployer, hashfunc: string, exponent: string, keyLength: string) => {
+  try {
+    const result = await deployer.deployed(CRSASigner__factory, `CRSASigner ${hashfunc} ${exponent} ${keyLength}`);
+    return result;
+  } catch {}
+
   const signer = await deployer.deploy(CRSASigner__factory, {
     name: `CRSASigner ${hashfunc} ${exponent} ${keyLength}`,
   });
@@ -121,6 +126,14 @@ const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent
 };
 
 const deployECDSA384Signer = async (deployer: Deployer, curve: string, hashfunc: string, keyLength: string) => {
+  try {
+    const result = await deployer.deployed(
+      CECDSA384Signer__factory,
+      `CESDCA384Signer ${curve} ${hashfunc} ${keyLength}`,
+    );
+    return result;
+  } catch {}
+
   const signer = await deployer.deploy(CECDSA384Signer__factory, {
     name: `CESDCA384Signer ${curve} ${hashfunc} ${keyLength}`,
   });
@@ -146,6 +159,11 @@ const deployECDSA384Signer = async (deployer: Deployer, curve: string, hashfunc:
 };
 
 const deployECDSA256Signer = async (deployer: Deployer, keyLength: string) => {
+  try {
+    const result = await deployer.deployed(CECDSA256Signer__factory, `CESDCA256Signer ${keyLength}`);
+    return result;
+  } catch {}
+
   const signer = await deployer.deploy(CECDSA256Signer__factory, {
     name: `CESDCA256Signer ${keyLength}`,
   });
@@ -154,6 +172,11 @@ const deployECDSA256Signer = async (deployer: Deployer, keyLength: string) => {
 };
 
 const deployECDSA512Signer = async (deployer: Deployer, keyLength: string) => {
+  try {
+    const result = await deployer.deployed(CECDSA512Signer__factory, `CESDCA512Signer ${keyLength}`);
+    return result;
+  } catch {}
+
   const signer = await deployer.deploy(CECDSA512Signer__factory, {
     name: `CESDCA512Signer ${keyLength}`,
   });
