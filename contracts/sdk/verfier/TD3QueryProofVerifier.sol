@@ -20,7 +20,12 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-contract ForeignCountryQueryProofVerifier {
+/**
+ * @notice See docs:
+ * - https://www.icao.int/publications/Documents/9303_p4_cons_en.pdf
+ * - https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+ */
+contract TD3QueryProofVerifier {
     // Scalar field size
     uint256 constant r =
         21888242871839275222246405745257275088548364400416034343698204186575808495617;
