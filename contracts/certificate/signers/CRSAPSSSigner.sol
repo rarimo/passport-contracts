@@ -7,6 +7,7 @@ import {RSASSAPSS} from "@solarity/solidity-lib/libs/crypto/RSASSAPSS.sol";
 
 import {ICertificateSigner} from "../../interfaces/signers/ICertificateSigner.sol";
 
+import {SHA384} from "../../utils/SHA384.sol";
 import {SHA512} from "../../utils/SHA512.sol";
 
 contract CRSAPSSSigner is ICertificateSigner, Initializable {
@@ -14,7 +15,8 @@ contract CRSAPSSSigner is ICertificateSigner, Initializable {
 
     enum HF {
         sha256,
-        sha512
+        sha512,
+        sha384
     }
 
     uint256 public exponent; // RSAPSS exponent
@@ -37,6 +39,12 @@ contract CRSAPSSSigner is ICertificateSigner, Initializable {
 
         if (hashFunction == HF.sha256) {
             params_ = RSASSAPSS.Parameters({hashLength: 32, saltLength: 32, hasher: _sha2});
+        } else if (hashFunction == HF.sha384) {
+            params_ = RSASSAPSS.Parameters({
+                hashLength: 48,
+                saltLength: 48,
+                hasher: SHA384.sha384
+            });
         } else if (hashFunction == HF.sha512) {
             params_ = RSASSAPSS.Parameters({
                 hashLength: 64,

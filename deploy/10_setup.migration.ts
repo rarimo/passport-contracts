@@ -194,6 +194,7 @@ import {
   C_RSA_SHA2_3072_56611,
   C_RSAPSS_SHA2_2048_3,
   C_RSAPSS_SHA2_3072,
+  C_RSAPSS_SHA384_2048,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -241,6 +242,10 @@ export = async (deployer: Deployer) => {
   const cRsaPss3072Sha2Dispatcher = await deployer.deployed(
     CRSADispatcher__factory,
     "CRSAPSSDispatcher SHA2 65537 512 0x0282018100",
+  );
+  const cRsaPss3072Sha384Dispatcher = await deployer.deployed(
+    CRSADispatcher__factory,
+    "CRSAPSSDispatcher SHA384 65537 512 0x0282010100",
   );
 
   const cEcdsaSecp256r1256Sha1Dispatcher = await deployer.deployed(
@@ -528,6 +533,7 @@ export = async (deployer: Deployer) => {
 
   await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA2_2048_3, await cRsaPss2048Sha2Dispatcher_3.getAddress());
   await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA2_3072, await cRsaPss3072Sha2Dispatcher.getAddress());
+  await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA384_2048, await cRsaPss3072Sha384Dispatcher.getAddress());
 
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP256R1_SHA1_256,

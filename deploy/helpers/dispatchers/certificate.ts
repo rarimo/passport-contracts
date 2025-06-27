@@ -30,7 +30,7 @@ export const deployCRSADispatcher = async (
 
 export const deployCRSAPSSDispatcher = async (
   deployer: Deployer,
-  hashFunc: "SHA2" | "SHA512",
+  hashFunc: "SHA2" | "SHA384" | "SHA512",
   exponent: string,
   keyLength: string,
   keyPrefix: string,
@@ -103,10 +103,16 @@ const deployRSAPSSSigner = async (deployer: Deployer, hashfunc: string, exponent
 
   let hf;
 
-  if (hashfunc === "SHA2") {
-    hf = 0;
-  } else {
-    hf = 1;
+  switch (hashfunc) {
+    case "SHA2":
+      hf = 0;
+      break;
+    case "SHA384":
+      hf = 2;
+      break;
+    default:
+      hf = 1;
+      break;
   }
 
   await signer.__CRSAPSSSigner_init(exponent, hf);
