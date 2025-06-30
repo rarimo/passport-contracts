@@ -3,4 +3,4 @@
 ./contracts/mock
 ./contracts/utils/Date2Time.sol
 ./contracts/libraries/Poseidon.sol
-./contracts/sdk/verfier/ForeignCountryQueryProofVerifier.sol
+./contracts/sdk/verifier/TD3QueryProofVerifier.sol
