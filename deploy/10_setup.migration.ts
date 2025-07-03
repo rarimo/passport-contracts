@@ -105,6 +105,7 @@ import {
   C_RSAPSS_SHA384_2048,
   C_RSAPSS_SHA512_4096,
   C_ECDSA_SECP256R1_SHA1_256,
+  C_ECDSA_SECP256R1_SHA1_512,
   C_ECDSA_SECP384R1_SHA2_512,
   C_ECDSA_SECP384R1_SHA384_512,
   C_ECDSA_BRAINPOOLP384R1_SHA2_512,
@@ -251,6 +252,11 @@ export = async (deployer: Deployer) => {
   const cEcdsaSecp256r1256Sha1Dispatcher = await deployer.deployed(
     CECDSADispatcher__factory,
     "CECDSADispatcher SECP256 SHA1 64",
+  );
+
+  const cEcdsaSecp256r1512Sha1Dispatcher = await deployer.deployed(
+    CECDSADispatcher__factory,
+    "CECDSADispatcher SECP256 SHA1 128",
   );
 
   const cEcdsaSecp384r1512Sha2Dispatcher = await deployer.deployed(
@@ -538,6 +544,10 @@ export = async (deployer: Deployer) => {
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP256R1_SHA1_256,
     await cEcdsaSecp256r1256Sha1Dispatcher.getAddress(),
+  );
+  await registration.mockAddCertificateDispatcher(
+    C_ECDSA_SECP256R1_SHA1_512,
+    await cEcdsaSecp256r1512Sha1Dispatcher.getAddress(),
   );
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP384R1_SHA2_512,
