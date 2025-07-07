@@ -46,7 +46,7 @@
     "@openzeppelin/contracts": "5.2.0",
     "@openzeppelin/contracts-upgradeable": "5.2.0",
     "@rarimo/evidence-registry": "0.1.1",
-    "@solarity/solidity-lib": "3.0.2",
+    "@solarity/solidity-lib": "3.1.0",
     "poseidon-solidity": "0.0.5"
   },
   "devDependencies": {
@@ -58,6 +58,7 @@
     "@solarity/hardhat-gobind": "^1.2.2",
     "@solarity/hardhat-markup": "^1.0.10",
     "@solarity/hardhat-migrate": "^3.0.2",
+    "@solarity/hardhat-smart-compare": "^0.1.6",
     "@solarity/hardhat-zkit": "^0.5.15",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
