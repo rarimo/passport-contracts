@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0]
+
+### Breaking Change
+
+* Bumped the version of `@solarity/solidity-lib` to `3.1.0`. Storage layout of `(A)MultiOwnable` has changed.  
+    Affected contracts:  
+    * L1RegistrationState  
+    * RegistrationSMTReplicator  
+    * StateKeeper  
+* For backwards compatibility with StateKeeper, additional fields were added.
+
+## [0.3.2]
+
+* Added TD3QueryProofVerifier to the SDK
+
 ## [0.3.1]
 
 * Enhanced `RegistrationSMTReplicator` with signature-based root transition.
