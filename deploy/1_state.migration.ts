@@ -1,5 +1,5 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
-import { deployPoseidons, deployProxy, deploySMTProxy } from "./helpers";
+import { deployProxy, deploySMTProxy } from "./helpers";
 
 import { StateKeeperMock__factory } from "@ethers-v6";
 
@@ -7,8 +7,6 @@ import { getConfig } from "./config/config";
 
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
-
-  await deployPoseidons(deployer, [1, 2, 3, 4, 5]);
 
   const registrationSmt = await deploySMTProxy(deployer, "RegistrationSMT");
   const certificatesSmt = await deploySMTProxy(deployer, "CertificatesSMT");

@@ -43,6 +43,9 @@ contract StateKeeper is Initializable, AMultiOwnable, UUPSUpgradeable {
         uint64 issueTimestamp;
     }
 
+    // Previously, _owners (type: struct EnumerableSet.AddressSet) from the old AMultiOwnable
+    bytes32[2] private _deprecated;
+
     PoseidonSMT public registrationSmt;
     PoseidonSMT public certificatesSmt;
 
@@ -88,6 +91,10 @@ contract StateKeeper is Initializable, AMultiOwnable, UUPSUpgradeable {
         icaoMasterTreeMerkleRoot = icaoMasterTreeMerkleRoot_;
 
         addOwners(initialOwner_.asSingletonArray());
+    }
+
+    function __StateKeeper_init_v2() external reinitializer(2) {
+        __AMultiOwnable_init();
     }
 
     /**
