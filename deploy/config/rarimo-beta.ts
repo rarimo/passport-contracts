@@ -3,7 +3,7 @@ export const owner = "0xD2D15f650654d69F4dFd3aF41c49412c62BD616F";
 
 export const evidenceRegistry = "0x156C5fb747638F18264080e1f17A15B76E938e73";
 
-export const icaoMasterTreeMerkleRoot = "0x0eef24f25513eb3d3e13856805319553013158c347209287d090d3100e33c55b";
+export const icaoMasterTreeMerkleRoot = "0x490355b1c9cca56d89c180780c5ea66c1766d57cf22670c7a9a07dc18b835a4f";
 
 export const registrationName = "SecondRegistration";
 export const simpleRegistrationName = "SimpleRegistration";
