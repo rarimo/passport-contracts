@@ -141,6 +141,17 @@ abstract contract AQueryProofExecutor is Initializable {
         _afterVerify(registrationRoot_, currentDate_, userPayload_);
     }
 
+    function getPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public virtual returns (bytes32[] memory publicSignals) {
+        uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
+        builder_.withIdStateRoot(registrationRoot_);
+
+        return PublicSignalsBuilder.buildAsBytesArray(builder_);
+    }
+
     function getRegistrationSMT() public view returns (address) {
         return _getABuilderStorage().registrationSMT;
     }
