@@ -77,13 +77,13 @@ abstract contract AQueryProofExecutor is Initializable {
      * @dev This function should decode `userPayload_` and use the `PublicSignalsBuilder` library functions
      * (attached via `using for`) to populate the public signals array based on the specific application's requirements.
      * @param userPayload_ Encoded application-specific data required to build the public signals.
-     * @return dataPointer_ A `uint256` representing the memory pointer to the constructed public signals array.
+     * @return builder_ A `uint256` representing the memory pointer to the constructed public signals array.
      */
     function _buildPublicSignals(
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public virtual returns (uint256 dataPointer_);
+    ) public virtual returns (uint256 builder_);
 
     /**
      * @notice Executes the full ZK proof verification workflow for a Circom (Groth16) proof.
@@ -139,6 +139,17 @@ abstract contract AQueryProofExecutor is Initializable {
         }
 
         _afterVerify(registrationRoot_, currentDate_, userPayload_);
+    }
+
+    function getPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public virtual returns (bytes32[] memory publicSignals) {
+        uint256 builder_ = _buildPublicSignals(registrationRoot_, currentDate_, userPayload_);
+        builder_.withIdStateRoot(registrationRoot_);
+
+        return PublicSignalsBuilder.buildAsBytesArray(builder_);
     }
 
     function getRegistrationSMT() public view returns (address) {
