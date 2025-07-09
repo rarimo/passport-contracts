@@ -196,6 +196,8 @@ import {
   Z_NOIR_PASSPORT_11_256_3_5_584_264_1_2136_4_256,
   Z_NOIR_PASSPORT_1_256_3_4_336_232_NA,
   Z_NOIR_PASSPORT_2_256_3_4_336_248_22_1496_7_2408,
+  C_ECDSA_SECP256R1_SHA1_384,
+  C_ECDSA_BRAINPOOLP256R1_SHA2_448,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -254,9 +256,19 @@ export = async (deployer: Deployer) => {
     "CECDSADispatcher SECP256 SHA1 64",
   );
 
+  const cEcdsaSecp256r1384Sha1Dispatcher = await deployer.deployed(
+    CECDSADispatcher__factory,
+    "CECDSADispatcher SECP256 SHA1 96",
+  );
+
   const cEcdsaSecp256r1512Sha1Dispatcher = await deployer.deployed(
     CECDSADispatcher__factory,
     "CECDSADispatcher SECP256 SHA1 128",
+  );
+
+  const cEcdsaBrainpoolP256r1112Sha1Dispatcher = await deployer.deployed(
+    CECDSADispatcher__factory,
+    "CECDSADispatcher brainpoolP256r1 SHA1 112",
   );
 
   const cEcdsaSecp384r1512Sha2Dispatcher = await deployer.deployed(
@@ -546,8 +558,16 @@ export = async (deployer: Deployer) => {
     await cEcdsaSecp256r1256Sha1Dispatcher.getAddress(),
   );
   await registration.mockAddCertificateDispatcher(
+    C_ECDSA_SECP256R1_SHA1_384,
+    await cEcdsaSecp256r1384Sha1Dispatcher.getAddress(),
+  );
+  await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP256R1_SHA1_512,
     await cEcdsaSecp256r1512Sha1Dispatcher.getAddress(),
+  );
+  await registration.mockAddCertificateDispatcher(
+    C_ECDSA_BRAINPOOLP256R1_SHA2_448,
+    await cEcdsaBrainpoolP256r1112Sha1Dispatcher.getAddress(),
   );
   await registration.mockAddCertificateDispatcher(
     C_ECDSA_SECP384R1_SHA2_512,

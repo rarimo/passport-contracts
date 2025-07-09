@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.2]
+
+* Made the `_buildPublicSignals` and `getPublicSignals` functions view. 
+* Added `C_ECDSA_SECP256R1_SHA1_384` and `C_ECDSA_BRAINPOOLP256R1_SHA2_448` dispatchers. 
+
 ## [0.4.1]
 
 * Added `getPublicSignals` function to the `AQueryProofExecutor` contract
