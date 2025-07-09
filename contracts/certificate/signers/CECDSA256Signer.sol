@@ -14,7 +14,8 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
     using SHA1 for *;
 
     enum Curve {
-        secp256r1
+        secp256r1,
+        brainpoolP256r1
     }
 
     enum HF {
@@ -29,6 +30,16 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
             gy: 0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5,
             p: 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF,
             n: 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551
+        });
+
+    EC256.Curve internal _brainpoolP256r1CurveParams =
+        EC256.Curve({
+            a: 0x7d5a0975fc2c3057eef67530417affe7fb8055c126dc5c6ce94a4b44f330b5d9,
+            b: 0x26dc5c6ce94a4b44f330b5d9bbd77cbf958416295cf7e1ce6bccdc18ff8c07b6,
+            gx: 0x8bd2aeb9cb7e57cb2c4b482ffc81b7afb9de27e1e3bd23c23a4453bd9ace3262,
+            gy: 0x547ef835c3dac4fd97f8461a14611dc9c27745132ded8e545c1d54c72f046997,
+            p: 0xa9fb57dba1eea9bc3e660a909d838d726e3bf623d52620282013481d1f6e5377,
+            n: 0xa9fb57dba1eea9bc3e660a909d838d718c397aa3b561a6f7901e0e82974856a7
         });
 
     Curve public curve;
@@ -49,6 +60,8 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
 
         if (curve == Curve.secp256r1) {
             curveParams_ = _secp256r1CurveParams;
+        } else if (curve == Curve.brainpoolP256r1) {
+            curveParams_ = _brainpoolP256r1CurveParams;
         }
 
         if (hashFunction == HF.sha1) {
