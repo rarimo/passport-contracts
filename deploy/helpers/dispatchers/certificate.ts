@@ -11,6 +11,7 @@ import {
   CRSAPSSSigner__factory,
   CRSASigner__factory,
 } from "@ethers-v6";
+import { log } from "node:util";
 
 export const deployCRSADispatcher = async (
   deployer: Deployer,
@@ -56,9 +57,9 @@ export const deployCECDSADispatcher = async (
   if (curve == "brainpoolP512r1") {
     signer = await deployECDSA512Signer(deployer, keyLength);
   } else if (curve == "SECP256") {
-    signer = await deployECDSA256Signer(deployer, curve, keyLength);
+    signer = await deployECDSA256Signer(deployer, curve, hashFunc, keyLength);
   } else if (curve == "brainpoolP256r1") {
-    signer = await deployECDSA256Signer(deployer, curve, keyLength);
+    signer = await deployECDSA256Signer(deployer, curve, hashFunc, keyLength);
   } else {
     signer = await deployECDSA384Signer(deployer, curve, hashFunc, keyLength);
   }
@@ -160,17 +161,21 @@ const deployECDSA384Signer = async (deployer: Deployer, curve: string, hashfunc:
   return signer;
 };
 
-const deployECDSA256Signer = async (deployer: Deployer, curve: string, keyLength: string) => {
+const deployECDSA256Signer = async (deployer: Deployer, curve: string, hashfunc: string, keyLength: string) => {
   try {
-    const result = await deployer.deployed(CECDSA256Signer__factory, `CESDCA256Signer ${keyLength}`);
+    const result = await deployer.deployed(
+      CECDSA256Signer__factory,
+      `CESDCA256Signer ${hashfunc} ${curve} ${keyLength}`,
+    );
     return result;
   } catch {}
 
   const signer = await deployer.deploy(CECDSA256Signer__factory, {
-    name: `CESDCA256Signer ${keyLength}`,
+    name: `CESDCA256Signer ${hashfunc} ${curve} ${keyLength}`,
   });
 
   let curv;
+  let hf;
 
   if (curve === "SECP256") {
     curv = 0;
@@ -178,7 +183,13 @@ const deployECDSA256Signer = async (deployer: Deployer, curve: string, keyLength
     curv = 1;
   }
 
-  await signer.__CECDSA256Signer_init(curv, 0 /* SHA1 */);
+  if (hashfunc === "SHA2") {
+    hf = 1;
+  } else {
+    hf = 0;
+  }
+
+  await signer.__CECDSA256Signer_init(curv, hf);
 
   return signer;
 };

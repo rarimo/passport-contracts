@@ -19,7 +19,8 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
     }
 
     enum HF {
-        sha1
+        sha1,
+        sha2
     }
 
     EC256.Curve private _secp256r1CurveParams =
@@ -66,6 +67,8 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
 
         if (hashFunction == HF.sha1) {
             hasher_ = _sha1;
+        } else if (hashFunction == HF.sha2) {
+            hasher_ = _sha2;
         }
 
         return
@@ -78,5 +81,9 @@ contract CECDSA256Signer is ICertificateSigner, Initializable {
 
     function _sha1(bytes memory message) internal pure returns (bytes32) {
         return bytes32(message.sha1()) >> 96;
+    }
+
+    function _sha2(bytes memory message) internal pure returns (bytes32) {
+        return sha256(message);
     }
 }
