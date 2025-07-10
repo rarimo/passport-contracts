@@ -11,7 +11,6 @@ import {
   CRSAPSSSigner__factory,
   CRSASigner__factory,
 } from "@ethers-v6";
-import { log } from "node:util";
 
 export const deployCRSADispatcher = async (
   deployer: Deployer,
