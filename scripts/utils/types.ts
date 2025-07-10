@@ -7,8 +7,10 @@ export const C_RSA_SHA1_2048 = keccak256(["string"], ["C_RSA_SHA1_2048"]);
 export const C_RSA_SHA2_4096 = keccak256(["string"], ["C_RSA_4096"]);
 export const C_RSA_SHA2_3072 = keccak256(["string"], ["C_RSA_3072"]);
 export const C_RSA_SHA2_2048 = keccak256(["string"], ["C_RSA_2048"]);
+export const C_RSA_SHA512_2048 = keccak256(["string"], ["C_RSA_SHA512_2048"]);
 export const C_RSA_SHA512_4096 = keccak256(["string"], ["C_RSA_SHA512_4096"]);
 export const C_RSA_SHA2_3072_56611 = keccak256(["string"], ["C_RSA_3072_56611"]);
+export const C_RSA_SHA2_2048_122125 = keccak256(["string"], ["C_RSA_2048_122125"]);
 
 export const C_RSAPSS_SHA2_2048 = keccak256(["string"], ["C_RSAPSS_SHA2_2048"]);
 export const C_RSAPSS_SHA2_4096 = keccak256(["string"], ["C_RSAPSS_SHA2_4096"]);
@@ -21,9 +23,12 @@ export const C_RSAPSS_SHA384_2048 = keccak256(["string"], ["C_RSAPSS_SHA384_2048
 export const C_ECDSA_SECP256R1_SHA1_256 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA1_256"]);
 export const C_ECDSA_SECP256R1_SHA1_384 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA1_384"]);
 export const C_ECDSA_SECP256R1_SHA1_512 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA1_512"]);
+export const C_ECDSA_SECP256R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA2_512"]);
+export const C_ECDSA_SECP256R1_SHA2_2048 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA2_2048"]);
 export const C_ECDSA_SECP384R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_SECP384R1_SHA2_512"]);
 export const C_ECDSA_SECP384R1_SHA384_512 = keccak256(["string"], ["C_ECDSA_SECP384R1_SHA384_512"]);
 export const C_ECDSA_BRAINPOOLP256R1_SHA1_448 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP256R1_SHA1_448"]);
+export const C_ECDSA_BRAINPOOLP256R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP256R1_SHA2_512"]);
 export const C_ECDSA_BRAINPOOLP384R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA2_512"]);
 export const C_ECDSA_BRAINPOOLP384R1_SHA384_512 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA384_512"]);
 export const C_ECDSA_BRAINPOOLP384R1_SHA384_768 = keccak256(["string"], ["C_ECDSA_BRAINPOOLP384R1_SHA384_768"]);
@@ -245,3 +250,5 @@ export const Z_NOIR_PASSPORT_26_512_3_3_336_264_1_1968_2_256 = keccak256(
   ["Z_NOIR_PASSPORT_26_512_3_3_336_264_1_1968_2_256"],
 );
 export const Z_NOIR_PASSPORT_27_512_3_4_336_248_NA = keccak256(["string"], ["Z_NOIR_PASSPORT_27_512_3_4_336_248_NA"]);
+
+export const Z_NOIR_PASSPORT_ID_CARD_I = keccak256(["string"], ["Z_NOIR_PASSPORT_ID_CARD_I"]);

@@ -32,8 +32,10 @@ export = async (deployer: Deployer) => {
   await deployCRSADispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
   await deployCRSADispatcher(deployer, "SHA2", "65537", "384", "0x0282018100");
   await deployCRSADispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
+  await deployCRSADispatcher(deployer, "SHA512", "65537", "256", "0x0282010100");
   await deployCRSADispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
   await deployCRSADispatcher(deployer, "SHA2", "56611", "512", "0x0282018100");
+  await deployCRSADispatcher(deployer, "SHA2", "122125", "256", "0x0282010100");
 
   await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
   await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");
@@ -46,7 +48,10 @@ export = async (deployer: Deployer) => {
   await deployCECDSADispatcher(deployer, "SECP256", "SHA1", "64", "0x03420004");
   await deployCECDSADispatcher(deployer, "SECP256", "SHA1", "96", "0x03320004");
   await deployCECDSADispatcher(deployer, "SECP256", "SHA1", "128", "0x03420004");
+  await deployCECDSADispatcher(deployer, "SECP256", "SHA2", "128", "0x03420004");
+  await deployCECDSADispatcher(deployer, "SECP256", "SHA2", "512", "0x0282010100");
   await deployCECDSADispatcher(deployer, "brainpoolP256r1", "SHA1", "112", "0x033A0004");
+  await deployCECDSADispatcher(deployer, "brainpoolP256r1", "SHA2", "128", "0x03420004");
   await deployCECDSADispatcher(deployer, "SECP384", "SHA2", "64", "0x03420004");
   await deployCECDSADispatcher(deployer, "SECP384", "SHA384", "64", "0x03420004");
   await deployCECDSADispatcher(deployer, "brainpoolP384r1", "SHA2", "64", "0x03420004");

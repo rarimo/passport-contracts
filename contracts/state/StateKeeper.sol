@@ -104,7 +104,10 @@ contract StateKeeper is Initializable, AMultiOwnable, UUPSUpgradeable {
         bytes32 certificateKey_,
         uint256 expirationTimestamp_
     ) external virtual onlyRegistration {
-        require(expirationTimestamp_ > block.timestamp, "StateKeeper: certificate is expired");
+        require(
+            expirationTimestamp_ + 5 * 365 days > block.timestamp,
+            "StateKeeper: certificate is expired"
+        );
 
         _certificateInfos[certificateKey_].expirationTimestamp = uint64(expirationTimestamp_);
 
