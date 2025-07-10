@@ -1,5 +1,11 @@
 # Changelog
 
+## [UNRELEASED]
+
+* Added an ability to register expired certificates
+* Added `C_RSA_SHA512_2048`, `C_RSA_SHA2_2048_122125`, `C_ECDSA_SECP256R1_SHA2_512`, `C_ECDSA_SECP256R1_SHA2_2048`, `C_ECDSA_BRAINPOOLP256R1_SHA2_512` dispatchers.
+* Added `Z_NOIR_PASSPORT_ID_CARD_I` verifier
+
 ## [0.4.2]
 
 * Made the `_buildPublicSignals` and `getPublicSignals` functions view. 
