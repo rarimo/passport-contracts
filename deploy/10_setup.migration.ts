@@ -208,6 +208,7 @@ import {
   Z_NOIR_PASSPORT_26_512_3_3_336_248_NA,
   Z_NOIR_PASSPORT_26_512_3_3_336_264_1_1968_2_256,
   Z_NOIR_PASSPORT_27_512_3_4_336_248_NA,
+  C_RSA_SHA2_2048_122125,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -229,6 +230,10 @@ export = async (deployer: Deployer) => {
   const cRsa3072Sha2Dispatcher_56611 = await deployer.deployed(
     CRSADispatcher__factory,
     "CRSADispatcher SHA2 512 56611",
+  );
+  const cRsa2048Sha2Dispatcher_122125 = await deployer.deployed(
+    CRSADispatcher__factory,
+    "CRSADispatcher SHA2 256 122125",
   );
 
   const cRsaPss2048Sha2Dispatcher = await deployer.deployed(
@@ -568,6 +573,10 @@ export = async (deployer: Deployer) => {
   await registration.mockAddCertificateDispatcher(
     C_RSA_SHA2_3072_56611,
     await cRsa3072Sha2Dispatcher_56611.getAddress(),
+  );
+  await registration.mockAddCertificateDispatcher(
+    C_RSA_SHA2_2048_122125,
+    await cRsa2048Sha2Dispatcher_122125.getAddress(),
   );
 
   await registration.mockAddCertificateDispatcher(C_RSAPSS_SHA2_2048, await cRsaPss2048Sha2Dispatcher.getAddress());

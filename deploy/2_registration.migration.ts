@@ -34,6 +34,7 @@ export = async (deployer: Deployer) => {
   await deployCRSADispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
   await deployCRSADispatcher(deployer, "SHA512", "65537", "512", "0x0282020100");
   await deployCRSADispatcher(deployer, "SHA2", "56611", "512", "0x0282018100");
+  await deployCRSADispatcher(deployer, "SHA2", "122125", "256", "0x0282010100");
 
   await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "256", "0x0282010100");
   await deployCRSAPSSDispatcher(deployer, "SHA2", "65537", "512", "0x0282020100");

@@ -57,6 +57,7 @@ const config: HardhatUserConfig = {
     "rarimo-l2": {
       url: "https://l2.rarimo.com",
       gasMultiplier: 1.2,
+      gasPrice: 1060000,
     },
     "rarimo-l2-testnet": {
       url: "https://l2.testnet.rarimo.com",
