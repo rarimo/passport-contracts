@@ -24,6 +24,7 @@ export const C_ECDSA_SECP256R1_SHA1_256 = keccak256(["string"], ["C_ECDSA_SECP25
 export const C_ECDSA_SECP256R1_SHA1_384 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA1_384"]);
 export const C_ECDSA_SECP256R1_SHA1_512 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA1_512"]);
 export const C_ECDSA_SECP256R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA2_512"]);
+export const C_ECDSA_SECP256R1_SHA2_768 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA2_768"]);
 export const C_ECDSA_SECP256R1_SHA2_2048 = keccak256(["string"], ["C_ECDSA_SECP256R1_SHA2_2048"]);
 export const C_ECDSA_SECP384R1_SHA2_512 = keccak256(["string"], ["C_ECDSA_SECP384R1_SHA2_512"]);
 export const C_ECDSA_SECP384R1_SHA384_512 = keccak256(["string"], ["C_ECDSA_SECP384R1_SHA384_512"]);
