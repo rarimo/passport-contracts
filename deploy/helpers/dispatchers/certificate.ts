@@ -49,7 +49,7 @@ export const deployCECDSADispatcher = async (
   deployer: Deployer,
   curve: "SECP256" | "SECP384" | "brainpoolP256r1" | "brainpoolP384r1" | "brainpoolP512r1",
   hashFunc: "SHA1" | "SHA2" | "SHA384" | "SHA512",
-  keyLength: "64" | "96" | "112" | "128" | "512",
+  keyLength: "64" | "96" | "112" | "128" | "192" | "512",
   keyPrefix: string,
 ) => {
   let signer: CECDSA384Signer | CECDSA512Signer;
