@@ -17,5 +17,9 @@ export async function getConfig() {
     return await import("./rarimo-beta");
   }
 
+  if (hre.network.name == "rarimo-l2-testnet") {
+    return await import("./rarimo-l2-testnet");
+  }
+
   throw new Error(`Config for network ${hre.network.name} is not specified`);
 }

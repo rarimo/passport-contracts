@@ -57,7 +57,7 @@ abstract contract AQueryProofExecutor is Initializable {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public virtual {}
+    ) internal virtual {}
 
     /**
      * @notice Hook executed after a `successful` ZK proof verification.
@@ -70,7 +70,7 @@ abstract contract AQueryProofExecutor is Initializable {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public virtual {}
+    ) internal virtual {}
 
     /**
      * @notice Abstract function responsible for constructing the public signals array for the ZK proof.
@@ -83,7 +83,7 @@ abstract contract AQueryProofExecutor is Initializable {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public view virtual returns (uint256 builder_);
+    ) internal view virtual returns (uint256 builder_);
 
     /**
      * @notice Executes the full ZK proof verification workflow for a Circom (Groth16) proof.
