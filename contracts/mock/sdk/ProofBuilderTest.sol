@@ -20,7 +20,7 @@ contract ProofBuilderTest is AQueryProofExecutor {
         bytes32,
         uint256,
         bytes memory
-    ) public pure override returns (uint256) {
+    ) internal pure override returns (uint256) {
         return 0;
     }
 
