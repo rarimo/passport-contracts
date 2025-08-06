@@ -2,6 +2,13 @@
 
 ## [UNRELEASED]
 
+* Added new Noir passport verifiers:
+  - `Z_NOIR_PASSPORT_1_256_3_5_336_248_1_2120_3_256`
+  - `Z_NOIR_PASSPORT_7_160_3_3_336_216_1_1080_3_256`
+  - `Z_NOIR_PASSPORT_8_160_3_3_336_216_1_1080_3_256`
+
+## [0.4.3]
+
 * Added an ability to register expired certificates
 * Added `C_RSA_SHA512_2048`, `C_RSA_SHA2_2048_122125`, `C_ECDSA_SECP256R1_SHA2_512`, `C_ECDSA_SECP256R1_SHA2_2048`, `C_ECDSA_BRAINPOOLP256R1_SHA2_512`, `C_ECDSA_SECP256R1_SHA2_768` dispatchers.
 * Added `Z_NOIR_PASSPORT_ID_CARD_I` verifier
