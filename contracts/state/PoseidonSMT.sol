@@ -110,7 +110,7 @@ contract PoseidonSMT is Initializable, UUPSUpgradeable {
     }
 
     /**
-     * @notice Check if the SMT root is valid. Zero root in always invalid and latest root is always a valid one.
+     * @notice Check if the SMT root is valid. Zero root is always invalid and latest root is always a valid one.
      */
     function isRootValid(bytes32 root_) external view virtual returns (bool) {
         if (root_ == bytes32(0)) {
