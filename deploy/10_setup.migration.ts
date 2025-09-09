@@ -118,6 +118,13 @@ import {
   NoirRegisterIdentity_3_160_3_3_336_200_NA__factory,
   NoirRegisterIdentity_3_160_3_4_576_216_1_1512_3_256__factory,
   NoirRegisterIdentity_3_256_3_3_576_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_4_576_248_1_1496_5_296__factory,
+  NoirRegisterIdentity_1_256_3_4_336_248_1_1496_4_256__factory,
+  NoirRegisterIdentity_1_256_3_5_344_232_NA__factory,
+  NoirRegisterIdentity_1_256_3_6_336_248_1_2432_3_256__factory,
+  NoirRegisterIdentity_21_256_3_7_336_264_21_3072_6_2008__factory,
+  NoirRegisterIdentity_25_384_3_5_576_248_20_3768_3_2008__factory,
+  NoirRegisterIdentity_2_256_3_5_336_248_22_1808_7_2408__factory,
 } from "@ethers-v6";
 
 import {
@@ -266,6 +273,13 @@ import {
   Z_NOIR_PASSPORT_3_160_3_3_336_200_NA,
   Z_NOIR_PASSPORT_3_160_3_4_576_216_1_1512_3_256,
   Z_NOIR_PASSPORT_3_256_3_3_576_248_NA,
+  Z_NOIR_PASSPORT_11_256_3_4_576_248_1_1496_5_296,
+  Z_NOIR_PASSPORT_1_256_3_4_336_248_1_1496_4_256,
+  Z_NOIR_PASSPORT_1_256_3_5_344_232_NA,
+  Z_NOIR_PASSPORT_1_256_3_6_336_248_1_2432_3_256,
+  Z_NOIR_PASSPORT_21_256_3_7_336_264_21_3072_6_2008,
+  Z_NOIR_PASSPORT_25_384_3_5_576_248_20_3768_3_2008,
+  Z_NOIR_PASSPORT_2_256_3_5_336_248_22_1808_7_2408,
 } from "@/scripts/utils/types";
 
 import { getConfig } from "./config/config";
@@ -718,6 +732,28 @@ export = async (deployer: Deployer) => {
   );
   const pNoirPassport_3_256_3_3_576_248_NA = await deployer.deployed(
     NoirRegisterIdentity_3_256_3_3_576_248_NA__factory,
+  );
+
+  const pNoirPassport_11_256_3_4_576_248_1_1496_5_296 = await deployer.deployed(
+    NoirRegisterIdentity_11_256_3_4_576_248_1_1496_5_296__factory,
+  );
+  const pNoirPassport_1_256_3_4_336_248_1_1496_4_256 = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_4_336_248_1_1496_4_256__factory,
+  );
+  const pNoirPassport_1_256_3_5_344_232_NA = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_5_344_232_NA__factory,
+  );
+  const pNoirPassport_1_256_3_6_336_248_1_2432_3_256 = await deployer.deployed(
+    NoirRegisterIdentity_1_256_3_6_336_248_1_2432_3_256__factory,
+  );
+  const pNoirPassport_21_256_3_7_336_264_21_3072_6_2008 = await deployer.deployed(
+    NoirRegisterIdentity_21_256_3_7_336_264_21_3072_6_2008__factory,
+  );
+  const pNoirPassport_25_384_3_5_576_248_20_3768_3_2008 = await deployer.deployed(
+    NoirRegisterIdentity_25_384_3_5_576_248_20_3768_3_2008__factory,
+  );
+  const pNoirPassport_2_256_3_5_336_248_22_1808_7_2408 = await deployer.deployed(
+    NoirRegisterIdentity_2_256_3_5_336_248_22_1808_7_2408__factory,
   );
 
   // ------------------------ CERTIFICATE ------------------------
@@ -1242,6 +1278,35 @@ export = async (deployer: Deployer) => {
   await registration.mockAddPassportVerifier(
     Z_NOIR_PASSPORT_3_256_3_3_576_248_NA,
     await pNoirPassport_3_256_3_3_576_248_NA.getAddress(),
+  );
+
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_11_256_3_4_576_248_1_1496_5_296,
+    await pNoirPassport_11_256_3_4_576_248_1_1496_5_296.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_4_336_248_1_1496_4_256,
+    await pNoirPassport_1_256_3_4_336_248_1_1496_4_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_5_344_232_NA,
+    await pNoirPassport_1_256_3_5_344_232_NA.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_1_256_3_6_336_248_1_2432_3_256,
+    await pNoirPassport_1_256_3_6_336_248_1_2432_3_256.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_21_256_3_7_336_264_21_3072_6_2008,
+    await pNoirPassport_21_256_3_7_336_264_21_3072_6_2008.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_25_384_3_5_576_248_20_3768_3_2008,
+    await pNoirPassport_25_384_3_5_576_248_20_3768_3_2008.getAddress(),
+  );
+  await registration.mockAddPassportVerifier(
+    Z_NOIR_PASSPORT_2_256_3_5_336_248_22_1808_7_2408,
+    await pNoirPassport_2_256_3_5_336_248_22_1808_7_2408.getAddress(),
   );
 
   await stateKeeper.mockAddRegistrations([config.registrationName], [await registration.getAddress()]);

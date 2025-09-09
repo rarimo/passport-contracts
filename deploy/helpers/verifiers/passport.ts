@@ -110,6 +110,13 @@ import {
   NoirRegisterIdentity_3_160_3_3_336_200_NA__factory,
   NoirRegisterIdentity_3_160_3_4_576_216_1_1512_3_256__factory,
   NoirRegisterIdentity_3_256_3_3_576_248_NA__factory,
+  NoirRegisterIdentity_11_256_3_4_576_248_1_1496_5_296__factory,
+  NoirRegisterIdentity_1_256_3_4_336_248_1_1496_4_256__factory,
+  NoirRegisterIdentity_1_256_3_5_344_232_NA__factory,
+  NoirRegisterIdentity_1_256_3_6_336_248_1_2432_3_256__factory,
+  NoirRegisterIdentity_21_256_3_7_336_264_21_3072_6_2008__factory,
+  NoirRegisterIdentity_25_384_3_5_576_248_20_3768_3_2008__factory,
+  NoirRegisterIdentity_2_256_3_5_336_248_22_1808_7_2408__factory,
 } from "@ethers-v6";
 
 export const deployPVerifiers = async (deployer: Deployer) => {
@@ -231,4 +238,12 @@ export const deployPVerifiers = async (deployer: Deployer) => {
   await deployer.deploy(NoirRegisterIdentity_3_160_3_3_336_200_NA__factory);
   await deployer.deploy(NoirRegisterIdentity_3_160_3_4_576_216_1_1512_3_256__factory);
   await deployer.deploy(NoirRegisterIdentity_3_256_3_3_576_248_NA__factory);
+
+  await deployer.deploy(NoirRegisterIdentity_11_256_3_4_576_248_1_1496_5_296__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_4_336_248_1_1496_4_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_5_344_232_NA__factory);
+  await deployer.deploy(NoirRegisterIdentity_1_256_3_6_336_248_1_2432_3_256__factory);
+  await deployer.deploy(NoirRegisterIdentity_21_256_3_7_336_264_21_3072_6_2008__factory);
+  await deployer.deploy(NoirRegisterIdentity_25_384_3_5_576_248_20_3768_3_2008__factory);
+  await deployer.deploy(NoirRegisterIdentity_2_256_3_5_336_248_22_1808_7_2408__factory);
 };

@@ -321,3 +321,29 @@ export const Z_NOIR_PASSPORT_3_160_3_4_576_216_1_1512_3_256 = keccak256(
   ["Z_NOIR_PASSPORT_3_160_3_4_576_216_1_1512_3_256"],
 );
 export const Z_NOIR_PASSPORT_3_256_3_3_576_248_NA = keccak256(["string"], ["Z_NOIR_PASSPORT_3_256_3_3_576_248_NA"]);
+
+export const Z_NOIR_PASSPORT_11_256_3_4_576_248_1_1496_5_296 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_11_256_3_4_576_248_1_1496_5_296"],
+);
+export const Z_NOIR_PASSPORT_1_256_3_4_336_248_1_1496_4_256 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_1_256_3_4_336_248_1_1496_4_256"],
+);
+export const Z_NOIR_PASSPORT_1_256_3_5_344_232_NA = keccak256(["string"], ["Z_NOIR_PASSPORT_1_256_3_5_344_232_NA"]);
+export const Z_NOIR_PASSPORT_1_256_3_6_336_248_1_2432_3_256 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_1_256_3_6_336_248_1_2432_3_256"],
+);
+export const Z_NOIR_PASSPORT_21_256_3_7_336_264_21_3072_6_2008 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_21_256_3_7_336_264_21_3072_6_2008"],
+);
+export const Z_NOIR_PASSPORT_25_384_3_5_576_248_20_3768_3_2008 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_25_384_3_5_576_248_20_3768_3_2008"],
+);
+export const Z_NOIR_PASSPORT_2_256_3_5_336_248_22_1808_7_2408 = keccak256(
+  ["string"],
+  ["Z_NOIR_PASSPORT_2_256_3_5_336_248_22_1808_7_2408"],
+);
