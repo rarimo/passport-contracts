@@ -11,7 +11,7 @@ interface IMessageService {
      * @notice Emitted when a message is sent.
      * @param _from The indexed sender address of the message (msg.sender).
      * @param _to The indexed intended recipient address of the message on the other layer.
-     * @param _fee The fee being being paid to deliver the message to the recipient in Wei.
+     * @param _fee The fee being paid to deliver the message to the recipient in Wei.
      * @param _value The value being sent to the recipient in Wei.
      * @param _nonce The unique message number.
      * @param _calldata The calldata being passed to the intended recipient when being called on claiming.
