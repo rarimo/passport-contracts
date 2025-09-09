@@ -22,8 +22,8 @@ pragma solidity >=0.7.0 <0.9.0;
 
 /**
  * @notice See docs:
- * - https://www.icao.int/publications/Documents/9303_p4_cons_en.pdf
- * - https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+ * - https://www2023.icao.int/publications/Documents/9303_p4_cons_en.pdf
+ * - https://www2023.icao.int/publications/pages/publication.aspx
  */
 contract TD3QueryProofVerifier {
     // Scalar field size
