@@ -1,3 +1,5 @@
+[![npm](https://img.shields.io/npm/v/@rarimo/passport-contracts.svg)](https://www.npmjs.com/package/@rarimo/passport-contracts)
+[![checks](https://github.com/rarimo/passport-contracts/actions/workflows/checks.yml/badge.svg)](https://github.com/rarimo/passport-contracts/actions/workflows/checks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # 🛂 Decentralized Identity Issuance
