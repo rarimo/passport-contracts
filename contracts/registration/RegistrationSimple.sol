@@ -11,6 +11,8 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 import {SetHelper} from "@solarity/solidity-lib/libs/arrays/SetHelper.sol";
 import {Groth16VerifierHelper} from "@solarity/solidity-lib/libs/zkp/Groth16VerifierHelper.sol";
 
+import {INoirVerifier} from "../interfaces/verifiers/INoirVerifier.sol";
+
 import {StateKeeper} from "../state/StateKeeper.sol";
 
 contract RegistrationSimple is Initializable, UUPSUpgradeable {
@@ -95,6 +97,40 @@ contract RegistrationSimple is Initializable, UUPSUpgradeable {
         );
     }
 
+    function registerSimpleViaNoir(
+        uint256 identityKey_,
+        Passport memory passport_,
+        bytes memory signature_,
+        bytes memory zkPoints_
+    ) external virtual {
+        require(identityKey_ > 0, "RegistrationSimple: identity can not be zero");
+
+        bytes32 signedData_ = _buildSignedData(passport_);
+        address dataSigner_ = ECDSA.recover(
+            MessageHashUtils.toEthSignedMessageHash(signedData_),
+            signature_
+        );
+
+        _requireSigner(dataSigner_);
+
+        stateKeeper.useSignature(keccak256(signature_));
+
+        _verifyNoirZKProof(
+            passport_.verifier,
+            passport_.dg1Hash,
+            bytes32(passport_.dgCommit),
+            bytes32(identityKey_),
+            zkPoints_
+        );
+
+        stateKeeper.addBond(
+            passport_.publicKey,
+            passport_.passportHash,
+            bytes32(identityKey_),
+            passport_.dgCommit
+        );
+    }
+
     function updateSignerList(bytes calldata data_) external {
         _onlyOwner();
 
@@ -156,6 +192,25 @@ contract RegistrationSimple is Initializable, UUPSUpgradeable {
         require(
             verifier_.verifyProof(zkPoints_, pubSignals_),
             "RegistrationSimple: invalid zk proof"
+        );
+    }
+
+    function _verifyNoirZKProof(
+        address verifier_,
+        bytes32 dg1Hash_,
+        bytes32 dg1Commitment_,
+        bytes32 pkIdentityHash_,
+        bytes memory zkPoints_
+    ) internal view {
+        bytes32[] memory pubSignals_ = new bytes32[](_PROOF_SIGNALS_COUNT);
+
+        pubSignals_[0] = dg1Commitment_; // output
+        pubSignals_[1] = dg1Hash_; // output
+        pubSignals_[2] = pkIdentityHash_; // output
+
+        require(
+            INoirVerifier(verifier_).verify(zkPoints_, pubSignals_),
+            "RegistrationSimple: invalid noir zk proof"
         );
     }
 
