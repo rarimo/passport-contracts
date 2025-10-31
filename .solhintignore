@@ -4,3 +4,5 @@
 ./contracts/utils/Date2Time.sol
 ./contracts/libraries/Poseidon.sol
 ./contracts/sdk/verifier/TD3QueryProofVerifier.sol
+./contracts/sdk/verifier/TD1QueryProofNoirVerifier.sol
+./contracts/sdk/verifier/TD3QueryProofNoirVerifier.sol
