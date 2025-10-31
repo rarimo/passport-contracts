@@ -24,6 +24,14 @@ contract ProofBuilderTest is AQueryProofExecutor {
         return 0;
     }
 
+    function _buildPublicSignalsTD1(
+        bytes32,
+        uint256,
+        bytes memory
+    ) internal pure override returns (uint256) {
+        return 0;
+    }
+
     function _initializeArrays(
         uint256 selector,
         uint256 nullifier
