@@ -65,11 +65,7 @@ describe("Registration2", () => {
 
   const deployCRSADispatcher = async () => {
     const CRSASHA2Signer = await ethers.getContractFactory("CRSASigner");
-    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
-      libraries: {
-        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
-      },
-    });
+    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher");
 
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
     cRsaDispatcher = await CRSADispatcher.deploy();
@@ -304,6 +300,7 @@ describe("Registration2", () => {
   });
 
   describe("$certificate flow", () => {
+    const sha256CertificateKey = "0x00ae56c58909709f0ed42b5d5bd40cc48d63207b58bb10f0b4fa04e8a9838dfd";
     const icaoPublicKey =
       "0xb6fc5ebd4d20b43e92ca6ffb1fca1097921a138b652592c0f94330f10baaa35feb55e889d353a93035bdb5a9cb8517fc3cda58bae757113714f09b74674955558f2fa4ac1351b04c203833f17f74b237621ae9cd31f970daac56e827352a8c89675e9aebf3459936f25e1efa3ae353e029448b54c690723df961551e6b6c7c4753accc80a3becc336aa58a502146cadcff0b7b549abe502bc9b0c27c210bd904ee8557a9f6a59dbc54016142288bd4611b97a35c248e3cce5f7a06f910cdd93e10121746bcb813f011e40723101d04498f8142baeb5bfa1ca33d56ebbb4bf951a99eeef4bb17d7136b1e8624e0db9b7af9e81ff571b4fd7d0fc1bb02f8722d511d3396238af1f39e7908155b24c532564f9b16cae228aa863286427d1d7dc8e3ef14d3ced507dd7d89b3eec3fa2ba25ac3047d56cc6a55227341ca196ab2219fddf45a52f5d47a2f5d6ea4944562e416aa77e37708ce2c8541834b3f0af5438482faf1992d9d9fdfba1fb3ea4a8e07a9663b4aa329d365c48c05f3900ff4e7337a9c7709a075b5a0d4efd4d6e4f03d23cf1ccfbb0c0ec2ca8769cf6dcc0e65ea672d586f91df90611087a197b2978f6a76e727697210f1916e0ed6e862aa7dd5cf6674fd620a6c4e57d1ecefe75f1fc7a1cdd235e6c75e8b7313088e73b2e2467aae7c510093e24509f5ca9450a863ef3c5fd2c804d99702e3cd4d9bf4886783";
     const icaoSignature =
@@ -329,12 +326,205 @@ describe("Registration2", () => {
 
         await stateKeeper.mockChangeICAOMasterTreeRoot(root);
 
-        expect(await registration.registerCertificate(certificate, icaoMember, proof))
-          .to.emit(registration, "CertificateRegistered")
-          .withArgs("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
-        expect(
-          await stateKeeper.getCertificateInfo("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72"),
-        ).to.deep.equal([1915341686n]);
+        await expect(registration.registerCertificate(certificate, icaoMember, proof))
+          .to.emit(stateKeeper, "CertificateAdded")
+          .withArgs(sha256CertificateKey, 1915341686n);
+        expect(await stateKeeper.getCertificateInfo(sha256CertificateKey)).to.deep.equal([1915341686n]);
+      });
+    });
+
+    describe("#migrateCertificateMockBatch", () => {
+      const legacyCertificateKey = ethers.keccak256(ethers.toUtf8Bytes("legacy-certificate-key"));
+      const certificate: Registration2.CertificateStruct = {
+        dataType: C_RSA_SHA2_4096,
+        signedAttributes: x509CertificateSA,
+        keyOffset: 444,
+        expirationOffset: 195,
+      };
+
+      beforeEach(async () => {
+        await stateKeeper.mockAddRegistrations(["Migration owner"], [OWNER.address]);
+        await stateKeeper.addCertificate(legacyCertificateKey, 1915341686n);
+      });
+
+      it("should atomically replace a legacy key using the configured dispatcher", async () => {
+        const migration = stateKeeper.migrateCertificateMockBatch(
+          [legacyCertificateKey],
+          [certificate],
+          await registration.getAddress(),
+        );
+
+        await expect(migration).to.emit(stateKeeper, "CertificateRemoved").withArgs(legacyCertificateKey);
+        await expect(migration).to.emit(stateKeeper, "CertificateAdded").withArgs(sha256CertificateKey, 1915341686n);
+
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(0);
+        expect(await stateKeeper.getCertificateInfo(sha256CertificateKey)).to.deep.equal([1915341686n]);
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
+
+        await stateKeeper.migrateCertificateMockBatch(
+          [legacyCertificateKey],
+          [certificate],
+          await registration.getAddress(),
+        );
+
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
+      });
+
+      it("should reject migration by a non-owner without removing the legacy key", async () => {
+        await expect(
+          stateKeeper
+            .connect(SECOND)
+            .migrateCertificateMockBatch([legacyCertificateKey], [certificate], await registration.getAddress()),
+        )
+          .to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount")
+          .withArgs(SECOND.address);
+
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(1915341686n);
+        expect((await stateKeeper.getCertificateInfo(sha256CertificateKey)).expirationTimestamp).to.equal(0);
+      });
+
+      it("component recovery adds first, survives interruption, and completes exactly once", async () => {
+        const rootBefore = await certificatesSmt.getRoot();
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        const rootPending = await certificatesSmt.getRoot();
+        expect(rootPending).not.to.equal(rootBefore);
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(1915341686n);
+        expect((await stateKeeper.getCertificateInfo(sha256CertificateKey)).expirationTimestamp).to.equal(1915341686n);
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(0);
+        expect((await certificatesSmt.getProof(legacyCertificateKey)).existence).to.equal(true);
+        expect((await certificatesSmt.getProof(sha256CertificateKey)).existence).to.equal(true);
+        expect(await stateKeeper.pendingMigrationOldKey()).to.equal(legacyCertificateKey);
+        expect(await stateKeeper.pendingMigrationNewKey()).to.equal(sha256CertificateKey);
+        expect(await stateKeeper.pendingMigrationExpiration()).to.equal(1915341686n);
+        // Retried begin is a no-op; completion does not require the original transaction object.
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        expect(await certificatesSmt.getRoot()).to.equal(rootPending);
+        await stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n);
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(0);
+        expect((await stateKeeper.getCertificateInfo(sha256CertificateKey)).expirationTimestamp).to.equal(1915341686n);
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
+        expect(await stateKeeper.pendingMigrationOldKey()).to.equal(ethers.ZeroHash);
+        expect(await stateKeeper.pendingMigrationNewKey()).to.equal(ethers.ZeroHash);
+        expect(await stateKeeper.pendingMigrationExpiration()).to.equal(0);
+        expect((await certificatesSmt.getProof(legacyCertificateKey)).existence).to.equal(false);
+        expect((await certificatesSmt.getProof(sha256CertificateKey)).existence).to.equal(true);
+        const rootAfter = await certificatesSmt.getRoot();
+        expect(rootAfter).not.to.equal(rootPending);
+        await stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n);
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
+        expect(await certificatesSmt.getRoot()).to.equal(rootAfter);
+      });
+
+      it("component recovery rejects unauthorized begin and completion", async () => {
+        await expect(
+          stateKeeper
+            .connect(SECOND)
+            .beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount");
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        await expect(
+          stateKeeper
+            .connect(SECOND)
+            .completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n),
+        ).to.be.revertedWithCustomError(stateKeeper, "UnauthorizedAccount");
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(0);
+      });
+
+      it("component recovery rejects mismatched records and concurrent migration paths", async () => {
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        const otherKey = ethers.keccak256(ethers.toUtf8Bytes("other legacy"));
+        await expect(
+          stateKeeper.beginCertificateMigration(otherKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: different migration pending");
+        await expect(
+          stateKeeper.completeCertificateMigration(otherKey, sha256CertificateKey, 1915341686n),
+        ).to.be.revertedWith("StateKeeper: different migration pending");
+        await expect(
+          stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341687n),
+        ).to.be.revertedWith("StateKeeper: replacement does not match");
+        await expect(stateKeeper.removeCertificateMock(legacyCertificateKey)).to.be.revertedWith(
+          "StateKeeper: migration pending",
+        );
+        await expect(
+          stateKeeper.migrateCertificateMock(legacyCertificateKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: migration pending");
+        await expect(stateKeeper.removeCertificate(sha256CertificateKey)).to.be.revertedWith(
+          "StateKeeper: replacement migration pending",
+        );
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(0);
+      });
+
+      it("component recovery validates old record before changing the SMT", async () => {
+        const root = await certificatesSmt.getRoot();
+        await expect(
+          stateKeeper.beginCertificateMigration(ethers.ZeroHash, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: invalid migration certificate");
+        await expect(
+          stateKeeper.beginCertificateMigration(sha256CertificateKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: invalid migration certificate");
+        await expect(
+          stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n),
+        ).to.be.revertedWith("StateKeeper: replacement does not match");
+        expect(await certificatesSmt.getRoot()).to.equal(root);
+        const wrongKey = ethers.keccak256(ethers.toUtf8Bytes("wrong expiration legacy"));
+        await stateKeeper.addCertificate(wrongKey, 1915341687n);
+        const wrongRoot = await certificatesSmt.getRoot();
+        await expect(
+          stateKeeper.beginCertificateMigration(wrongKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: certificate is not in a migratable state");
+        expect(await certificatesSmt.getRoot()).to.equal(wrongRoot);
+        expect(await stateKeeper.pendingMigrationOldKey()).to.equal(ethers.ZeroHash);
+      });
+
+      it("component recovery never removes old if the replacement already exists without a checkpoint", async () => {
+        await stateKeeper.addCertificate(sha256CertificateKey, 1915341686n);
+        await expect(
+          stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: certificate is not in a migratable state");
+        await expect(
+          stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n),
+        ).to.be.revertedWith("StateKeeper: no migration pending");
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(1915341686n);
+      });
+
+      it("component recovery handles an authorized legacy expiry removal between components", async () => {
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        await time.increaseTo(1915341687n);
+        await stateKeeper.removeCertificate(legacyCertificateKey);
+        await stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n);
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
+        expect((await stateKeeper.getCertificateInfo(sha256CertificateKey)).expirationTimestamp).to.equal(1915341686n);
+      });
+
+      it("component recovery rejects expired replacements atomically before any checkpoint", async () => {
+        await time.increaseTo(1915341686n + 5n * 365n * 24n * 60n * 60n);
+        const root = await certificatesSmt.getRoot();
+        await expect(
+          stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress()),
+        ).to.be.revertedWith("StateKeeper: certificate is expired");
+        expect(await certificatesSmt.getRoot()).to.equal(root);
+        expect(await stateKeeper.pendingMigrationOldKey()).to.equal(ethers.ZeroHash);
+        expect((await stateKeeper.getCertificateInfo(legacyCertificateKey)).expirationTimestamp).to.equal(1915341686n);
+      });
+
+      it("component recovery production authorization blocks upgrades while pending", async () => {
+        const factory = await ethers.getContractFactory("StateKeeper", {
+          libraries: {
+            PoseidonUnit1L: await (await getPoseidon(1)).getAddress(),
+            PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
+            PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
+          },
+        });
+        const implementation = await factory.deploy();
+        await stateKeeper.upgradeToAndCall(await implementation.getAddress(), "0x");
+        await stateKeeper.beginCertificateMigration(legacyCertificateKey, certificate, await registration.getAddress());
+        await expect(stateKeeper.upgradeToAndCall(await implementation.getAddress(), "0x")).to.be.revertedWith(
+          "StateKeeper: migration pending",
+        );
+        await stateKeeper.completeCertificateMigration(legacyCertificateKey, sha256CertificateKey, 1915341686n);
+        await stateKeeper.upgradeToAndCall(await implementation.getAddress(), "0x");
+        expect(await stateKeeper.migratedCertificateCount()).to.equal(1);
       });
     });
 
@@ -362,7 +552,7 @@ describe("Registration2", () => {
 
         await time.increaseTo(2015341686);
 
-        await registration.revokeCertificate("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
+        await registration.revokeCertificate(sha256CertificateKey);
       });
     });
   });
