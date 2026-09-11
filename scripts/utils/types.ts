@@ -361,3 +361,4 @@ export const Z_NOIR_PASSPORT_1_256_3_7_336_264_20_2760_6_2008 = keccak256(
   ["string"],
   ["Z_NOIR_PASSPORT_1_256_3_7_336_264_20_2760_6_2008"],
 );
+export const Z_NOIR_PASSPORT_1_256_1_6_960_248_NA = keccak256(["string"], ["Z_NOIR_PASSPORT_1_256_1_6_960_248_NA"]);

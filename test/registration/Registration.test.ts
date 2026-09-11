@@ -65,11 +65,7 @@ describe("Registration2", () => {
 
   const deployCRSADispatcher = async () => {
     const CRSASHA2Signer = await ethers.getContractFactory("CRSASigner");
-    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
-      libraries: {
-        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
-      },
-    });
+    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher");
 
     const rsaSha2Signer = await CRSASHA2Signer.deploy();
     cRsaDispatcher = await CRSADispatcher.deploy();
@@ -304,6 +300,7 @@ describe("Registration2", () => {
   });
 
   describe("$certificate flow", () => {
+    const sha256CertificateKey = "0x00ae56c58909709f0ed42b5d5bd40cc48d63207b58bb10f0b4fa04e8a9838dfd";
     const icaoPublicKey =
       "0xb6fc5ebd4d20b43e92ca6ffb1fca1097921a138b652592c0f94330f10baaa35feb55e889d353a93035bdb5a9cb8517fc3cda58bae757113714f09b74674955558f2fa4ac1351b04c203833f17f74b237621ae9cd31f970daac56e827352a8c89675e9aebf3459936f25e1efa3ae353e029448b54c690723df961551e6b6c7c4753accc80a3becc336aa58a502146cadcff0b7b549abe502bc9b0c27c210bd904ee8557a9f6a59dbc54016142288bd4611b97a35c248e3cce5f7a06f910cdd93e10121746bcb813f011e40723101d04498f8142baeb5bfa1ca33d56ebbb4bf951a99eeef4bb17d7136b1e8624e0db9b7af9e81ff571b4fd7d0fc1bb02f8722d511d3396238af1f39e7908155b24c532564f9b16cae228aa863286427d1d7dc8e3ef14d3ced507dd7d89b3eec3fa2ba25ac3047d56cc6a55227341ca196ab2219fddf45a52f5d47a2f5d6ea4944562e416aa77e37708ce2c8541834b3f0af5438482faf1992d9d9fdfba1fb3ea4a8e07a9663b4aa329d365c48c05f3900ff4e7337a9c7709a075b5a0d4efd4d6e4f03d23cf1ccfbb0c0ec2ca8769cf6dcc0e65ea672d586f91df90611087a197b2978f6a76e727697210f1916e0ed6e862aa7dd5cf6674fd620a6c4e57d1ecefe75f1fc7a1cdd235e6c75e8b7313088e73b2e2467aae7c510093e24509f5ca9450a863ef3c5fd2c804d99702e3cd4d9bf4886783";
     const icaoSignature =
@@ -329,12 +326,10 @@ describe("Registration2", () => {
 
         await stateKeeper.mockChangeICAOMasterTreeRoot(root);
 
-        expect(await registration.registerCertificate(certificate, icaoMember, proof))
-          .to.emit(registration, "CertificateRegistered")
-          .withArgs("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
-        expect(
-          await stateKeeper.getCertificateInfo("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72"),
-        ).to.deep.equal([1915341686n]);
+        await expect(registration.registerCertificate(certificate, icaoMember, proof))
+          .to.emit(stateKeeper, "CertificateAdded")
+          .withArgs(sha256CertificateKey, 1915341686n);
+        expect(await stateKeeper.getCertificateInfo(sha256CertificateKey)).to.deep.equal([1915341686n]);
       });
     });
 
@@ -362,7 +357,7 @@ describe("Registration2", () => {
 
         await time.increaseTo(2015341686);
 
-        await registration.revokeCertificate("0x143607139f5db6f9af9db0c948d40a61c10493ddedb629499095cce3104d4b72");
+        await registration.revokeCertificate(sha256CertificateKey);
       });
     });
   });

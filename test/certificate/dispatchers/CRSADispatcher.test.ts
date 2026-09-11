@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 
 import { CRSADispatcher } from "@ethers-v6";
 
-import { Reverter, getPoseidon } from "@/test/helpers/";
+import { Reverter } from "@/test/helpers/";
 
 describe("CRSADispatcher", () => {
   const reverter = new Reverter();
@@ -12,11 +12,7 @@ describe("CRSADispatcher", () => {
 
   before("setup", async () => {
     const CRSAPSSSigner = await ethers.getContractFactory("CRSAPSSSigner");
-    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher", {
-      libraries: {
-        PoseidonUnit5L: await (await getPoseidon(5)).getAddress(),
-      },
-    });
+    const CRSADispatcher = await ethers.getContractFactory("CRSADispatcher");
 
     const signerSha2 = await CRSAPSSSigner.deploy();
     dispatcher = await CRSADispatcher.deploy();
@@ -56,7 +52,18 @@ describe("CRSADispatcher", () => {
         await dispatcher.getCertificateKey(
           "0xa55c562c1f959457331c3840904a103eaa691a15f0c675068a14dfe200051ac8d4edfe549d2bcf54e6544cd0b21028a5077887e952ec71759a027b91a45924f1d9a6c11d77d0a0b9542ab9dac85fe59d31c65f5fc37c8a04c7c69b37bf2117f59dde035946bcf3750019dcdd054d832e179df3d265f10e5f8c88e8a4162ea170a5912c1d30715a61063ec5ed164c1971469fb80846b24bbf7f60baa37d9f17dc9d26510e9f8f6521f5ea30092817553e27b7d98e3483677a846655710687b61b42b569309c0ef28d3c231982fe910f9a08eb32eb69e17b422c074ee593d9c9641bd0612ed1d189a042e9ed6eb84ac6186e8afbb92a2df3221fa52c6182c043e5",
         ),
-      ).to.equal("0x28762f4450a4cea80aa7170e60f7bd430b48b532ca96243e691b999841139938");
+      ).to.equal("0x002c886ad262f39501f6ec0f863ae135380d7da0086efe76764031d79ebc29a7");
+    });
+
+    it("should keep the upper 248 SHA-256 bits rather than the lower 248 bits", async () => {
+      const publicKey = "0x000102030405060708090a0b0c0d0e0f";
+      const expectedDigest = "0xbe45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991";
+      const expectedUpper248 = "0x00be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a89";
+      const incorrectLower248 = "0x0045cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991";
+
+      expect(ethers.sha256(publicKey)).to.equal(expectedDigest);
+      expect(await dispatcher.getCertificateKey(publicKey)).to.equal(expectedUpper248);
+      expect(expectedUpper248).not.to.equal(incorrectLower248);
     });
   });
 });

@@ -26,10 +26,35 @@ function privateKey() {
   return process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [];
 }
 
+function passportForking() {
+  const url = process.env.PASSPORT_FORK_RPC_URL;
+
+  if (url === undefined) {
+    return undefined;
+  }
+
+  const block = process.env.PASSPORT_FORK_BLOCK;
+
+  if (block === undefined || !/^\d+$/.test(block)) {
+    throw new Error("PASSPORT_FORK_BLOCK must be an explicit decimal block number when PASSPORT_FORK_RPC_URL is set");
+  }
+
+  return { url, blockNumber: Number(block) };
+}
+
 const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialDate: "2004-01-01",
+      // Match the Solidity target and Rarimo fork profile, including pre-Osaka gas limits.
+      hardfork: "london",
+      forking: passportForking(),
+      chains: {
+        7368: {
+          // Rarimo L2 block 68084 exposes London fields and no Shanghai/Cancun fields.
+          hardforkHistory: { london: 1 },
+        },
+      },
     },
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -57,7 +82,6 @@ const config: HardhatUserConfig = {
     "rarimo-l2": {
       url: "https://l2.rarimo.com",
       gasMultiplier: 1.2,
-      gasPrice: 1060000,
     },
     "rarimo-l2-testnet": {
       url: "https://l2.testnet.rarimo.com",

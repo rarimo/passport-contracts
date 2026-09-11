@@ -25,7 +25,7 @@
     "compile": "npx hardhat compile --force",
     "coverage": "npx hardhat coverage --solcoverjs ./.solcover.ts",
     "clean": "npx hardhat clean",
-    "prepare-circuits": "npx hardhat zkit make && ./scripts/replace-circuits-files.sh",
+    "prepare-circuits": "npx hardhat zkit compile && ./scripts/replace-circuits-files.sh",
     "test": "npm run prepare-circuits && npx hardhat test",
     "test-all": "npx hardhat migrate && npm run test",
     "private-network": "npx hardhat node",
