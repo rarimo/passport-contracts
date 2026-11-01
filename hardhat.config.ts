@@ -96,6 +96,12 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       gasMultiplier: 1.2,
     },
+    gnosis: {
+      url: process.env.GNOSIS_RPC ?? "https://rpc.gnosischain.com",
+      chainId: 100,
+      accounts: privateKey(),
+      gasMultiplier: 1.2,
+    },
   },
   solidity: {
     version: "0.8.28",
